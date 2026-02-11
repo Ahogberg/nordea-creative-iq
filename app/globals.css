@@ -68,48 +68,42 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Nordea custom colors */
   --color-nordea-blue: #0000A0;
   --color-nordea-blue-dark: #000080;
-  --color-nordea-blue-light: #0000C8;
-  --color-success: #00A76F;
-  --color-warning: #F59E0B;
-  --color-error: #DC3545;
-  --color-info: #0EA5E9;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: #F8F9FA;
-  --foreground: #1A1A2E;
+  --radius: 0.375rem;
+  --background: #FFFFFF;
+  --foreground: #1A1A1A;
   --card: #FFFFFF;
-  --card-foreground: #1A1A2E;
+  --card-foreground: #1A1A1A;
   --popover: #FFFFFF;
-  --popover-foreground: #1A1A2E;
+  --popover-foreground: #1A1A1A;
   --primary: #0000A0;
   --primary-foreground: #FFFFFF;
-  --secondary: #F3F4F6;
-  --secondary-foreground: #1A1A2E;
-  --muted: #F3F4F6;
+  --secondary: #FAFAFA;
+  --secondary-foreground: #1A1A1A;
+  --muted: #FAFAFA;
   --muted-foreground: #6B7280;
-  --accent: #F3F4F6;
-  --accent-foreground: #1A1A2E;
-  --destructive: #DC3545;
-  --border: #E5E7EB;
-  --input: #E5E7EB;
+  --accent: #FAFAFA;
+  --accent-foreground: #1A1A1A;
+  --destructive: #DC2626;
+  --border: #E5E5E5;
+  --input: #E5E5E5;
   --ring: #0000A0;
   --chart-1: #0000A0;
-  --chart-2: #00A76F;
-  --chart-3: #F59E0B;
+  --chart-2: #059669;
+  --chart-3: #D97706;
   --chart-4: #0EA5E9;
-  --chart-5: #8B5CF6;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1A1A2E;
+  --chart-5: #6B7280;
+  --sidebar: #FAFAFA;
+  --sidebar-foreground: #1A1A1A;
   --sidebar-primary: #0000A0;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F3F4F6;
-  --sidebar-accent-foreground: #1A1A2E;
-  --sidebar-border: #E5E7EB;
+  --sidebar-accent: #FAFAFA;
+  --sidebar-accent-foreground: #1A1A1A;
+  --sidebar-border: #E5E5E5;
   --sidebar-ring: #0000A0;
 }
 
@@ -118,6 +112,6 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }

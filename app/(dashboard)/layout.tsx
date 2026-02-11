@@ -31,18 +31,18 @@ export default function DashboardLayout({
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
-        <div className="w-8 h-8 border-3 border-[#0000A0]/20 border-t-[#0000A0] rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-gray-200 border-t-gray-400 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA]">
+    <div className="min-h-screen bg-white">
       <Sidebar />
-      <div className="lg:pl-64">
+      <div className="lg:pl-56">
         <Header />
-        <main className="p-4 lg:p-8">
+        <main className="px-6 py-6 lg:px-8 lg:py-8 max-w-6xl">
           {children}
         </main>
       </div>
