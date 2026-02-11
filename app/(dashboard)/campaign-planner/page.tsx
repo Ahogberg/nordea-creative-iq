@@ -10,12 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import {
   BarChart3,
+  Calculator,
   Download,
   Save,
   AlertTriangle,
   Users,
   TrendingUp,
 } from 'lucide-react';
+import { MediaCalculator } from '@/components/campaign-planner/MediaCalculator';
 
 // ---------------------------------------------------------------------------
 // Types & Constants
@@ -84,6 +86,9 @@ interface ChannelResult {
 }
 
 export default function CampaignPlannerPage() {
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'planner' | 'calculator'>('planner');
+
   // Budget & Duration
   const [budget, setBudget] = useState<number>(500000);
   const [budgetInput, setBudgetInput] = useState<string>('500 000');
@@ -242,21 +247,57 @@ export default function CampaignPlannerPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Kampanjplanerare</h1>
           <p className="text-gray-500 mt-1">
-            Planera budget, kanalfordelning och prognostisera kampanjresultat
+            Planera budget, kanalfördelning och prognostisera kampanjresultat
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Exportera PDF
-          </Button>
-          <Button className="gap-2 bg-[#0000A0] hover:bg-[#000080] text-white">
-            <Save className="w-4 h-4" />
-            Spara kampanj
-          </Button>
-        </div>
+        {activeTab === 'planner' && (
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="gap-2">
+              <Download className="w-4 h-4" />
+              Exportera PDF
+            </Button>
+            <Button className="gap-2 bg-[#0000A0] hover:bg-[#000080] text-white">
+              <Save className="w-4 h-4" />
+              Spara kampanj
+            </Button>
+          </div>
+        )}
       </div>
 
+      {/* Tab navigation */}
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+        <button
+          type="button"
+          onClick={() => setActiveTab('planner')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'planner'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          Kampanjplanerare
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('calculator')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'calculator'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Calculator className="w-4 h-4" />
+          Mediakalkylator
+        </button>
+      </div>
+
+      {/* Media Calculator tab */}
+      {activeTab === 'calculator' && <MediaCalculator />}
+
+      {/* Campaign Planner tab */}
+      {activeTab === 'planner' && (
+      <>
       {/* Warnings */}
       {warnings.length > 0 && (
         <div className="space-y-2">
@@ -624,6 +665,8 @@ export default function CampaignPlannerPage() {
           </Card>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
