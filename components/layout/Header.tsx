@@ -24,6 +24,7 @@ import {
   Globe,
   Users,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -39,22 +40,46 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [userEmail, setUserEmail] = useState('');
+  const [useSupabase, setUseSupabase] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem('nordea-user');
-    if (user) {
-      try {
-        const parsed = JSON.parse(user);
-        setUserEmail(parsed.email || '');
-      } catch {
-        // ignore
+    async function loadUser() {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      const isSupabase = url && url !== 'https://placeholder.supabase.co' && key && key !== 'placeholder-key';
+
+      if (isSupabase) {
+        setUseSupabase(true);
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUserEmail(user.email || '');
+        }
+      } else {
+        const user = localStorage.getItem('nordea-user');
+        if (user) {
+          try {
+            const parsed = JSON.parse(user);
+            setUserEmail(parsed.email || '');
+          } catch {
+            // ignore
+          }
+        }
       }
     }
+
+    loadUser();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('nordea-user');
+  const handleLogout = async () => {
+    if (useSupabase) {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } else {
+      localStorage.removeItem('nordea-user');
+    }
     router.push('/login');
+    router.refresh();
   };
 
   const initials = userEmail

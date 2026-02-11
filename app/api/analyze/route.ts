@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { callClaude } from '@/lib/ai/anthropic';
+import { brandAnalysisPrompt } from '@/lib/ai/prompts/brand-analysis';
 
 const mockAnalysis = {
   brandFit: 78,
@@ -26,13 +28,35 @@ const mockAnalysis = {
   ],
 };
 
-export async function POST() {
-  // Simulate processing delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { adCopy, channel, title } = body;
 
-  if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-    console.log('[CreativeIQ] Ingen API-nyckel konfigurerad – returnerar mockad analys');
+    const userMessage = `Analysera denna annons:
+Titel: ${title || 'Ej angiven'}
+Kanal: ${channel || 'Ej angiven'}
+Annonstext: ${adCopy || 'Ingen text angiven'}
+
+Ge din analys i det specificerade JSON-formatet.`;
+
+    const result = await callClaude(brandAnalysisPrompt, userMessage);
+
+    if (result) {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return NextResponse.json(parsed);
+      }
+    }
+
+    // Fallback to mock
+    console.log('[CreativeIQ] AI-analys fallback till mockdata');
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return NextResponse.json(mockAnalysis);
+  } catch (error) {
+    console.error('[CreativeIQ] Analyze error:', error);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return NextResponse.json(mockAnalysis);
   }
-
-  return NextResponse.json(mockAnalysis);
 }

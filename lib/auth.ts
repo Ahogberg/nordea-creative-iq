@@ -20,3 +20,7 @@ export function isSupabaseConfigured(): boolean {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'placeholder-key'
   );
 }
+
+export function isAIConfigured(): boolean {
+  return !!process.env.ANTHROPIC_API_KEY;
+}

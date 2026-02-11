@@ -2,24 +2,39 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const user = localStorage.getItem('nordea-user');
-    if (user) {
-      try {
-        const parsed = JSON.parse(user);
-        if (parsed.isLoggedIn) {
-          router.push('/dashboard');
-          return;
+    async function checkAuth() {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      const isSupabase = url && url !== 'https://placeholder.supabase.co' && key && key !== 'placeholder-key';
+
+      if (isSupabase) {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        router.push(user ? '/dashboard' : '/login');
+      } else {
+        const user = localStorage.getItem('nordea-user');
+        if (user) {
+          try {
+            const parsed = JSON.parse(user);
+            if (parsed.isLoggedIn) {
+              router.push('/dashboard');
+              return;
+            }
+          } catch {
+            // Invalid JSON
+          }
         }
-      } catch {
-        // Invalid JSON, redirect to login
+        router.push('/login');
       }
     }
-    router.push('/login');
+
+    checkAuth();
   }, [router]);
 
   return (

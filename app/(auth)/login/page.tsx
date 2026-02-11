@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { validateNordeaEmail } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/client';
 import { Shield } from 'lucide-react';
 
 export default function LoginPage() {
@@ -15,6 +16,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [useSupabase, setUseSupabase] = useState(false);
+
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (url && url !== 'https://placeholder.supabase.co' && key && key !== 'placeholder-key') {
+      setUseSupabase(true);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,16 +42,50 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    // Demo mode: accept any @nordea.com email
-    setTimeout(() => {
-      localStorage.setItem('nordea-user', JSON.stringify({
+    if (useSupabase) {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email,
-        full_name: email.split('@')[0].replace('.', ' '),
-        isLoggedIn: true,
-      }));
-      router.push('/');
-      setLoading(false);
-    }, 800);
+        password,
+      });
+
+      if (authError) {
+        if (authError.message.includes('Invalid login credentials')) {
+          const { error: signupError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: email.split('@')[0].replace('.', ' '),
+              },
+            },
+          });
+
+          if (signupError) {
+            setError(signupError.message);
+            setLoading(false);
+            return;
+          }
+        } else {
+          setError(authError.message);
+          setLoading(false);
+          return;
+        }
+      }
+
+      router.push('/dashboard');
+      router.refresh();
+    } else {
+      setTimeout(() => {
+        localStorage.setItem('nordea-user', JSON.stringify({
+          email,
+          full_name: email.split('@')[0].replace('.', ' '),
+          isLoggedIn: true,
+        }));
+        router.push('/dashboard');
+        setLoading(false);
+      }, 800);
+    }
   };
 
   return (
@@ -124,6 +168,12 @@ export default function LoginPage() {
             <Shield className="w-3 h-3" />
             <span>Skyddad av Nordea Enterprise Security</span>
           </div>
+
+          {!useSupabase && (
+            <p className="text-center text-xs text-amber-600">
+              Demo-läge: Supabase ej konfigurerad
+            </p>
+          )}
         </div>
       </div>
     </div>

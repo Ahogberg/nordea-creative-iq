@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { callClaude } from '@/lib/ai/anthropic';
+import { copyGenerationPrompt } from '@/lib/ai/prompts/copy-generation';
 
 const mockCopies: Record<string, Record<string, { headline: string; subheadline: string; bodyCopy: string; cta: string; hashtags: string | null; brandFitScore: number; toneScores: { humanWarm: number; clearSimple: number; confidentHumble: number; forwardLooking: number } }>> = {
   linkedin: {
@@ -42,17 +44,34 @@ const mockCopies: Record<string, Record<string, { headline: string; subheadline:
 };
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { channel, objective } = body;
+  try {
+    const body = await request.json();
+    const { channel, objective, topic } = body;
 
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+    const prompt = copyGenerationPrompt(channel, objective, topic || 'Bolåneerbjudande för nya kunder');
+    const result = await callClaude(
+      'Du är en senior copywriter på Nordeas interna marknadsteam. Svara ALLTID med valid JSON.',
+      prompt
+    );
 
-  if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-    console.log('[CreativeIQ] Ingen API-nyckel konfigurerad – returnerar mockad copy');
+    if (result) {
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return NextResponse.json(parsed);
+      }
+    }
+
+    // Fallback to mock
+    console.log('[CreativeIQ] Copy-generering fallback till mockdata');
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const channelCopies = mockCopies[channel] || mockCopies.linkedin;
+    const copy = channelCopies[objective] || channelCopies.awareness;
+    return NextResponse.json(copy);
+  } catch (error) {
+    console.error('[CreativeIQ] Generate-copy error:', error);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const channelCopies = mockCopies.linkedin;
+    return NextResponse.json(channelCopies.awareness);
   }
-
-  const channelCopies = mockCopies[channel] || mockCopies.linkedin;
-  const copy = channelCopies[objective] || channelCopies.awareness;
-
-  return NextResponse.json(copy);
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
+import { createClient } from '@/lib/supabase/client';
 
 export default function DashboardLayout({
   children,
@@ -14,19 +15,37 @@ export default function DashboardLayout({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem('nordea-user');
-    if (user) {
-      try {
-        const parsed = JSON.parse(user);
-        if (parsed.isLoggedIn) {
+    async function checkAuth() {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      const isSupabase = url && url !== 'https://placeholder.supabase.co' && key && key !== 'placeholder-key';
+
+      if (isSupabase) {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
           setIsAuthenticated(true);
-          return;
+        } else {
+          router.push('/login');
         }
-      } catch {
-        // Invalid JSON
+      } else {
+        const user = localStorage.getItem('nordea-user');
+        if (user) {
+          try {
+            const parsed = JSON.parse(user);
+            if (parsed.isLoggedIn) {
+              setIsAuthenticated(true);
+              return;
+            }
+          } catch {
+            // Invalid JSON
+          }
+        }
+        router.push('/login');
       }
     }
-    router.push('/login');
+
+    checkAuth();
   }, [router]);
 
   if (!isAuthenticated) {

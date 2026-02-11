@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { callClaudeChat } from '@/lib/ai/anthropic';
+import { personaSimulationPrompt } from '@/lib/ai/prompts/persona-simulation';
+import { defaultPersonas } from '@/lib/constants/personas';
+import type { Persona } from '@/types/database';
 
-const personaResponses: Record<string, string[]> = {
+const mockResponses: Record<string, string[]> = {
   'Ung Förstagångsköpare': [
     'Hmm, det låter intressant men jag undrar... vad är den faktiska totalkostnaden? Jag har läst att det finns en massa dolda avgifter som bankerna inte alltid är tydliga med.',
     'Okej, men hur jämför det sig med andra banker? Jag har kollat runt lite och det verkar som att det finns billigare alternativ. Kan ni matcha det?',
@@ -32,20 +36,62 @@ const personaResponses: Record<string, string[]> = {
 };
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { personaName, messages } = body;
+  try {
+    const body = await request.json();
+    const { personaName, messages, adContent } = body;
 
-  await new Promise((resolve) => setTimeout(resolve, 800));
+    // Find persona data
+    const persona = defaultPersonas.find(p => p.name === personaName);
+    if (!persona) {
+      return NextResponse.json({ reply: 'Persona hittades inte.', sentiment: 'neutral' });
+    }
 
-  if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-    console.log('[CreativeIQ] Ingen API-nyckel konfigurerad – returnerar mockad persona-respons');
+    const systemPrompt = personaSimulationPrompt(persona as unknown as Persona);
+
+    // Build conversation history for Claude
+    const chatMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
+    if (messages && messages.length > 0) {
+      for (const msg of messages) {
+        chatMessages.push({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content,
+        });
+      }
+    } else {
+      chatMessages.push({
+        role: 'user',
+        content: adContent || 'Hej! Vad tycker du om den här annonsen?',
+      });
+    }
+
+    const result = await callClaudeChat(systemPrompt, chatMessages, {
+      maxTokens: 512,
+      temperature: 0.9,
+    });
+
+    if (result) {
+      const sentiment = persona.response_style === 'skeptical' ? 'skeptical'
+        : persona.response_style === 'curious' ? 'neutral'
+        : 'neutral';
+      return NextResponse.json({ reply: result, sentiment });
+    }
+
+    // Fallback to mock
+    console.log('[CreativeIQ] Persona-chat fallback till mockdata');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    const responses = mockResponses[personaName] || mockResponses['Spararen'];
+    const messageIndex = (messages?.length || 0) % responses.length;
+    return NextResponse.json({
+      reply: responses[messageIndex],
+      sentiment: personaName === 'Pensionsspararen' ? 'skeptical' : 'neutral',
+    });
+  } catch (error) {
+    console.error('[CreativeIQ] Persona-chat error:', error);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    return NextResponse.json({
+      reply: 'Jag förstår inte riktigt vad du menar. Kan du förklara lite mer?',
+      sentiment: 'neutral',
+    });
   }
-
-  const responses = personaResponses[personaName] || personaResponses['Spararen'];
-  const messageIndex = (messages?.length || 0) % responses.length;
-
-  return NextResponse.json({
-    reply: responses[messageIndex],
-    sentiment: personaName === 'Pensionsspararen' ? 'skeptical' : 'neutral',
-  });
 }
