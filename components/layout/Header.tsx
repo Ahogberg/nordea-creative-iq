@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
 import {
@@ -24,7 +24,7 @@ import {
   Globe,
   Users,
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -36,55 +36,25 @@ const navItems = [
   { href: '/settings', label: 'Inställningar', icon: Settings },
 ];
 
-export function Header() {
+interface HeaderProps {
+  user: SupabaseUser;
+}
+
+export function Header({ user }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [userEmail, setUserEmail] = useState('');
-  const [useSupabase, setUseSupabase] = useState(false);
-
-  useEffect(() => {
-    async function loadUser() {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      const isSupabase = url && url !== 'https://placeholder.supabase.co' && key && key !== 'placeholder-key';
-
-      if (isSupabase) {
-        setUseSupabase(true);
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setUserEmail(user.email || '');
-        }
-      } else {
-        const user = localStorage.getItem('nordea-user');
-        if (user) {
-          try {
-            const parsed = JSON.parse(user);
-            setUserEmail(parsed.email || '');
-          } catch {
-            // ignore
-          }
-        }
-      }
-    }
-
-    loadUser();
-  }, []);
+  const supabase = createClient();
 
   const handleLogout = async () => {
-    if (useSupabase) {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-    } else {
-      localStorage.removeItem('nordea-user');
-    }
+    await supabase.auth.signOut();
     router.push('/login');
     router.refresh();
   };
 
+  const userEmail = user.email || '';
   const initials = userEmail
-    ? userEmail.split('@')[0].split('.').map(n => n[0]?.toUpperCase()).join('')
-    : 'NU';
+    ? userEmail.split('@')[0].split('.').map(n => n[0]?.toUpperCase()).join('').slice(0, 2)
+    : 'U';
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8">
@@ -143,8 +113,8 @@ export function Header() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <div className="px-2 py-1.5">
-            <p className="text-sm font-medium">{userEmail}</p>
-            <p className="text-xs text-gray-500">Marketing Team</p>
+            <p className="text-sm font-medium">{userEmail.split('@')[0]}</p>
+            <p className="text-xs text-gray-500">{userEmail}</p>
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
@@ -160,7 +130,7 @@ export function Header() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+          <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
             <LogOut className="w-4 h-4 mr-2" />
             Logga ut
           </DropdownMenuItem>
