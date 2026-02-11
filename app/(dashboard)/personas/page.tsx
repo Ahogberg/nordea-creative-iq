@@ -1,11 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -14,9 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import { defaultPersonas } from '@/lib/constants/personas';
 import { Persona } from '@/types/database';
-import { cn } from '@/lib/utils';
 
 type PersonaForm = {
   name: string;
@@ -41,7 +48,7 @@ type PersonaForm = {
 const emptyForm: PersonaForm = {
   name: '',
   description: '',
-  avatar: '',
+  avatar: '👤',
   age_min: 25,
   age_max: 45,
   life_stage: 'young_professional',
@@ -79,40 +86,33 @@ function TagInput({
   };
 
   return (
-    <div>
-      <label className="block text-xs text-gray-500 mb-1">{label}</label>
+    <div className="space-y-2">
+      <Label>{label}</Label>
       <div className="flex gap-2">
-        <input
+        <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
           placeholder={placeholder}
-          className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#0000A0]"
+          className="flex-1"
         />
-        <button
-          type="button"
-          onClick={addTag}
-          className="px-3 py-1.5 text-xs border border-gray-200 rounded-md text-gray-500 hover:border-gray-300"
-        >
-          Lagg till
-        </button>
+        <Button type="button" variant="outline" onClick={addTag} size="sm">
+          Lägg till
+        </Button>
       </div>
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-1.5">
-          {tags.map((tag) => (
-            <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-gray-600 bg-[#FAFAFA] rounded">
-              {tag}
-              <button onClick={() => onChange(tags.filter((t) => t !== tag))} className="text-gray-400 hover:text-gray-600">&times;</button>
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap gap-1">
+        {tags.map((tag) => (
+          <Badge key={tag} variant="secondary" className="gap-1">
+            {tag}
+            <X
+              className="w-3 h-3 cursor-pointer"
+              onClick={() => onChange(tags.filter((t) => t !== tag))}
+            />
+          </Badge>
+        ))}
+      </div>
     </div>
   );
-}
-
-function getInitials(name: string) {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
 export default function PersonasPage() {
@@ -125,167 +125,334 @@ export default function PersonasPage() {
 
   const handleSave = () => {
     if (!editingPersona || !editingPersona.name) return;
+
     if (editingId) {
-      setPersonas((prev) => prev.map((p) => p.id === editingId ? { ...p, ...editingPersona } : p));
+      setPersonas((prev) =>
+        prev.map((p) =>
+          p.id === editingId
+            ? { ...p, ...editingPersona }
+            : p
+        )
+      );
     } else {
-      setPersonas((prev) => [...prev, { ...editingPersona, id: `custom-${Date.now()}`, user_id: 'mock-user', is_default: false, is_active: true }]);
+      setPersonas((prev) => [
+        ...prev,
+        {
+          ...editingPersona,
+          id: `custom-${Date.now()}`,
+          user_id: 'mock-user',
+          is_default: false,
+          is_active: true,
+        },
+      ]);
     }
     setDialogOpen(false);
     setEditingPersona(null);
     setEditingId(null);
   };
 
-  const handleDelete = (id: string) => setPersonas((prev) => prev.filter((p) => p.id !== id));
+  const handleDelete = (id: string) => {
+    setPersonas((prev) => prev.filter((p) => p.id !== id));
+  };
 
   const openEdit = (persona: typeof personas[0]) => {
     setEditingPersona({
-      name: persona.name, description: persona.description || '', avatar: persona.avatar,
-      age_min: persona.age_min || 25, age_max: persona.age_max || 45,
-      life_stage: persona.life_stage || '', income_level: persona.income_level || 'medium',
-      location: persona.location || 'urban', traits: persona.traits || [], goals: persona.goals || [],
-      pain_points: persona.pain_points || [], interests: persona.interests || [],
-      products_interested: persona.products_interested || [], digital_maturity: persona.digital_maturity,
-      channel_preference: persona.channel_preference || [], system_prompt: persona.system_prompt || '',
+      name: persona.name,
+      description: persona.description || '',
+      avatar: persona.avatar,
+      age_min: persona.age_min || 25,
+      age_max: persona.age_max || 45,
+      life_stage: persona.life_stage || '',
+      income_level: persona.income_level || 'medium',
+      location: persona.location || 'urban',
+      traits: persona.traits || [],
+      goals: persona.goals || [],
+      pain_points: persona.pain_points || [],
+      interests: persona.interests || [],
+      products_interested: persona.products_interested || [],
+      digital_maturity: persona.digital_maturity,
+      channel_preference: persona.channel_preference || [],
+      system_prompt: persona.system_prompt || '',
       response_style: persona.response_style,
     });
     setEditingId(persona.id);
     setDialogOpen(true);
   };
 
-  const openCreate = () => { setEditingPersona({ ...emptyForm }); setEditingId(null); setDialogOpen(true); };
+  const openCreate = () => {
+    setEditingPersona({ ...emptyForm });
+    setEditingId(null);
+    setDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium text-gray-900">Personas</h1>
-        <button onClick={openCreate} className="px-4 py-2 text-sm bg-[#0000A0] hover:bg-[#000080] text-white rounded-md transition-colors">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Personas</h1>
+          <p className="text-gray-500 mt-1">Hantera virtuella kundprofiler för testning</p>
+        </div>
+        <Button onClick={openCreate} className="bg-[#0000A0] hover:bg-[#000080]">
+          <Plus className="w-4 h-4 mr-2" />
           Skapa persona
-        </button>
+        </Button>
       </div>
 
-      {/* List layout */}
-      <div className="space-y-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {personas.map((persona) => (
-          <div key={persona.id} className="flex items-center gap-4 py-4 border-b border-gray-100 last:border-0">
-            <div className="w-9 h-9 rounded-full bg-[#FAFAFA] border border-gray-200 flex items-center justify-center text-xs font-medium text-gray-500 flex-shrink-0">
-              {getInitials(persona.name)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900">{persona.name}</span>
-                {persona.is_default && <span className="text-xs text-gray-400">Standard</span>}
+          <Card key={persona.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <span className="text-4xl">{persona.avatar}</span>
+                {persona.is_default && (
+                  <Badge variant="secondary" className="text-xs">Standard</Badge>
+                )}
               </div>
-              <p className="text-xs text-gray-500 truncate">{persona.description}</p>
-            </div>
-            <div className="hidden md:flex items-center gap-1">
-              {persona.traits.slice(0, 2).map((trait) => (
-                <span key={trait} className="text-xs text-gray-400">{trait}</span>
-              ))}
-            </div>
-            <div className="text-xs text-gray-400 hidden sm:block">
-              {persona.age_min}–{persona.age_max} ar
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => openEdit(persona)} className="text-xs text-gray-400 hover:text-gray-600">
-                Redigera
-              </button>
-              {!persona.is_default && (
-                <button onClick={() => handleDelete(persona.id)} className="text-xs text-gray-400 hover:text-red-500">
-                  Ta bort
-                </button>
-              )}
-            </div>
-          </div>
+              <h3 className="font-semibold text-gray-900 mb-1">{persona.name}</h3>
+              <p className="text-sm text-gray-500 mb-3 line-clamp-2">{persona.description}</p>
+
+              <div className="space-y-2 mb-4">
+                <div className="text-xs text-gray-400">
+                  {persona.age_min}-{persona.age_max} år | {persona.digital_maturity} digital mognad
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {persona.traits.slice(0, 3).map((trait) => (
+                    <Badge key={trait} variant="outline" className="text-xs">
+                      {trait}
+                    </Badge>
+                  ))}
+                  {persona.traits.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{persona.traits.length - 3}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => openEdit(persona)}
+                >
+                  <Edit2 className="w-3 h-3 mr-1" />
+                  Redigera
+                </Button>
+                {!persona.is_default && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 hover:bg-red-50"
+                    onClick={() => handleDelete(persona.id)}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium">
+            <DialogTitle>
               {editingId ? 'Redigera persona' : 'Skapa ny persona'}
             </DialogTitle>
           </DialogHeader>
 
           {editingPersona && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Namn</label>
-                  <input value={editingPersona.name} onChange={(e) => setEditingPersona({ ...editingPersona, name: e.target.value })} placeholder="T.ex. Ung Forstagangskopare" className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#0000A0]" />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Namn</Label>
+                  <Input
+                    value={editingPersona.name}
+                    onChange={(e) =>
+                      setEditingPersona({ ...editingPersona, name: e.target.value })
+                    }
+                    placeholder="T.ex. Ung Förstagångsköpare"
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Alder min</label>
-                    <input type="number" value={editingPersona.age_min} onChange={(e) => setEditingPersona({ ...editingPersona, age_min: parseInt(e.target.value) || 0 })} className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#0000A0]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Alder max</label>
-                    <input type="number" value={editingPersona.age_max} onChange={(e) => setEditingPersona({ ...editingPersona, age_max: parseInt(e.target.value) || 0 })} className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#0000A0]" />
-                  </div>
+                <div className="space-y-2">
+                  <Label>Avatar (emoji)</Label>
+                  <Input
+                    value={editingPersona.avatar}
+                    onChange={(e) =>
+                      setEditingPersona({ ...editingPersona, avatar: e.target.value })
+                    }
+                    placeholder="🏠"
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Beskrivning</label>
-                <textarea value={editingPersona.description} onChange={(e) => setEditingPersona({ ...editingPersona, description: e.target.value })} placeholder="Kort beskrivning..." rows={2} className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#0000A0] resize-none" />
+              <div className="space-y-2">
+                <Label>Beskrivning</Label>
+                <Textarea
+                  value={editingPersona.description}
+                  onChange={(e) =>
+                    setEditingPersona({ ...editingPersona, description: e.target.value })
+                  }
+                  placeholder="Kort beskrivning av personan..."
+                  rows={2}
+                />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Livsfas</label>
-                  <Select value={editingPersona.life_stage} onValueChange={(v) => setEditingPersona({ ...editingPersona, life_stage: v })}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Ålder (min)</Label>
+                  <Input
+                    type="number"
+                    value={editingPersona.age_min}
+                    onChange={(e) =>
+                      setEditingPersona({ ...editingPersona, age_min: parseInt(e.target.value) || 0 })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Ålder (max)</Label>
+                  <Input
+                    type="number"
+                    value={editingPersona.age_max}
+                    onChange={(e) =>
+                      setEditingPersona({ ...editingPersona, age_max: parseInt(e.target.value) || 0 })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Livsfas</Label>
+                  <Select
+                    value={editingPersona.life_stage}
+                    onValueChange={(v) =>
+                      setEditingPersona({ ...editingPersona, life_stage: v })
+                    }
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="student">Student</SelectItem>
                       <SelectItem value="young_professional">Ung yrkesverksam</SelectItem>
                       <SelectItem value="family">Familj</SelectItem>
-                      <SelectItem value="pre_retirement">Fore pension</SelectItem>
-                      <SelectItem value="retired">Pensionar</SelectItem>
+                      <SelectItem value="pre_retirement">Före pension</SelectItem>
+                      <SelectItem value="retired">Pensionär</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Inkomst</label>
-                  <Select value={editingPersona.income_level} onValueChange={(v) => setEditingPersona({ ...editingPersona, income_level: v })}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <div className="space-y-2">
+                  <Label>Inkomstnivå</Label>
+                  <Select
+                    value={editingPersona.income_level}
+                    onValueChange={(v) =>
+                      setEditingPersona({ ...editingPersona, income_level: v })
+                    }
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Lag</SelectItem>
+                      <SelectItem value="low">Låg</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">Hog</SelectItem>
+                      <SelectItem value="high">Hög</SelectItem>
+                      <SelectItem value="very_high">Mycket hög</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Responsstil</label>
-                  <Select value={editingPersona.response_style} onValueChange={(v) => setEditingPersona({ ...editingPersona, response_style: v as PersonaForm['response_style'] })}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                <div className="space-y-2">
+                  <Label>Digital mognad</Label>
+                  <Select
+                    value={editingPersona.digital_maturity}
+                    onValueChange={(v) =>
+                      setEditingPersona({
+                        ...editingPersona,
+                        digital_maturity: v as 'low' | 'medium' | 'high',
+                      })
+                    }
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="curious">Nyfiken</SelectItem>
-                      <SelectItem value="neutral">Neutral</SelectItem>
-                      <SelectItem value="skeptical">Skeptisk</SelectItem>
-                      <SelectItem value="enthusiastic">Entusiastisk</SelectItem>
+                      <SelectItem value="low">Låg</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">Hög</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <TagInput label="Karaktarsdrag" tags={editingPersona.traits} onChange={(traits) => setEditingPersona({ ...editingPersona, traits })} placeholder="T.ex. Digital native" />
-              <TagInput label="Mal" tags={editingPersona.goals} onChange={(goals) => setEditingPersona({ ...editingPersona, goals })} placeholder="T.ex. Kopa forsta bostad" />
-              <TagInput label="Smartpunkter" tags={editingPersona.pain_points} onChange={(pain_points) => setEditingPersona({ ...editingPersona, pain_points })} placeholder="T.ex. Svart att forsta" />
+              <TagInput
+                label="Karaktärsdrag"
+                tags={editingPersona.traits}
+                onChange={(traits) => setEditingPersona({ ...editingPersona, traits })}
+                placeholder="T.ex. Digital native"
+              />
 
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">System Prompt</label>
-                <textarea value={editingPersona.system_prompt} onChange={(e) => setEditingPersona({ ...editingPersona, system_prompt: e.target.value })} placeholder="Beskriv hur denna persona ska bete sig..." rows={3} className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#0000A0] resize-none" />
+              <TagInput
+                label="Mål"
+                tags={editingPersona.goals}
+                onChange={(goals) => setEditingPersona({ ...editingPersona, goals })}
+                placeholder="T.ex. Köpa första bostad"
+              />
+
+              <TagInput
+                label="Smärtpunkter"
+                tags={editingPersona.pain_points}
+                onChange={(pain_points) => setEditingPersona({ ...editingPersona, pain_points })}
+                placeholder="T.ex. Svårt att förstå"
+              />
+
+              <TagInput
+                label="Produktintresse"
+                tags={editingPersona.products_interested}
+                onChange={(products_interested) =>
+                  setEditingPersona({ ...editingPersona, products_interested })
+                }
+                placeholder="T.ex. Bolån"
+              />
+
+              <div className="space-y-2">
+                <Label>Responsstil</Label>
+                <Select
+                  value={editingPersona.response_style}
+                  onValueChange={(v) =>
+                    setEditingPersona({
+                      ...editingPersona,
+                      response_style: v as PersonaForm['response_style'],
+                    })
+                  }
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="curious">Nyfiken</SelectItem>
+                    <SelectItem value="neutral">Neutral</SelectItem>
+                    <SelectItem value="skeptical">Skeptisk</SelectItem>
+                    <SelectItem value="enthusiastic">Entusiastisk</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <button onClick={() => setDialogOpen(false)} className="px-4 py-2 text-sm border border-gray-200 rounded-md text-gray-600 hover:border-gray-300">
+              <div className="space-y-2">
+                <Label>System Prompt (AI-instruktioner)</Label>
+                <Textarea
+                  value={editingPersona.system_prompt}
+                  onChange={(e) =>
+                    setEditingPersona({ ...editingPersona, system_prompt: e.target.value })
+                  }
+                  placeholder="Beskriv hur denna persona ska bete sig i konversationer..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
                   Avbryt
-                </button>
-                <button onClick={handleSave} className="px-4 py-2 text-sm bg-[#0000A0] hover:bg-[#000080] text-white rounded-md">
-                  {editingId ? 'Spara' : 'Skapa'}
-                </button>
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  className="bg-[#0000A0] hover:bg-[#000080]"
+                >
+                  {editingId ? 'Spara ändringar' : 'Skapa persona'}
+                </Button>
               </div>
             </div>
           )}

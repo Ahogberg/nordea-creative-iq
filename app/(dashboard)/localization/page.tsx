@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check, ChevronDown } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Globe, Sparkles, Copy, Check, ChevronRight } from 'lucide-react';
 import { nordicMarkets } from '@/lib/constants/markets';
 import { cn } from '@/lib/utils';
 
@@ -28,9 +34,9 @@ const mockLocalizations: Record<string, LocalizedResult> = {
     cta: 'Prøv beregneren',
     scores: { linguistic: 92, cultural: 88, legal: 85 },
     adaptations: [
-      { type: 'linguistic', original: 'bolånekalkylator', adapted: 'boliglånsberegner', reason: 'Dansk terminologi for bolåneverktyg' },
-      { type: 'cultural', original: 'kontantinsats', adapted: 'udbetaling', reason: 'Dansk term for handpenning' },
-      { type: 'tone', original: 'steg for steg', adapted: 'nemt', reason: 'Danskare foredrar enkel, direkt kommunikation' },
+      { type: 'linguistic', original: 'bolånekalkylator', adapted: 'boliglånsberegner', reason: 'Dansk terminologi för bolåneverktyg' },
+      { type: 'cultural', original: 'kontantinsats', adapted: 'udbetaling', reason: 'Dansk term för handpenning' },
+      { type: 'tone', original: 'steg för steg', adapted: 'nemt', reason: 'Danskare föredrar enkel, direkt kommunikation' },
     ],
     alternativeHeadlines: [
       { text: 'Din første bolig? Start med en hurtig beregning', confidence: 88 },
@@ -44,7 +50,7 @@ const mockLocalizations: Record<string, LocalizedResult> = {
     cta: 'Test kalkulatoren',
     scores: { linguistic: 95, cultural: 90, legal: 87 },
     adaptations: [
-      { type: 'linguistic', original: 'kontantinsats', adapted: 'egenkapital', reason: 'Norsk term for handpenning' },
+      { type: 'linguistic', original: 'kontantinsats', adapted: 'egenkapital', reason: 'Norsk term för handpenning' },
       { type: 'legal', original: 'amorteringskrav', adapted: 'avdragskrav', reason: 'Norsk juridisk terminologi' },
     ],
     alternativeHeadlines: [
@@ -59,8 +65,8 @@ const mockLocalizations: Record<string, LocalizedResult> = {
     cta: 'Kokeile laskuria',
     scores: { linguistic: 88, cultural: 92, legal: 90 },
     adaptations: [
-      { type: 'cultural', original: 'steg for steg', adapted: 'yksinkertaisella', reason: 'Finsk kultur varderar rakhet och effektivitet' },
-      { type: 'tone', original: 'Vi hjalper dig forsta', adapted: 'Olemme tehneet siitä helppoa', reason: 'Mer faktabaserad ton for finsk marknad' },
+      { type: 'cultural', original: 'steg för steg', adapted: 'yksinkertaisella', reason: 'Finsk kultur värderar rakhet och effektivitet' },
+      { type: 'tone', original: 'Vi hjälper dig förstå', adapted: 'Olemme tehneet siitä helppoa', reason: 'Mer faktabaserad ton för finsk marknad' },
     ],
     alternativeHeadlines: [
       { text: 'Paljonko sinulla on varaa? Selvitä minuuteissa', confidence: 90 },
@@ -74,7 +80,7 @@ const mockLocalizations: Record<string, LocalizedResult> = {
     cta: 'Proovi kalkulaatorit',
     scores: { linguistic: 85, cultural: 82, legal: 88 },
     adaptations: [
-      { type: 'cultural', original: 'Nordea-specifik', adapted: 'digital-first approach', reason: 'Estland ar digitalt foregangsland' },
+      { type: 'cultural', original: 'Nordea-specifik', adapted: 'digital-first approach', reason: 'Estland är digitalt föregångsland – betonar digital enkelhet' },
     ],
     alternativeHeadlines: [
       { text: 'Kui palju sa saad endale lubada? Uuri siit', confidence: 84 },
@@ -87,7 +93,7 @@ const mockLocalizations: Record<string, LocalizedResult> = {
     cta: 'Išbandykite skaičiuoklę',
     scores: { linguistic: 83, cultural: 80, legal: 86 },
     adaptations: [
-      { type: 'cultural', original: 'lagom approach', adapted: 'family-oriented messaging', reason: 'Litauisk kultur ar familjeorienterad' },
+      { type: 'cultural', original: 'lagom approach', adapted: 'family-oriented messaging', reason: 'Litauisk kultur är familjeorienterad' },
     ],
     alternativeHeadlines: [
       { text: 'Kiek galite sau leisti? Sužinokite čia', confidence: 82 },
@@ -95,18 +101,12 @@ const mockLocalizations: Record<string, LocalizedResult> = {
   },
 };
 
-function scoreColor(score: number) {
-  if (score >= 85) return 'text-emerald-600';
-  if (score >= 70) return 'text-amber-600';
-  return 'text-red-600';
-}
-
 export default function LocalizationPage() {
   const [sourceMarket, setSourceMarket] = useState('se');
   const [targetMarkets, setTargetMarkets] = useState<string[]>([]);
-  const [headline, setHeadline] = useState('Ditt forsta boende borjar med en enkel kalkyl');
+  const [headline, setHeadline] = useState('Ditt första boende börjar med en enkel kalkyl');
   const [body, setBody] = useState(
-    'Att kopa sin forsta bostad ar stort. Vi vet att det kan kannas overväldigande med amorteringskrav, kontantinsats och räntebindning. Darfor har vi gjort det enkelt. Med var bolånekalkylator far du svar pa nagra minuter – utan forpliktelser.'
+    'Att köpa sin första bostad är stort. Vi vet att det kan kännas överväldigande med amorteringskrav, kontantinsats och räntebindning. Därför har vi gjort det enkelt. Med vår bolånekalkylator får du svar på några minuter – utan förpliktelser.'
   );
   const [cta, setCta] = useState('Testa kalkylatorn');
   const [results, setResults] = useState<LocalizedResult[]>([]);
@@ -125,7 +125,9 @@ export default function LocalizationPage() {
     if (targetMarkets.length === 0) return;
     setLoading(true);
     setTimeout(() => {
-      const res = targetMarkets.map((m) => mockLocalizations[m]).filter(Boolean);
+      const res = targetMarkets
+        .map((m) => mockLocalizations[m])
+        .filter(Boolean);
       setResults(res);
       setLoading(false);
       if (res.length > 0) setExpandedMarket(res[0].market);
@@ -138,101 +140,125 @@ export default function LocalizationPage() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  return (
-    <div className="space-y-8">
-      <h1 className="text-lg font-medium text-gray-900">Lokalisering</h1>
+  const getScoreColor = (score: number) =>
+    score >= 85 ? 'text-green-600' : score >= 70 ? 'text-yellow-600' : 'text-red-600';
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Lokalisering</h1>
+        <p className="text-gray-500 mt-1">Anpassa innehåll för nordiska och baltiska marknader</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input */}
         <div className="space-y-6">
-          <div>
-            <label className="block text-xs text-gray-400 uppercase tracking-wide mb-3">Kallmarknad</label>
-            <div className="flex flex-wrap gap-2">
-              {nordicMarkets.map((market) => (
-                <button
-                  key={market.id}
-                  onClick={() => {
-                    setSourceMarket(market.id);
-                    setTargetMarkets((prev) => prev.filter((m) => m !== market.id));
-                  }}
-                  className={cn(
-                    'px-3 py-1.5 text-sm border rounded-md transition-colors',
-                    sourceMarket === market.id
-                      ? 'border-gray-900 text-gray-900 font-medium'
-                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                  )}
-                >
-                  {market.flag} {market.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <label className="block text-xs text-gray-400 uppercase tracking-wide">Kallinnehall</label>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Rubrik</label>
-              <textarea
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#0000A0] resize-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Brodtext</label>
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#0000A0] resize-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">CTA</label>
-              <input
-                value={cta}
-                onChange={(e) => setCta(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#0000A0]"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs text-gray-400 uppercase tracking-wide mb-3">Malmarknader</label>
-            <div className="flex flex-wrap gap-2">
-              {nordicMarkets
-                .filter((m) => m.id !== sourceMarket)
-                .map((market) => (
+          {/* Source Market */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Källmarknad</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-2">
+                {nordicMarkets.map((market) => (
                   <button
                     key={market.id}
-                    onClick={() => toggleTarget(market.id)}
+                    onClick={() => {
+                      setSourceMarket(market.id);
+                      setTargetMarkets((prev) => prev.filter((m) => m !== market.id));
+                    }}
                     className={cn(
-                      'px-3 py-1.5 text-sm border rounded-md transition-colors',
-                      targetMarkets.includes(market.id)
-                        ? 'border-[#0000A0] text-[#0000A0] font-medium'
-                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      'p-3 rounded-lg border text-center transition-all text-sm',
+                      sourceMarket === market.id
+                        ? 'border-[#0000A0] bg-blue-50 text-[#0000A0] font-medium'
+                        : 'border-gray-200 hover:border-gray-300'
                     )}
                   >
-                    {market.flag} {market.name}
+                    <span className="text-xl block mb-1">{market.flag}</span>
+                    {market.name}
                   </button>
                 ))}
-            </div>
+              </div>
+            </CardContent>
+          </Card>
 
-            <button
-              onClick={handleLocalize}
-              disabled={targetMarkets.length === 0 || loading}
-              className="mt-4 px-6 py-2 text-sm bg-[#0000A0] hover:bg-[#000080] text-white rounded-md transition-colors disabled:opacity-40"
-            >
-              {loading ? 'Lokaliserar...' : `Lokalisera (${targetMarkets.length})`}
-            </button>
-          </div>
+          {/* Content Input */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Källinnehåll</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Rubrik</Label>
+                <Textarea value={headline} onChange={(e) => setHeadline(e.target.value)} rows={2} />
+              </div>
+              <div className="space-y-2">
+                <Label>Brödtext</Label>
+                <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} />
+              </div>
+              <div className="space-y-2">
+                <Label>CTA</Label>
+                <Textarea value={cta} onChange={(e) => setCta(e.target.value)} rows={1} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Target Markets */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Målmarknader</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-2">
+                {nordicMarkets
+                  .filter((m) => m.id !== sourceMarket)
+                  .map((market) => (
+                    <button
+                      key={market.id}
+                      onClick={() => toggleTarget(market.id)}
+                      className={cn(
+                        'p-3 rounded-lg border text-center transition-all text-sm',
+                        targetMarkets.includes(market.id)
+                          ? 'border-[#0000A0] bg-blue-50 text-[#0000A0] font-medium'
+                          : 'border-gray-200 hover:border-gray-300'
+                      )}
+                    >
+                      <span className="text-xl block mb-1">{market.flag}</span>
+                      {market.name}
+                    </button>
+                  ))}
+              </div>
+
+              <Button
+                onClick={handleLocalize}
+                disabled={targetMarkets.length === 0 || loading}
+                className="w-full mt-4 bg-[#0000A0] hover:bg-[#000080]"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Lokaliserar...
+                  </span>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Lokalisera till {targetMarkets.length} marknad{targetMarkets.length !== 1 ? 'er' : ''}
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Results */}
-        <div className="space-y-0">
+        <div className="space-y-4">
           {results.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8">Valj malmarknader och klicka Lokalisera</p>
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-12 text-center">
+                <Globe className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-500">Välj målmarknader och klicka "Lokalisera" för att se resultat</p>
+              </CardContent>
+            </Card>
           ) : (
             results.map((result) => {
               const market = nordicMarkets.find((m) => m.id === result.market)!;
@@ -242,98 +268,114 @@ export default function LocalizationPage() {
               );
 
               return (
-                <div key={result.market} className="border-b border-gray-100 last:border-0">
-                  <button
-                    className="w-full py-3 flex items-center justify-between text-left hover:bg-[#FAFAFA] transition-colors"
+                <Card key={result.market} className="border-0 shadow-sm">
+                  <div
+                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => setExpandedMarket(isExpanded ? null : result.market)}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">{market.flag}</span>
-                      <span className="text-sm font-medium text-gray-900">{market.name}</span>
-                      <span className="text-xs text-gray-400">{market.language}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{market.flag}</span>
+                      <div>
+                        <p className="font-medium">{market.name}</p>
+                        <p className="text-xs text-gray-500">{market.language}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={cn('text-sm tabular-nums', scoreColor(avgScore))}>{avgScore}</span>
-                      <ChevronDown className={cn('w-4 h-4 text-gray-300 transition-transform', isExpanded && 'rotate-180')} />
+                      <Badge
+                        className={cn(
+                          'text-xs',
+                          avgScore >= 85
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        )}
+                      >
+                        {avgScore}/100
+                      </Badge>
+                      <ChevronRight
+                        className={cn('w-4 h-4 text-gray-400 transition-transform', isExpanded && 'rotate-90')}
+                      />
                     </div>
-                  </button>
+                  </div>
 
                   {isExpanded && (
-                    <div className="pb-4 space-y-4">
+                    <CardContent className="pt-0 space-y-4">
+                      {/* Localized content */}
                       {[
                         { label: 'Rubrik', value: result.headline, key: `${result.market}-h` },
-                        { label: 'Brodtext', value: result.body, key: `${result.market}-b` },
+                        { label: 'Brödtext', value: result.body, key: `${result.market}-b` },
                         { label: 'CTA', value: result.cta, key: `${result.market}-c` },
                       ].map((field) => (
-                        <div key={field.key}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-gray-400">{field.label}</span>
+                        <div key={field.key} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs text-gray-500">{field.label}</Label>
                             <button
                               onClick={() => copyToClipboard(field.value, field.key)}
-                              className="text-gray-300 hover:text-gray-500"
+                              className="text-gray-400 hover:text-gray-600"
                             >
                               {copiedField === field.key ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                <Check className="w-3 h-3 text-green-500" />
                               ) : (
-                                <Copy className="w-3.5 h-3.5" />
+                                <Copy className="w-3 h-3" />
                               )}
                             </button>
                           </div>
-                          <p className="text-sm text-gray-700 bg-[#FAFAFA] rounded-md p-3">{field.value}</p>
+                          <p className="text-sm bg-gray-50 rounded-lg p-3">{field.value}</p>
                         </div>
                       ))}
 
-                      {/* Scores */}
-                      <div className="space-y-1.5">
-                        <span className="text-xs text-gray-400">Kvalitet</span>
+                      {/* Quality Scores */}
+                      <div className="space-y-2">
+                        <Label className="text-xs text-gray-500">Kvalitetspoäng</Label>
                         {[
-                          { label: 'Sprak', value: result.scores.linguistic },
-                          { label: 'Kultur', value: result.scores.cultural },
-                          { label: 'Juridik', value: result.scores.legal },
-                        ].map((s) => (
-                          <div key={s.label} className="flex items-center gap-3">
-                            <span className="text-xs text-gray-500 w-14">{s.label}</span>
-                            <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
-                              <div
-                                className={cn(
-                                  'h-full rounded-full',
-                                  s.value >= 85 ? 'bg-emerald-500' : s.value >= 70 ? 'bg-amber-500' : 'bg-red-500'
-                                )}
-                                style={{ width: `${s.value}%` }}
-                              />
-                            </div>
-                            <span className={cn('text-xs tabular-nums w-6 text-right', scoreColor(s.value))}>{s.value}</span>
+                          { label: 'Språklig precision', value: result.scores.linguistic },
+                          { label: 'Kulturell passform', value: result.scores.cultural },
+                          { label: 'Juridisk efterlevnad', value: result.scores.legal },
+                        ].map((score) => (
+                          <div key={score.label} className="flex items-center gap-3">
+                            <span className="text-xs text-gray-600 w-36">{score.label}</span>
+                            <Progress value={score.value} className="flex-1 h-2" />
+                            <span className={cn('text-xs font-medium w-8', getScoreColor(score.value))}>
+                              {score.value}
+                            </span>
                           </div>
                         ))}
                       </div>
 
                       {/* Adaptations */}
                       {result.adaptations.length > 0 && (
-                        <div>
-                          <span className="text-xs text-gray-400">Anpassningar</span>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-gray-500">Anpassningar</Label>
                           {result.adaptations.map((a, i) => (
-                            <p key={i} className="text-xs text-gray-500 mt-1">
-                              <span className="text-gray-400">{a.type}</span> — {a.reason}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Alt headlines */}
-                      {result.alternativeHeadlines.length > 0 && (
-                        <div>
-                          <span className="text-xs text-gray-400">Alternativa rubriker</span>
-                          {result.alternativeHeadlines.map((alt, i) => (
-                            <div key={i} className="flex items-center justify-between mt-1">
-                              <p className="text-sm text-gray-600">{alt.text}</p>
-                              <span className="text-xs text-gray-400 tabular-nums ml-3">{alt.confidence}%</span>
+                            <div key={i} className="bg-blue-50 rounded-lg p-3 text-xs">
+                              <Badge variant="outline" className="text-xs mb-1">
+                                {a.type}
+                              </Badge>
+                              <p className="text-gray-600 mt-1">{a.reason}</p>
                             </div>
                           ))}
                         </div>
                       )}
-                    </div>
+
+                      {/* Alternative Headlines */}
+                      {result.alternativeHeadlines.length > 0 && (
+                        <div className="space-y-2">
+                          <Label className="text-xs text-gray-500">Alternativa rubriker</Label>
+                          {result.alternativeHeadlines.map((alt, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between bg-gray-50 rounded-lg p-3"
+                            >
+                              <p className="text-sm">{alt.text}</p>
+                              <Badge variant="outline" className="text-xs ml-2">
+                                {alt.confidence}%
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
                   )}
-                </div>
+                </Card>
               );
             })
           )}
