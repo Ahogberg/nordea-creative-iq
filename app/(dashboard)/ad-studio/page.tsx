@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -16,892 +16,682 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Upload,
   Sparkles,
-  Eye,
-  EyeOff,
   CheckCircle2,
   AlertTriangle,
   XCircle,
-  Lightbulb,
+  Loader2,
+  Image as ImageIcon,
+  Video,
   Send,
   MessageCircle,
+  Plus,
+  Clock,
+  Zap,
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { defaultPersonas } from '@/lib/constants/personas';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-interface HeatmapPoint {
-  x: number;
-  y: number;
-  intensity: number;
-  label: string;
-}
-
-interface ComplianceItem {
-  status: 'pass' | 'warning' | 'fail';
-  category: string;
-  message: string;
-}
-
-interface Suggestion {
-  type: string;
-  priority: 'high' | 'medium' | 'low';
-  message: string;
-}
+type MediaType = 'image' | 'video' | null;
 
 interface AnalysisResult {
-  brandFit: number;
-  performance: number;
-  compliance: number;
-  heatmapData: HeatmapPoint[];
-  complianceItems: ComplianceItem[];
-  suggestions: Suggestion[];
+  mediaType: MediaType;
+  visualScore: number;
+  copyScore: number;
+  overallScore: number;
+  visualFeedback: Array<{ status: 'pass' | 'warning' | 'fail'; message: string }>;
+  copyFeedback: Array<{ status: 'pass' | 'warning' | 'fail'; message: string }>;
+  holisticFeedback: Array<{ status: 'pass' | 'warning' | 'fail'; message: string }>;
+  suggestions: string[];
+  videoAnalysis?: {
+    duration: number;
+    hookScore: number;
+    pacingScore: number;
+    ctaTiming: string;
+  };
+}
+
+interface Persona {
+  id: string;
+  name: string;
+  avatar: string;
+  traits: string[];
+  pain_points: string[];
+  system_prompt: string | null;
+  response_style: string;
+}
+
+interface PersonaFeedback {
+  impression: string;
+  clickProbability: number;
+  concerns: string[];
+  videoSpecific?: {
+    hookReaction: string;
+    watchTime: string;
+    dropOffPoint?: string;
+  };
 }
 
 interface ChatMessage {
   id: string;
   role: 'user' | 'persona';
   content: string;
-  timestamp: Date;
-}
-
-interface PersonaTab {
-  id: string;
-  name: string;
-  avatar: string;
-  responseStyle: string;
 }
 
 // ---------------------------------------------------------------------------
 // Mock data
 // ---------------------------------------------------------------------------
 
-const mockAnalysis: AnalysisResult = {
-  brandFit: 78,
-  performance: 72,
-  compliance: 85,
-  heatmapData: [
-    { x: 50, y: 15, intensity: 0.95, label: 'Rubrik' },
-    { x: 50, y: 45, intensity: 0.8, label: 'Bild' },
-    { x: 50, y: 75, intensity: 0.7, label: 'CTA' },
-    { x: 15, y: 10, intensity: 0.6, label: 'Logo' },
-    { x: 80, y: 85, intensity: 0.5, label: 'Disclaimer' },
+const mockImageAnalysis: AnalysisResult = {
+  mediaType: 'image',
+  visualScore: 78,
+  copyScore: 85,
+  overallScore: 82,
+  visualFeedback: [
+    { status: 'pass', message: 'Bildkvalitet är god (hög upplösning)' },
+    { status: 'pass', message: 'Nordea-logotyp korrekt placerad' },
+    { status: 'warning', message: 'Kontrasten kan förbättras på CTA' },
   ],
-  complianceItems: [
-    { status: 'pass', category: 'logo', message: 'Nordea-logotyp korrekt placerad' },
-    { status: 'pass', category: 'contrast', message: 'Textkontrast uppfyller WCAG AA' },
-    { status: 'warning', category: 'disclaimer', message: 'Riskdisclaimer saknas för investeringsprodukt' },
-    { status: 'pass', category: 'terminology', message: 'Korrekt terminologi används' },
-    { status: 'fail', category: 'legal', message: 'Effektiv ränta måste anges tydligare' },
+  copyFeedback: [
+    { status: 'pass', message: 'Rubriken är tydlig och kortfattad' },
+    { status: 'pass', message: 'Tone of Voice stämmer med riktlinjer' },
+    { status: 'fail', message: 'Disclaimer saknas för finansiell produkt' },
+  ],
+  holisticFeedback: [
+    { status: 'pass', message: 'Bild och budskap hänger ihop' },
+    { status: 'warning', message: 'CTA kunde vara mer framträdande i bilden' },
   ],
   suggestions: [
-    { type: 'visual', priority: 'high', message: 'Öka kontrasten på CTA-knappen för bättre synlighet' },
-    { type: 'copy', priority: 'medium', message: 'Förenkla rubriken – använd max 8 ord för LinkedIn' },
-    { type: 'compliance', priority: 'high', message: 'Lägg till riskdisclaimer: "Historisk avkastning är ingen garanti..."' },
-    { type: 'performance', priority: 'medium', message: 'Placera CTA ovanför folden för bättre konvertering' },
+    'Lägg till riskdisclaimer för finansiella produkter',
+    'Öka kontrasten på CTA-knappen',
+    'Placera CTA ovanför folden',
   ],
 };
 
-const fallbackPersonas: PersonaTab[] = defaultPersonas.map((p, i) => ({
-  id: `default-${i}`,
-  name: p.name,
-  avatar: p.avatar,
-  responseStyle: p.response_style,
-}));
+const mockVideoAnalysis: AnalysisResult = {
+  mediaType: 'video',
+  visualScore: 75,
+  copyScore: 82,
+  overallScore: 79,
+  visualFeedback: [
+    { status: 'pass', message: 'Videokvalitet är god (1080p)' },
+    { status: 'pass', message: 'Nordea-branding synlig genom hela videon' },
+    { status: 'warning', message: 'Textöverlägg svårlästa i vissa frames' },
+  ],
+  copyFeedback: [
+    { status: 'pass', message: 'Budskapet är tydligt' },
+    { status: 'warning', message: 'CTA kommer sent (efter 12 sek)' },
+    { status: 'fail', message: 'Disclaimer saknas' },
+  ],
+  holisticFeedback: [
+    { status: 'pass', message: 'Videon fångar uppmärksamhet direkt' },
+    { status: 'warning', message: 'Tempo kan ökas i mittensektionen' },
+    { status: 'pass', message: 'Stark avslutning med tydlig CTA' },
+  ],
+  suggestions: [
+    'Flytta CTA till tidigare i videon (inom 8 sek)',
+    'Lägg till undertexter för ljudlös visning',
+    'Öka tempot i mittensektionen',
+  ],
+  videoAnalysis: {
+    duration: 15,
+    hookScore: 85,
+    pacingScore: 68,
+    ctaTiming: 'Sen (12s) – rekommenderat inom 8s',
+  },
+};
 
-const personaMockResponses: Record<string, string[]> = {
-  young: [
-    'Hmm, annonsens rubrik är ganska catchy, men jag vill veta mer om de faktiska kostnaderna. Vad är den effektiva räntan? Det står inte tydligt nog.',
-    'Jag gillar att designen är ren och modern, men det känns lite som "typisk bank". Hade velat se mer transparens – visa mig reella siffror, inte bara "förmånlig ränta".',
-    'CTA:n "Ansök nu" ger mig lite panik. Kan ni inte ha något mjukare, typ "Räkna på ditt bolån" så jag kan utforska först utan att committa?',
-    'Appen ser snygg ut i bilden, men funkar den verkligen så smidigt? Jag har laddat ner massa bank-appar som inte levde upp till löftet.',
-    'Det saknas info om vad som händer efter att jag klickar. Blir jag uppringd? Får jag ett mail? Jag vill veta processen innan jag ger ifrån mig mina uppgifter.',
-  ],
-  saver: [
-    'Jag förstår att ni vill locka med avkastning, men var är jämförelsen? Hur står sig era fonder mot Avanza eller Lysa? Visa mig siffror.',
-    'Avgifterna nämns inte alls i annonsen. Det är det första jag kollar. Utan den infon scrollar jag bara vidare.',
-    'Designen är lugn och professionell, det gillar jag. Men budskapet är för vagt – "Låt pengarna växa" säger ingenting konkret.',
-    'Hade uppskattad en enkel kalkyl direkt i annonsen. Typ: "Spara 2 000 kr/mån i 10 år = X kr med Y% avkastning".',
-    'Disclaimern behöver finnas med. Jag ser direkt att den saknas och då tappar jag förtroende för hela annonsen.',
-  ],
-  parent: [
-    'Snabb tanke: jag ser inte direkt vad erbjudandet är. Jag har typ 5 sekunder innan barnen kräver uppmärksamhet, så budskapet måste vara kristallklart.',
-    'Barnperspektivet saknas helt. Visa mig att ni förstår att jag sparar för DERAS skull, inte bara min egen. Det hade gjort att jag stannade kvar.',
-    'Bra att det finns en tydlig knapp, men kan ni lägga till "Tar 2 minuter" eller liknande? Jag behöver veta att det inte stjäl min kväll.',
-    'Designen känns vuxen och seriös – bra. Men kanske lite för stel? En touch värme, en familj-bild eller liknande, hade gjort stor skillnad.',
-    'Finns det en "automatisk"-funktion? Typ att jag sätter igång ett månadssparande och sen sköter sig allt? Lyft det i annonsen isf.',
-  ],
-  retiree: [
-    'Texten är för liten för mig. Om jag behöver zooma in för att läsa villkoren så stänger jag sidan direkt. Och var är telefonnumret?',
-    'Jag vill inte klicka på "Ansök nu" utan att först prata med någon. Finns det ingen möjlighet att boka ett möte istället? Det borde stå i annonsen.',
-    'Ni skriver "digital rådgivning" – men vad innebär det egentligen? Är det en chatbot? Jag vill prata med en riktig människa som förstår min situation.',
-    'Annonsen ser professionell ut, det ska ni ha. Men jag saknar trygghetskänslan. Visa mig att mina pengar är säkra, det är det enda jag bryr mig om nu.',
-    'Pensionssystemet är redan förvirrande nog. Förenkla budskapet. Berätta för mig vad jag BEHÖVER göra, inte alla alternativ som finns.',
-  ],
+const mockPersonaFeedback: Record<string, PersonaFeedback> = {
+  'Ung Förstagångsköpare': {
+    impression: 'Den här annonsen fångar min uppmärksamhet. Relevant för mig, men jag vill veta mer om vad som händer efter jag klickar.',
+    clickProbability: 72,
+    concerns: ['Vad händer efter klick?', 'Hur lång tid tar processen?'],
+    videoSpecific: { hookReaction: 'Första 3 sekunderna fångade mig', watchTime: 'Skulle titta klart (15 sek)' },
+  },
+  'Spararen': {
+    impression: 'Professionellt, men för vagt. Jag vill se konkreta siffror och jämförelser.',
+    clickProbability: 45,
+    concerns: ['Var är siffrorna?', 'Hur jämför ni med andra?'],
+    videoSpecific: { hookReaction: 'Intressant start men tappade mig i mitten', watchTime: 'Scrollar vidare efter 8 sek', dropOffPoint: '8 sekunder' },
+  },
+  'Familjeföräldern': {
+    impression: 'Snabbt och enkelt budskap – perfekt när man har ont om tid.',
+    clickProbability: 78,
+    concerns: ['Hur lång tid tar det?', 'Kan jag spara och fortsätta sen?'],
+    videoSpecific: { hookReaction: 'Bra att det går snabbt till poängen', watchTime: 'Skulle titta klart om under 20 sek' },
+  },
+  'Pensionsspararen': {
+    impression: 'Lite för snabbt och digitalt. Saknar mänsklig kontakt.',
+    clickProbability: 35,
+    concerns: ['Kan jag prata med någon?', 'Finns telefonnummer?'],
+    videoSpecific: { hookReaction: 'Texten går för fort', watchTime: 'Pausar eller scrollar vidare', dropOffPoint: '5 sekunder' },
+  },
 };
 
 // ---------------------------------------------------------------------------
-// Score Ring component
+// Helper components
 // ---------------------------------------------------------------------------
 
-function ScoreRing({
-  score,
-  size = 96,
-  label,
-}: {
-  score: number;
-  size?: number;
-  label: string;
-}) {
-  const radius = (size - 10) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  const color = score >= 80 ? '#00A76F' : score >= 60 ? '#F59E0B' : '#DC3545';
-
+function ScoreCard({ label, score, icon: Icon }: { label: string; score: number; icon?: React.ComponentType<{ className?: string }> }) {
+  const color = score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : 'text-red-600';
+  const bg = score >= 80 ? 'bg-green-50' : score >= 60 ? 'bg-yellow-50' : 'bg-red-50';
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="#E5E7EB"
-            strokeWidth="7"
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={color}
-            strokeWidth="7"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xl font-bold" style={{ color }}>
-            {score}
-          </span>
-        </div>
-      </div>
-      <span className="text-xs font-medium text-gray-600">{label}</span>
+    <div className={`${bg} rounded-xl p-4 text-center`}>
+      {Icon && <Icon className={`w-5 h-5 mx-auto mb-1 ${color}`} />}
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className={`text-2xl font-bold ${color}`}>{score}</p>
+    </div>
+  );
+}
+
+function FeedbackItem({ status, message }: { status: 'pass' | 'warning' | 'fail'; message: string }) {
+  const Icon = status === 'pass' ? CheckCircle2 : status === 'warning' ? AlertTriangle : XCircle;
+  const color = status === 'pass' ? 'text-green-500' : status === 'warning' ? 'text-yellow-500' : 'text-red-500';
+  const bg = status === 'pass' ? 'bg-green-50' : status === 'warning' ? 'bg-yellow-50' : 'bg-red-50';
+  return (
+    <div className={`flex items-start gap-2 p-2 rounded-lg ${bg}`}>
+      <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${color}`} />
+      <span className="text-sm text-gray-700">{message}</span>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Heatmap overlay component
-// ---------------------------------------------------------------------------
-
-function HeatmapOverlay({ points }: { points: HeatmapPoint[] }) {
-  return (
-    <div className="absolute inset-0 pointer-events-none">
-      {points.map((point, i) => {
-        const size = 40 + point.intensity * 60;
-        const opacity = 0.25 + point.intensity * 0.45;
-        const bgColor =
-          point.intensity >= 0.85
-            ? 'bg-red-500'
-            : point.intensity >= 0.7
-              ? 'bg-orange-400'
-              : point.intensity >= 0.55
-                ? 'bg-yellow-400'
-                : 'bg-blue-400';
-
-        return (
-          <div
-            key={i}
-            className="absolute flex flex-col items-center"
-            style={{
-              left: `${point.x}%`,
-              top: `${point.y}%`,
-              transform: 'translate(-50%, -50%)',
-            }}
-          >
-            <div
-              className={`rounded-full ${bgColor} blur-sm`}
-              style={{
-                width: size,
-                height: size,
-                opacity,
-              }}
-            />
-            <span className="mt-1 text-[10px] font-semibold text-white bg-black/60 px-1.5 py-0.5 rounded">
-              {point.label}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Compliance icon helper
-// ---------------------------------------------------------------------------
-
-function ComplianceIcon({ status }: { status: 'pass' | 'warning' | 'fail' }) {
-  if (status === 'pass') return <CheckCircle2 className="w-4 h-4 text-[#00A76F] shrink-0" />;
-  if (status === 'warning') return <AlertTriangle className="w-4 h-4 text-[#F59E0B] shrink-0" />;
-  return <XCircle className="w-4 h-4 text-[#DC3545] shrink-0" />;
-}
-
-// ---------------------------------------------------------------------------
-// Main page component
+// Main component
 // ---------------------------------------------------------------------------
 
 export default function AdStudioPage() {
-  // Upload & input state
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [adCopy, setAdCopy] = useState('');
-  const [adHeadline, setAdHeadline] = useState('');
-  const [adBody, setAdBody] = useState('');
-  const [adCta, setAdCta] = useState('');
-  const [adChannel, setAdChannel] = useState('linkedin');
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const supabase = createClient();
+
+  // Media state
+  const [mediaType, setMediaType] = useState<MediaType>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+
+  // Copy state
+  const [headline, setHeadline] = useState('');
+  const [bodyText, setBodyText] = useState('');
+  const [cta, setCta] = useState('');
+  const [channel, setChannel] = useState('meta');
 
   // Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
 
-  // Heatmap toggle
-  const [showHeatmap, setShowHeatmap] = useState(false);
+  // Persona state
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [personaFeedback, setPersonaFeedback] = useState<PersonaFeedback | null>(null);
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
 
-  // Dynamic personas from Supabase
-  const [personas, setPersonas] = useState<PersonaTab[]>(fallbackPersonas);
+  // Import copy from Copy Studio via sessionStorage
+  useEffect(() => {
+    const savedCopy = sessionStorage.getItem('copyForAdStudio');
+    if (savedCopy) {
+      try {
+        const parsed = JSON.parse(savedCopy);
+        if (parsed.headline) setHeadline(parsed.headline);
+        if (parsed.body) setBodyText(parsed.body);
+        if (parsed.cta) setCta(parsed.cta);
+        if (parsed.channel) setChannel(parsed.channel);
+        sessionStorage.removeItem('copyForAdStudio');
+      } catch (e) {
+        console.error('Failed to parse saved copy', e);
+      }
+    }
+  }, []);
 
+  // Fetch personas
   useEffect(() => {
     const fetchPersonas = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { data } = await supabase
         .from('personas')
-        .select('id, name, avatar, response_style, is_active')
-        .or(`user_id.eq.${user.id},is_default.eq.true`)
+        .select('*')
         .eq('is_active', true)
-        .order('is_default', { ascending: false })
-        .order('created_at', { ascending: true });
-
-      if (data && data.length > 0) {
-        setPersonas(data.map((p) => ({
-          id: p.id,
-          name: p.name,
-          avatar: p.avatar,
-          responseStyle: p.response_style,
-        })));
+        .order('is_default', { ascending: false });
+      if (data) {
+        setPersonas(data);
+        if (data.length > 0) setSelectedPersona(data[0]);
       }
     };
     fetchPersonas();
-  }, []);
+  }, [supabase]);
 
-  // Focus group chat state
-  const [activePersona, setActivePersona] = useState(fallbackPersonas[0].id);
-  const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
+  // Handle media upload
+  const handleMediaUpload = useCallback((file: File) => {
+    const isVideo = file.type.startsWith('video/');
+    setMediaType(isVideo ? 'video' : 'image');
+    setMediaFile(file);
 
-  // When personas change (fetched from DB), select the first one
-  useEffect(() => {
-    if (personas.length > 0 && !personas.find((p) => p.id === activePersona)) {
-      setActivePersona(personas[0].id);
+    if (isVideo) {
+      setMediaPreview(URL.createObjectURL(file));
+    } else {
+      const reader = new FileReader();
+      reader.onloadend = () => setMediaPreview(reader.result as string);
+      reader.readAsDataURL(file);
     }
-  }, [personas, activePersona]);
-
-  // ---- Image handling ----
-
-  const handleFile = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) return;
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
   }, []);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file) handleFile(file);
-    },
-    [handleFile],
-  );
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(true);
-  }, []);
+    const file = e.dataTransfer.files[0];
+    if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+      handleMediaUpload(file);
+    }
+  }, [handleMediaUpload]);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
+  const removeMedia = () => {
+    if (mediaPreview && mediaType === 'video') URL.revokeObjectURL(mediaPreview);
+    setMediaFile(null);
+    setMediaPreview(null);
+    setMediaType(null);
+    setAnalysis(null);
+  };
 
-  const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) handleFile(file);
-    },
-    [handleFile],
-  );
-
-  // ---- Analysis ----
-
-  // Build combined ad copy from structured fields
-  const fullAdCopy = [adHeadline, adBody, adCta, adCopy].filter(Boolean).join('\n\n');
-  const hasContent = imageFile || adHeadline.trim() || adBody.trim() || adCopy.trim();
-
-  const runAnalysis = useCallback(() => {
-    if (!hasContent) return;
+  // Analyze
+  const handleAnalyze = async () => {
     setIsAnalyzing(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      setAnalysis(mockAnalysis);
-      setIsAnalyzing(false);
-    }, 2000);
-  }, [hasContent]);
+    setAnalysis(null);
+    setPersonaFeedback(null);
 
-  // ---- Focus group chat ----
+    await new Promise((r) => setTimeout(r, 2000));
+    setAnalysis(mediaType === 'video' ? mockVideoAnalysis : mockImageAnalysis);
+    setIsAnalyzing(false);
 
-  const sendMessage = useCallback(async () => {
-    const text = chatInput.trim();
-    if (!text) return;
+    // Auto-fetch persona feedback
+    if (selectedPersona) {
+      handleGetPersonaFeedback();
+    }
+  };
 
-    const userMsg: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: text,
-      timestamp: new Date(),
-    };
+  // Persona feedback
+  const handleGetPersonaFeedback = async () => {
+    if (!selectedPersona) return;
+    setIsLoadingFeedback(true);
+    setChatMessages([]);
 
-    setChatMessages((prev) => ({
-      ...prev,
-      [activePersona]: [...(prev[activePersona] || []), userMsg],
-    }));
+    await new Promise((r) => setTimeout(r, 1000));
+    const feedback = mockPersonaFeedback[selectedPersona.name] || mockPersonaFeedback['Spararen'];
+    setPersonaFeedback(feedback);
+    setIsLoadingFeedback(false);
+  };
+
+  // Chat
+  const handleSendChat = async () => {
+    if (!chatInput.trim() || !selectedPersona) return;
+    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: chatInput };
+    setChatMessages((prev) => [...prev, userMsg]);
+    const msg = chatInput;
     setChatInput('');
 
-    // Check if we have hardcoded mock responses for this persona (legacy IDs)
-    const mockResponses = personaMockResponses[activePersona];
-    if (mockResponses && mockResponses.length > 0) {
-      setTimeout(() => {
-        const responseText = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-        const personaMsg: ChatMessage = {
-          id: `persona-${Date.now()}`,
-          role: 'persona',
-          content: responseText,
-          timestamp: new Date(),
-        };
-        setChatMessages((prev) => ({
-          ...prev,
-          [activePersona]: [...(prev[activePersona] || []), personaMsg],
-        }));
-      }, 1200);
-      return;
-    }
-
-    // Call persona-chat API for DB-sourced personas
     try {
-      const currentPersonaObj = personas.find((p) => p.id === activePersona);
       const res = await fetch('/api/persona-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          personaId: activePersona,
-          personaName: currentPersonaObj?.name || 'Persona',
-          message: text,
-          adContext: fullAdCopy || undefined,
+          personaName: selectedPersona.name,
+          messages: [...chatMessages, userMsg].map((m) => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content,
+          })),
+          adContent: `Rubrik: ${headline}\nBrödtext: ${bodyText}\nCTA: ${cta}`,
         }),
       });
       const data = await res.json();
-      const personaMsg: ChatMessage = {
-        id: `persona-${Date.now()}`,
-        role: 'persona',
-        content: data.response || data.message || 'Jag kunde inte svara just nu.',
-        timestamp: new Date(),
-      };
-      setChatMessages((prev) => ({
+      setChatMessages((prev) => [
         ...prev,
-        [activePersona]: [...(prev[activePersona] || []), personaMsg],
-      }));
+        { id: (Date.now() + 1).toString(), role: 'persona', content: data.reply || 'Kunde inte svara.' },
+      ]);
     } catch {
-      const personaMsg: ChatMessage = {
-        id: `persona-${Date.now()}`,
-        role: 'persona',
-        content: 'Något gick fel. Försök igen.',
-        timestamp: new Date(),
-      };
-      setChatMessages((prev) => ({
+      setChatMessages((prev) => [
         ...prev,
-        [activePersona]: [...(prev[activePersona] || []), personaMsg],
-      }));
+        { id: (Date.now() + 1).toString(), role: 'persona', content: 'Något gick fel.' },
+      ]);
     }
-  }, [chatInput, activePersona, personas, adCopy]);
+  };
 
-  const handleChatKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    },
-    [sendMessage],
-  );
-
-  // ---- Render helpers ----
-
-  const currentPersona = personas.find((p) => p.id === activePersona)!;
-  const currentMessages = chatMessages[activePersona] || [];
+  const hasContent = mediaPreview || headline.trim() || bodyText.trim();
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Ad Studio</h1>
-        <p className="text-gray-500 mt-1">
-          Analysera kompletta annonser – kreativ och copy tillsammans
-        </p>
+        <p className="text-gray-500 mt-1">Analysera kompletta annonser – bild, video och copy tillsammans</p>
       </div>
 
+      {/* Input section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ================================================================ */}
-        {/* LEFT COLUMN – Upload & Input                                     */}
-        {/* ================================================================ */}
-        <div className="space-y-6">
-          {/* Image upload */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-base">Ladda upp annons</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div
-                className={`relative border-2 border-dashed rounded-xl transition-colors cursor-pointer ${
-                  isDragging
-                    ? 'border-[#0000A0] bg-blue-50/60'
-                    : imagePreview
-                      ? 'border-gray-200 bg-gray-50'
-                      : 'border-gray-300 hover:border-[#0000A0]/50 bg-gray-50/50'
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileInput}
-                />
-
-                {imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="Annonsförhandsvisning"
-                      className="w-full rounded-xl object-contain max-h-[400px]"
-                    />
-                    {/* Heatmap overlay */}
-                    {showHeatmap && analysis && (
-                      <HeatmapOverlay points={analysis.heatmapData} />
-                    )}
+        {/* Media upload */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              {mediaType === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
+              Kreativt material
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                mediaPreview ? 'border-[#0000A0] bg-blue-50/50' : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {mediaPreview ? (
+                <div className="space-y-4">
+                  {mediaType === 'video' ? (
+                    <video src={mediaPreview} controls className="max-h-48 mx-auto rounded-lg" />
+                  ) : (
+                    <img src={mediaPreview} alt="Preview" className="max-h-48 mx-auto rounded-lg" />
+                  )}
+                  <div className="flex items-center justify-center gap-2">
+                    <Badge variant="outline">
+                      {mediaType === 'video' ? <><Video className="w-3 h-3 mr-1" />Video</> : <><ImageIcon className="w-3 h-3 mr-1" />Bild</>}
+                    </Badge>
+                    {mediaFile && <span className="text-xs text-gray-400">{mediaFile.name}</span>}
+                    <Button variant="outline" size="sm" onClick={removeMedia}>Byt fil</Button>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 px-4">
-                    <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
-                      <Upload className="w-7 h-7 text-[#0000A0]" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">
-                      Dra och släpp din annonsbild här
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      eller klicka för att välja fil (PNG, JPG, WebP)
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {imageFile && (
-                <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
-                  <span className="truncate">{imageFile.name}</span>
-                  <span>({(imageFile.size / 1024).toFixed(0)} KB)</span>
-                  <button
-                    className="ml-auto text-[#DC3545] hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setImageFile(null);
-                      setImagePreview(null);
-                      setAnalysis(null);
-                      setShowHeatmap(false);
-                    }}
-                  >
-                    Ta bort
-                  </button>
                 </div>
+              ) : (
+                <label className="cursor-pointer block">
+                  <div className="flex items-center justify-center gap-4 mb-3">
+                    <ImageIcon className="w-8 h-8 text-gray-300" />
+                    <Video className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">Dra & släpp eller klicka för att ladda upp</p>
+                  <p className="text-xs text-gray-400">Bild (PNG, JPG) eller Video (MP4, MOV, WebM)</p>
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && handleMediaUpload(e.target.files[0])}
+                  />
+                </label>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Ad copy input - structured fields */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-base">Annonsinnehåll</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Kanal</Label>
-                <Select value={adChannel} onValueChange={setAdChannel}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="linkedin">LinkedIn</SelectItem>
-                    <SelectItem value="meta">Meta/Instagram</SelectItem>
-                    <SelectItem value="tiktok">TikTok</SelectItem>
-                    <SelectItem value="display">Display</SelectItem>
-                    <SelectItem value="email">E-post</SelectItem>
-                  </SelectContent>
-                </Select>
+            {mediaType === 'video' && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-[#0000A0] font-medium flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Video-analys aktiverad
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Vi analyserar hook (första 3 sek), pacing, CTA-timing och brand consistency.
+                </p>
               </div>
-
-              <div className="space-y-2">
-                <Label>Rubrik</Label>
-                <Input
-                  value={adHeadline}
-                  onChange={(e) => setAdHeadline(e.target.value)}
-                  placeholder="Annonsens rubrik..."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Brödtext</Label>
-                <Textarea
-                  value={adBody}
-                  onChange={(e) => setAdBody(e.target.value)}
-                  placeholder="Annonsens brödtext..."
-                  rows={3}
-                  className="resize-y"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>CTA</Label>
-                <Input
-                  value={adCta}
-                  onChange={(e) => setAdCta(e.target.value)}
-                  placeholder="T.ex. Ansök nu, Läs mer..."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-400">Övrig text (valfritt)</Label>
-                <Textarea
-                  placeholder="Disclaimer, hashtags, eller annan text..."
-                  value={adCopy}
-                  onChange={(e) => setAdCopy(e.target.value)}
-                  rows={2}
-                  className="resize-y"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Analyse button */}
-          <Button
-            className="w-full h-12 text-base font-semibold bg-[#0000A0] hover:bg-[#000080] text-white"
-            onClick={runAnalysis}
-            disabled={isAnalyzing || !hasContent}
-          >
-            {isAnalyzing ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Analyserar...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                Kör AI-analys
-              </>
             )}
-          </Button>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* ================================================================ */}
-        {/* RIGHT COLUMN – Results (shown after analysis)                    */}
-        {/* ================================================================ */}
+        {/* Copy input */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base">Annonsinnehåll</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Kanal</Label>
+              <Select value={channel} onValueChange={setChannel}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="meta">Meta/Instagram</SelectItem>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="display">Display</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Rubrik</Label>
+              <Input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="Annonsens rubrik..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Brödtext</Label>
+              <Textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)} placeholder="Annonsens brödtext..." rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>CTA</Label>
+              <Input value={cta} onChange={(e) => setCta(e.target.value)} placeholder="Call to action..." />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Analyze button */}
+      <Button
+        onClick={handleAnalyze}
+        disabled={isAnalyzing || !hasContent}
+        className="w-full h-12 bg-[#0000A0] hover:bg-[#000080]"
+      >
+        {isAnalyzing ? (
+          <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Analyserar {mediaType === 'video' ? 'video' : 'annons'}...</>
+        ) : (
+          <><Sparkles className="w-5 h-5 mr-2" />Analysera komplett annons</>
+        )}
+      </Button>
+
+      {/* Results */}
+      {analysis && (
         <div className="space-y-6">
-          {!analysis && !isAnalyzing && (
-            <Card className="border-0 shadow-sm">
-              <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-                  <Sparkles className="w-8 h-8 text-gray-300" />
-                </div>
-                <p className="text-sm font-medium text-gray-500">
-                  Ladda upp en annons och kör AI-analys
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Resultaten visas här efter analysen
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          {/* Scores */}
+          <div className="grid grid-cols-3 gap-4">
+            <ScoreCard label="Visuellt" score={analysis.visualScore} icon={mediaType === 'video' ? Video : ImageIcon} />
+            <ScoreCard label="Copy" score={analysis.copyScore} icon={MessageCircle} />
+            <ScoreCard label="Helhet" score={analysis.overallScore} icon={Sparkles} />
+          </div>
 
-          {isAnalyzing && (
+          {/* Video-specific analysis */}
+          {analysis.videoAnalysis && (
             <Card className="border-0 shadow-sm">
-              <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-12 h-12 border-3 border-[#0000A0]/20 border-t-[#0000A0] rounded-full animate-spin mb-4" />
-                <p className="text-sm font-medium text-gray-700">Analyserar din annons...</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Brand fit, performance och compliance kontrolleras
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {analysis && !isAnalyzing && (
-            <>
-              {/* Score rings */}
-              <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-base">Resultat</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-around">
-                    <ScoreRing score={analysis.brandFit} label="Brand Fit" />
-                    <ScoreRing score={analysis.performance} label="Performance" />
-                    <ScoreRing score={analysis.compliance} label="Compliance" />
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Video className="w-4 h-4" />
+                  Video-analys
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <Clock className="w-5 h-5 mx-auto mb-1 text-gray-400" />
+                    <p className="text-xs text-gray-500">Längd</p>
+                    <p className="font-semibold">{analysis.videoAnalysis.duration}s</p>
                   </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <Zap className="w-5 h-5 mx-auto mb-1 text-yellow-500" />
+                    <p className="text-xs text-gray-500">Hook (3s)</p>
+                    <p className={`font-semibold ${analysis.videoAnalysis.hookScore >= 80 ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {analysis.videoAnalysis.hookScore}/100
+                    </p>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <Sparkles className="w-5 h-5 mx-auto mb-1 text-blue-500" />
+                    <p className="text-xs text-gray-500">Pacing</p>
+                    <p className={`font-semibold ${analysis.videoAnalysis.pacingScore >= 70 ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {analysis.videoAnalysis.pacingScore}/100
+                    </p>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <Upload className="w-5 h-5 mx-auto mb-1 text-purple-500" />
+                    <p className="text-xs text-gray-500">CTA-timing</p>
+                    <p className="font-semibold text-sm">{analysis.videoAnalysis.ctaTiming}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Feedback */}
+            <div className="space-y-4">
+              <Card className="border-0 shadow-sm">
+                <CardHeader><CardTitle className="text-base">Visuell feedback</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                  {analysis.visualFeedback.map((f, i) => <FeedbackItem key={i} {...f} />)}
                 </CardContent>
               </Card>
-
-              {/* Heatmap toggle */}
-              {imagePreview && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader><CardTitle className="text-base">Copy-feedback</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                  {analysis.copyFeedback.map((f, i) => <FeedbackItem key={i} {...f} />)}
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-sm">
+                <CardHeader><CardTitle className="text-base">Helhetsbedömning</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                  {analysis.holisticFeedback.map((f, i) => <FeedbackItem key={i} {...f} />)}
+                </CardContent>
+              </Card>
+              {analysis.suggestions.length > 0 && (
                 <Card className="border-0 shadow-sm">
-                  <CardContent className="flex items-center justify-between py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                        <Eye className="w-4 h-4 text-[#0000A0]" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          Eye-tracking heatmap
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Simulerad uppmärksamhetsanalys
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant={showHeatmap ? 'default' : 'outline'}
-                      size="sm"
-                      className={showHeatmap ? 'bg-[#0000A0] hover:bg-[#000080]' : ''}
-                      onClick={() => setShowHeatmap(!showHeatmap)}
-                    >
-                      {showHeatmap ? (
-                        <>
-                          <EyeOff className="w-4 h-4" />
-                          Dölj
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="w-4 h-4" />
-                          Visa
-                        </>
-                      )}
-                    </Button>
+                  <CardHeader><CardTitle className="text-base">Förslag</CardTitle></CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {analysis.suggestions.map((s, i) => (
+                        <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                          <span className="text-[#0000A0] mt-0.5">&#x2022;</span>{s}
+                        </li>
+                      ))}
+                    </ul>
                   </CardContent>
                 </Card>
               )}
+            </div>
 
-              {/* Compliance checklist */}
-              <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-base">Compliance-checklista</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {analysis.complianceItems.map((item, i) => (
-                      <div
-                        key={i}
-                        className={`flex items-start gap-3 p-3 rounded-lg ${
-                          item.status === 'pass'
-                            ? 'bg-green-50/60'
-                            : item.status === 'warning'
-                              ? 'bg-yellow-50/60'
-                              : 'bg-red-50/60'
-                        }`}
-                      >
-                        <ComplianceIcon status={item.status} />
-                        <p className="text-sm text-gray-800 flex-1">{item.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* AI suggestions */}
-              <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Lightbulb className="w-4 h-4 text-[#F59E0B]" />
-                    AI-förslag
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {analysis.suggestions.map((suggestion, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start gap-3 p-3 rounded-lg bg-blue-50/40"
-                      >
-                        <div className="mt-0.5">
-                          <Badge
-                            className={`text-[10px] ${
-                              suggestion.priority === 'high'
-                                ? 'bg-[#DC3545]/10 text-[#DC3545] border-[#DC3545]/20'
-                                : suggestion.priority === 'medium'
-                                  ? 'bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20'
-                                  : 'bg-gray-100 text-gray-500 border-gray-200'
-                            }`}
-                            variant="outline"
-                          >
-                            {suggestion.priority === 'high'
-                              ? 'Hög'
-                              : suggestion.priority === 'medium'
-                                ? 'Medel'
-                                : 'Låg'}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-700 flex-1">{suggestion.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Virtual Focus Group */}
-              <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-[#0000A0]" />
-                    Virtual Focus Group
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Tabs
-                    value={activePersona}
-                    onValueChange={setActivePersona}
-                    className="w-full"
+            {/* Persona feedback */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4" />
+                  Persona-feedback
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Välj persona</Label>
+                  <Select
+                    value={selectedPersona?.id || ''}
+                    onValueChange={(v) => {
+                      if (v === 'create-new') {
+                        router.push('/personas');
+                      } else {
+                        const p = personas.find((px) => px.id === v);
+                        if (p) {
+                          setSelectedPersona(p);
+                          setPersonaFeedback(null);
+                          setChatMessages([]);
+                        }
+                      }
+                    }}
                   >
-                    <TabsList className="w-full flex flex-wrap gap-1 mb-4">
-                      {personas.map((persona) => (
-                        <TabsTrigger
-                          key={persona.id}
-                          value={persona.id}
-                          className="text-xs gap-1 px-1"
-                        >
-                          <span className="hidden sm:inline">{persona.avatar}</span>
-                          <span className="truncate">{persona.name.split(' ')[0]}</span>
-                        </TabsTrigger>
+                    <SelectTrigger><SelectValue placeholder="Välj persona..." /></SelectTrigger>
+                    <SelectContent>
+                      {personas.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.avatar} {p.name}</SelectItem>
                       ))}
-                    </TabsList>
+                      <SelectItem value="create-new" className="text-[#0000A0]">
+                        <span className="flex items-center gap-2"><Plus className="w-4 h-4" />Skapa ny persona</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                    {personas.map((persona) => (
-                      <TabsContent key={persona.id} value={persona.id}>
-                        {/* Persona header */}
-                        <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-gray-50">
-                          <span className="text-2xl">{persona.avatar}</span>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{persona.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {persona.responseStyle === 'curious'
-                                ? 'Nyfiken och ifrågasättande'
-                                : persona.responseStyle === 'skeptical'
-                                  ? 'Skeptisk och trygghetssökande'
-                                  : 'Neutral och jämförande'}
-                            </p>
-                          </div>
-                        </div>
+                <Button
+                  onClick={handleGetPersonaFeedback}
+                  disabled={!selectedPersona || isLoadingFeedback}
+                  className="w-full bg-[#0000A0] hover:bg-[#000080]"
+                >
+                  {isLoadingFeedback ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Hämtar feedback...</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4 mr-2" />Få persona-feedback</>
+                  )}
+                </Button>
 
-                        {/* Chat messages */}
-                        <ScrollArea className="h-[300px] pr-2">
-                          <div className="space-y-3">
-                            {chatMessages[persona.id]?.length === 0 && (
-                              <div className="text-center py-10">
-                                <p className="text-xs text-gray-400">
-                                  Ställ en fråga till {persona.name} om annonsen
-                                </p>
+                {personaFeedback && selectedPersona && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">{selectedPersona.avatar}</span>
+                        <span className="font-medium text-sm">{selectedPersona.name}</span>
+                      </div>
+                      <p className="text-sm italic text-gray-700">&quot;{personaFeedback.impression}&quot;</p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <Label className="text-xs text-gray-500">Klicksannolikhet</Label>
+                      <Badge className={personaFeedback.clickProbability >= 60 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
+                        {personaFeedback.clickProbability}%
+                      </Badge>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-gray-500">Funderingar</Label>
+                      <ul className="mt-1 space-y-1">
+                        {personaFeedback.concerns.map((c, i) => (
+                          <li key={i} className="text-sm text-gray-600">&#x2022; {c}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {personaFeedback.videoSpecific && mediaType === 'video' && (
+                      <div className="p-3 bg-blue-50 rounded-lg space-y-2">
+                        <p className="text-xs font-medium text-[#0000A0]">Video-specifikt</p>
+                        <p className="text-sm text-gray-700"><strong>Hook-reaktion:</strong> {personaFeedback.videoSpecific.hookReaction}</p>
+                        <p className="text-sm text-gray-700"><strong>Uppskattad tittartid:</strong> {personaFeedback.videoSpecific.watchTime}</p>
+                        {personaFeedback.videoSpecific.dropOffPoint && (
+                          <p className="text-sm text-red-600"><strong>Tappar intresset vid:</strong> {personaFeedback.videoSpecific.dropOffPoint}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Chat */}
+                    <div className="pt-4 border-t">
+                      <Label className="text-xs text-gray-500 mb-2 block">Diskutera med {selectedPersona.name}</Label>
+                      <ScrollArea className="h-[180px] mb-3">
+                        <div className="space-y-2">
+                          {chatMessages.map((msg) => (
+                            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
+                                msg.role === 'user' ? 'bg-[#0000A0] text-white' : 'bg-gray-100'
+                              }`}>
+                                {msg.role === 'persona' && (
+                                  <span className="text-xs font-medium text-gray-500 block mb-0.5">
+                                    {selectedPersona.avatar} {selectedPersona.name}
+                                  </span>
+                                )}
+                                {msg.content}
                               </div>
-                            )}
-
-                            {chatMessages[persona.id]?.map((msg) => (
-                              <div
-                                key={msg.id}
-                                className={`flex ${
-                                  msg.role === 'user' ? 'justify-end' : 'justify-start'
-                                }`}
-                              >
-                                <div
-                                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                                    msg.role === 'user'
-                                      ? 'bg-[#0000A0] text-white rounded-br-md'
-                                      : 'bg-gray-100 text-gray-800 rounded-bl-md'
-                                  }`}
-                                >
-                                  {msg.role === 'persona' && (
-                                    <span className="text-xs font-medium text-gray-500 block mb-1">
-                                      {persona.avatar} {persona.name}
-                                    </span>
-                                  )}
-                                  {msg.content}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-
-                        {/* Chat input */}
-                        <div className="flex items-center gap-2 mt-4">
-                          <Input
-                            placeholder={`Fråga ${persona.name}...`}
-                            value={activePersona === persona.id ? chatInput : ''}
-                            onChange={(e) => setChatInput(e.target.value)}
-                            onKeyDown={handleChatKeyDown}
-                            className="flex-1"
-                          />
-                          <Button
-                            size="icon"
-                            className="bg-[#0000A0] hover:bg-[#000080] shrink-0"
-                            onClick={sendMessage}
-                            disabled={!chatInput.trim()}
-                          >
-                            <Send className="w-4 h-4" />
-                          </Button>
+                            </div>
+                          ))}
                         </div>
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </CardContent>
-              </Card>
-            </>
-          )}
+                      </ScrollArea>
+                      <div className="flex gap-2">
+                        <Input
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
+                          placeholder={`Fråga ${selectedPersona.name}...`}
+                        />
+                        <Button size="icon" className="bg-[#0000A0] hover:bg-[#000080] shrink-0" onClick={handleSendChat} disabled={!chatInput.trim()}>
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
