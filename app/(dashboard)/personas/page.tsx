@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -21,9 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Loader2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import { defaultPersonas } from '@/lib/constants/personas';
-import { Persona } from '@/types/database';
+import type { Persona, PersonaInsert } from '@/types/database';
 
 type PersonaForm = {
   name: string;
@@ -116,46 +116,170 @@ function TagInput({
 }
 
 export default function PersonasPage() {
-  const [personas, setPersonas] = useState<(Omit<Persona, 'id' | 'created_at' | 'updated_at'> & { id: string })[]>(
-    defaultPersonas.map((p, i) => ({ ...p, id: `default-${i}` }))
-  );
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editingPersona, setEditingPersona] = useState<PersonaForm | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleSave = () => {
-    if (!editingPersona || !editingPersona.name) return;
+  const supabase = createClient();
 
-    if (editingId) {
-      setPersonas((prev) =>
-        prev.map((p) =>
-          p.id === editingId
-            ? { ...p, ...editingPersona }
-            : p
-        )
+  // ---- Fetch personas from Supabase (user's own + defaults) ----
+  const fetchPersonas = useCallback(async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      // Fallback: show hardcoded defaults if not logged in
+      setPersonas(
+        defaultPersonas.map((p, i) => ({
+          ...p,
+          id: `default-${i}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }))
+      );
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('personas')
+      .select('*')
+      .or(`user_id.eq.${user.id},is_default.eq.true`)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      // No personas in DB yet – show hardcoded defaults
+      setPersonas(
+        defaultPersonas.map((p, i) => ({
+          ...p,
+          id: `default-${i}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }))
       );
     } else {
-      setPersonas((prev) => [
-        ...prev,
-        {
-          ...editingPersona,
-          id: `custom-${Date.now()}`,
-          user_id: 'mock-user',
-          is_default: false,
-          is_active: true,
-        },
-      ]);
+      setPersonas(data as Persona[]);
     }
+    setLoading(false);
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchPersonas();
+  }, [fetchPersonas]);
+
+  // ---- Save (create or update) ----
+  const handleSave = async () => {
+    if (!editingPersona || !editingPersona.name) return;
+    setSaving(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (editingId && !editingId.startsWith('default-')) {
+      // Update existing persona in DB
+      const { error } = await supabase
+        .from('personas')
+        .update({
+          name: editingPersona.name,
+          description: editingPersona.description || null,
+          avatar: editingPersona.avatar,
+          age_min: editingPersona.age_min,
+          age_max: editingPersona.age_max,
+          life_stage: editingPersona.life_stage,
+          income_level: editingPersona.income_level,
+          location: editingPersona.location,
+          traits: editingPersona.traits,
+          goals: editingPersona.goals,
+          pain_points: editingPersona.pain_points,
+          interests: editingPersona.interests,
+          products_interested: editingPersona.products_interested,
+          digital_maturity: editingPersona.digital_maturity,
+          channel_preference: editingPersona.channel_preference,
+          system_prompt: editingPersona.system_prompt || null,
+          response_style: editingPersona.response_style,
+        })
+        .eq('id', editingId);
+
+      if (error) {
+        console.error('Error updating persona:', error);
+        // Fallback: update locally
+        setPersonas((prev) =>
+          prev.map((p) => (p.id === editingId ? { ...p, ...editingPersona } : p))
+        );
+      } else {
+        await fetchPersonas();
+      }
+    } else {
+      // Create new persona
+      const insert: PersonaInsert = {
+        user_id: user?.id || null,
+        name: editingPersona.name,
+        description: editingPersona.description || null,
+        avatar: editingPersona.avatar,
+        age_min: editingPersona.age_min,
+        age_max: editingPersona.age_max,
+        life_stage: editingPersona.life_stage,
+        income_level: editingPersona.income_level,
+        location: editingPersona.location,
+        traits: editingPersona.traits,
+        goals: editingPersona.goals,
+        pain_points: editingPersona.pain_points,
+        interests: editingPersona.interests,
+        products_interested: editingPersona.products_interested,
+        digital_maturity: editingPersona.digital_maturity,
+        channel_preference: editingPersona.channel_preference,
+        system_prompt: editingPersona.system_prompt || null,
+        response_style: editingPersona.response_style,
+        is_default: false,
+        is_active: true,
+      };
+
+      const { error } = await supabase.from('personas').insert(insert);
+
+      if (error) {
+        console.error('Error creating persona:', error);
+        // Fallback: add locally
+        setPersonas((prev) => [
+          ...prev,
+          {
+            ...insert,
+            id: `local-${Date.now()}`,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ]);
+      } else {
+        await fetchPersonas();
+      }
+    }
+
+    setSaving(false);
     setDialogOpen(false);
     setEditingPersona(null);
     setEditingId(null);
   };
 
-  const handleDelete = (id: string) => {
-    setPersonas((prev) => prev.filter((p) => p.id !== id));
+  // ---- Delete ----
+  const handleDelete = async (id: string) => {
+    if (id.startsWith('default-') || id.startsWith('local-')) {
+      setPersonas((prev) => prev.filter((p) => p.id !== id));
+      return;
+    }
+
+    const { error } = await supabase.from('personas').delete().eq('id', id);
+
+    if (error) {
+      console.error('Error deleting persona:', error);
+      setPersonas((prev) => prev.filter((p) => p.id !== id));
+    } else {
+      await fetchPersonas();
+    }
   };
 
-  const openEdit = (persona: typeof personas[0]) => {
+  const openEdit = (persona: Persona) => {
     setEditingPersona({
       name: persona.name,
       description: persona.description || '',
@@ -184,6 +308,14 @@ export default function PersonasPage() {
     setEditingId(null);
     setDialogOpen(true);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-[#0000A0]" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -449,9 +581,15 @@ export default function PersonasPage() {
                 </Button>
                 <Button
                   onClick={handleSave}
+                  disabled={saving}
                   className="bg-[#0000A0] hover:bg-[#000080]"
                 >
-                  {editingId ? 'Spara ändringar' : 'Skapa persona'}
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Sparar...
+                    </>
+                  ) : editingId ? 'Spara ändringar' : 'Skapa persona'}
                 </Button>
               </div>
             </div>

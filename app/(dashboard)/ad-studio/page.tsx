@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Upload,
   Sparkles,
@@ -20,6 +28,8 @@ import {
   Send,
   MessageCircle,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { defaultPersonas } from '@/lib/constants/personas';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -97,12 +107,12 @@ const mockAnalysis: AnalysisResult = {
   ],
 };
 
-const personas: PersonaTab[] = [
-  { id: 'young', name: 'Ung Förstagångsköpare', avatar: '🏠', responseStyle: 'curious' },
-  { id: 'saver', name: 'Spararen', avatar: '💰', responseStyle: 'neutral' },
-  { id: 'parent', name: 'Familjeföräldern', avatar: '👨‍👩‍👧‍👦', responseStyle: 'neutral' },
-  { id: 'retiree', name: 'Pensionsspararen', avatar: '🌅', responseStyle: 'skeptical' },
-];
+const fallbackPersonas: PersonaTab[] = defaultPersonas.map((p, i) => ({
+  id: `default-${i}`,
+  name: p.name,
+  avatar: p.avatar,
+  responseStyle: p.response_style,
+}));
 
 const personaMockResponses: Record<string, string[]> = {
   young: [
@@ -255,6 +265,10 @@ export default function AdStudioPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [adCopy, setAdCopy] = useState('');
+  const [adHeadline, setAdHeadline] = useState('');
+  const [adBody, setAdBody] = useState('');
+  const [adCta, setAdCta] = useState('');
+  const [adChannel, setAdChannel] = useState('linkedin');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -265,16 +279,46 @@ export default function AdStudioPage() {
   // Heatmap toggle
   const [showHeatmap, setShowHeatmap] = useState(false);
 
+  // Dynamic personas from Supabase
+  const [personas, setPersonas] = useState<PersonaTab[]>(fallbackPersonas);
+
+  useEffect(() => {
+    const fetchPersonas = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('personas')
+        .select('id, name, avatar, response_style, is_active')
+        .or(`user_id.eq.${user.id},is_default.eq.true`)
+        .eq('is_active', true)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: true });
+
+      if (data && data.length > 0) {
+        setPersonas(data.map((p) => ({
+          id: p.id,
+          name: p.name,
+          avatar: p.avatar,
+          responseStyle: p.response_style,
+        })));
+      }
+    };
+    fetchPersonas();
+  }, []);
+
   // Focus group chat state
-  const [activePersona, setActivePersona] = useState(personas[0].id);
+  const [activePersona, setActivePersona] = useState(fallbackPersonas[0].id);
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>(() => {
-    const initial: Record<string, ChatMessage[]> = {};
-    personas.forEach((p) => {
-      initial[p.id] = [];
-    });
-    return initial;
-  });
+  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
+
+  // When personas change (fetched from DB), select the first one
+  useEffect(() => {
+    if (personas.length > 0 && !personas.find((p) => p.id === activePersona)) {
+      setActivePersona(personas[0].id);
+    }
+  }, [personas, activePersona]);
 
   // ---- Image handling ----
 
@@ -318,19 +362,23 @@ export default function AdStudioPage() {
 
   // ---- Analysis ----
 
+  // Build combined ad copy from structured fields
+  const fullAdCopy = [adHeadline, adBody, adCta, adCopy].filter(Boolean).join('\n\n');
+  const hasContent = imageFile || adHeadline.trim() || adBody.trim() || adCopy.trim();
+
   const runAnalysis = useCallback(() => {
-    if (!imageFile && !adCopy.trim()) return;
+    if (!hasContent) return;
     setIsAnalyzing(true);
     // Simulate API call delay
     setTimeout(() => {
       setAnalysis(mockAnalysis);
       setIsAnalyzing(false);
     }, 2000);
-  }, [imageFile, adCopy]);
+  }, [hasContent]);
 
   // ---- Focus group chat ----
 
-  const sendMessage = useCallback(() => {
+  const sendMessage = useCallback(async () => {
     const text = chatInput.trim();
     if (!text) return;
 
@@ -347,24 +395,62 @@ export default function AdStudioPage() {
     }));
     setChatInput('');
 
-    // Simulate persona response
-    setTimeout(() => {
-      const responses = personaMockResponses[activePersona] || [];
-      const responseText = responses[Math.floor(Math.random() * responses.length)];
+    // Check if we have hardcoded mock responses for this persona (legacy IDs)
+    const mockResponses = personaMockResponses[activePersona];
+    if (mockResponses && mockResponses.length > 0) {
+      setTimeout(() => {
+        const responseText = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+        const personaMsg: ChatMessage = {
+          id: `persona-${Date.now()}`,
+          role: 'persona',
+          content: responseText,
+          timestamp: new Date(),
+        };
+        setChatMessages((prev) => ({
+          ...prev,
+          [activePersona]: [...(prev[activePersona] || []), personaMsg],
+        }));
+      }, 1200);
+      return;
+    }
 
+    // Call persona-chat API for DB-sourced personas
+    try {
+      const currentPersonaObj = personas.find((p) => p.id === activePersona);
+      const res = await fetch('/api/persona-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          personaId: activePersona,
+          personaName: currentPersonaObj?.name || 'Persona',
+          message: text,
+          adContext: fullAdCopy || undefined,
+        }),
+      });
+      const data = await res.json();
       const personaMsg: ChatMessage = {
         id: `persona-${Date.now()}`,
         role: 'persona',
-        content: responseText,
+        content: data.response || data.message || 'Jag kunde inte svara just nu.',
         timestamp: new Date(),
       };
-
       setChatMessages((prev) => ({
         ...prev,
         [activePersona]: [...(prev[activePersona] || []), personaMsg],
       }));
-    }, 1200);
-  }, [chatInput, activePersona]);
+    } catch {
+      const personaMsg: ChatMessage = {
+        id: `persona-${Date.now()}`,
+        role: 'persona',
+        content: 'Något gick fel. Försök igen.',
+        timestamp: new Date(),
+      };
+      setChatMessages((prev) => ({
+        ...prev,
+        [activePersona]: [...(prev[activePersona] || []), personaMsg],
+      }));
+    }
+  }, [chatInput, activePersona, personas, adCopy]);
 
   const handleChatKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -387,7 +473,7 @@ export default function AdStudioPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Ad Studio</h1>
         <p className="text-gray-500 mt-1">
-          Analysera och kvalitetssäkra annonser med AI innan publicering
+          Analysera kompletta annonser – kreativ och copy tillsammans
         </p>
       </div>
 
@@ -471,18 +557,67 @@ export default function AdStudioPage() {
             </CardContent>
           </Card>
 
-          {/* Ad copy input */}
+          {/* Ad copy input - structured fields */}
           <Card className="border-0 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-base">Annonstext</CardTitle>
+              <CardTitle className="text-base">Annonsinnehåll</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Klistra in din annonstext här..."
-                value={adCopy}
-                onChange={(e) => setAdCopy(e.target.value)}
-                className="min-h-[120px] resize-y"
-              />
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Kanal</Label>
+                <Select value={adChannel} onValueChange={setAdChannel}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                    <SelectItem value="meta">Meta/Instagram</SelectItem>
+                    <SelectItem value="tiktok">TikTok</SelectItem>
+                    <SelectItem value="display">Display</SelectItem>
+                    <SelectItem value="email">E-post</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Rubrik</Label>
+                <Input
+                  value={adHeadline}
+                  onChange={(e) => setAdHeadline(e.target.value)}
+                  placeholder="Annonsens rubrik..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Brödtext</Label>
+                <Textarea
+                  value={adBody}
+                  onChange={(e) => setAdBody(e.target.value)}
+                  placeholder="Annonsens brödtext..."
+                  rows={3}
+                  className="resize-y"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>CTA</Label>
+                <Input
+                  value={adCta}
+                  onChange={(e) => setAdCta(e.target.value)}
+                  placeholder="T.ex. Ansök nu, Läs mer..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-400">Övrig text (valfritt)</Label>
+                <Textarea
+                  placeholder="Disclaimer, hashtags, eller annan text..."
+                  value={adCopy}
+                  onChange={(e) => setAdCopy(e.target.value)}
+                  rows={2}
+                  className="resize-y"
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -490,7 +625,7 @@ export default function AdStudioPage() {
           <Button
             className="w-full h-12 text-base font-semibold bg-[#0000A0] hover:bg-[#000080] text-white"
             onClick={runAnalysis}
-            disabled={isAnalyzing || (!imageFile && !adCopy.trim())}
+            disabled={isAnalyzing || !hasContent}
           >
             {isAnalyzing ? (
               <>
@@ -673,7 +808,7 @@ export default function AdStudioPage() {
                     onValueChange={setActivePersona}
                     className="w-full"
                   >
-                    <TabsList className="w-full grid grid-cols-4 mb-4">
+                    <TabsList className="w-full flex flex-wrap gap-1 mb-4">
                       {personas.map((persona) => (
                         <TabsTrigger
                           key={persona.id}

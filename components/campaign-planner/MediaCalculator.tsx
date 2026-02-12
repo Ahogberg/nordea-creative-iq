@@ -474,20 +474,59 @@ Faktisk kostnad: ${formatNumber(results.actualSpend)} SEK`;
                 )}
               </div>
 
-              {/* Discrepancy section */}
+              {/* Discrepancy section - improved explanation */}
               <div className="h-px bg-gray-100 mt-2" />
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <p className="text-sm font-medium text-amber-800 mb-1">
-                  Efter discrepancy ({discrepancyRate}%)
-                </p>
-                <div className="flex justify-between text-sm">
-                  <span className="text-amber-700">Levererade impressions</span>
-                  <span className="font-bold text-amber-900">{formatNumber(results.netImpressions)}</span>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-amber-900 mb-1">
+                    Click Discrepancy ({discrepancyRate}%)
+                  </p>
+                  <p className="text-xs text-amber-700 leading-relaxed">
+                    Skillnaden mellan köpta och faktiskt levererade impressions. Orsakas av
+                    annonsblockerare, mätningsdiff mellan adserver och plattform, bot-trafik
+                    och latens vid laddning. Branschstandard: 5–15%.
+                  </p>
                 </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-amber-700">Faktisk kostnad</span>
-                  <span className="font-bold text-amber-900">{formatNumber(results.actualSpend)} SEK</span>
+
+                {/* Visual comparison bar */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-amber-700">Köpta impressions</span>
+                    <span className="font-mono font-bold text-amber-900">{formatNumber(results.grossImpressions)}</span>
+                  </div>
+                  <div className="relative h-3 bg-amber-200 rounded-full overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-amber-500 rounded-full transition-all"
+                      style={{ width: `${100 - discrepancyRate}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-amber-700">Levererade impressions</span>
+                    <span className="font-mono font-bold text-amber-900">{formatNumber(results.netImpressions)}</span>
+                  </div>
                 </div>
+
+                <div className="h-px bg-amber-200" />
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="bg-amber-100/50 rounded-lg p-2">
+                    <p className="text-amber-600 mb-0.5">Förlorade impressions</p>
+                    <p className="font-bold text-amber-900">
+                      {formatNumber(results.grossImpressions - results.netImpressions)}
+                    </p>
+                  </div>
+                  <div className="bg-amber-100/50 rounded-lg p-2">
+                    <p className="text-amber-600 mb-0.5">Faktisk kostnad</p>
+                    <p className="font-bold text-amber-900">{formatNumber(results.actualSpend)} SEK</p>
+                  </div>
+                </div>
+
+                {discrepancyRate > 12 && (
+                  <p className="text-xs text-amber-800 bg-amber-100 rounded p-2">
+                    Discrepancy-raten {discrepancyRate}% ligger över branschgenomsnittet (10%).
+                    Överväg att revidera mediaplanen eller byt till plattformar med lägre discrepancy.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -36,6 +36,9 @@ export interface Persona {
   updated_at: string;
 }
 
+export type PersonaInsert = Omit<Persona, 'id' | 'created_at' | 'updated_at'>;
+export type PersonaUpdate = Partial<Omit<Persona, 'id' | 'created_at' | 'updated_at'>>;
+
 export interface AdAnalysis {
   id: string;
   user_id: string;
