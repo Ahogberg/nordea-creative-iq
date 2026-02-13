@@ -302,9 +302,111 @@ export default function AdStudioPage() {
     setAnalysis(null);
     setPersonaFeedback(null);
 
-    await new Promise((r) => setTimeout(r, 2000));
-    setAnalysis(mediaType === 'video' ? mockVideoAnalysis : mockImageAnalysis);
-    setIsAnalyzing(false);
+    try {
+      if (mediaType === 'video' && mediaFile) {
+        // Dynamic import to keep video-utils client-only
+        const { extractFramesFromVideo, getVideoMetadata } = await import('@/lib/video-utils');
+        const frames = await extractFramesFromVideo(mediaFile, { frameInterval: 2, maxFrames: 8 });
+        const metadata = await getVideoMetadata(mediaFile);
+
+        const framesForApi = frames.map((frame) => ({
+          timestamp: frame.timestamp,
+          base64: frame.dataUrl.split(',')[1],
+          mediaType: 'image/jpeg',
+        }));
+
+        const response = await fetch('/api/analyze-video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            frames: framesForApi,
+            duration: metadata.duration,
+            headline,
+            bodyText,
+            cta,
+            channel,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to analyze video');
+        const data = await response.json();
+
+        // Map video analysis to our AnalysisResult format
+        setAnalysis({
+          mediaType: 'video',
+          visualScore: data.scores?.branding || 75,
+          copyScore: data.scores?.overall || 72,
+          overallScore: data.scores?.overall || 72,
+          visualFeedback: data.brandingAnalysis
+            ? [
+                { status: 'pass' as const, message: `Branding: ${data.brandingAnalysis.brandFit}` },
+                { status: data.scores?.hook >= 70 ? 'pass' as const : 'warning' as const, message: `Hook (3s): ${data.hookAnalysis?.feedback || 'Analyserad'}` },
+              ]
+            : mockVideoAnalysis.visualFeedback,
+          copyFeedback: data.ctaAnalysis
+            ? [
+                { status: data.scores?.ctaTiming >= 70 ? 'pass' as const : 'warning' as const, message: `CTA Timing: ${data.ctaAnalysis.timing}` },
+                ...(data.complianceIssues || []).map((ci: { severity: string; issue: string }) => ({
+                  status: ci.severity === 'high' ? 'fail' as const : 'warning' as const,
+                  message: ci.issue,
+                })),
+              ]
+            : mockVideoAnalysis.copyFeedback,
+          holisticFeedback: data.silentViewability
+            ? [
+                { status: data.silentViewability.score >= 70 ? 'pass' as const : 'warning' as const, message: `Ljudlös visning: ${data.silentViewability.feedback}` },
+                { status: data.scores?.pacing >= 70 ? 'pass' as const : 'warning' as const, message: `Pacing: ${data.pacingAnalysis?.feedback || 'Analyserad'}` },
+              ]
+            : mockVideoAnalysis.holisticFeedback,
+          suggestions: data.suggestions || [],
+          videoAnalysis: {
+            duration: metadata.duration,
+            hookScore: data.scores?.hook || data.hookAnalysis?.score || 75,
+            pacingScore: data.scores?.pacing || data.pacingAnalysis?.score || 70,
+            ctaTiming: data.ctaAnalysis?.timing || 'Analyserad',
+          },
+        });
+      } else if (mediaType === 'image' && mediaPreview) {
+        const base64 = mediaPreview.split(',')[1];
+        const mimeType = mediaPreview.split(';')[0].split(':')[1];
+
+        const response = await fetch('/api/analyze-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: base64,
+            mediaType: mimeType,
+            headline,
+            bodyText,
+            cta,
+            channel,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to analyze image');
+        const data = await response.json();
+
+        setAnalysis({
+          mediaType: 'image',
+          visualScore: data.scores?.visual || 78,
+          copyScore: data.scores?.copy || 85,
+          overallScore: data.scores?.overall || 82,
+          visualFeedback: data.visualAnalysis?.feedback || mockImageAnalysis.visualFeedback,
+          copyFeedback: data.copyAnalysis?.feedback || mockImageAnalysis.copyFeedback,
+          holisticFeedback: data.holisticAnalysis?.feedback || mockImageAnalysis.holisticFeedback,
+          suggestions: data.suggestions || [],
+        });
+      } else {
+        // Text-only analysis with existing /api/analyze
+        await new Promise((r) => setTimeout(r, 1500));
+        setAnalysis(mockImageAnalysis);
+      }
+    } catch (error) {
+      console.error('Error analyzing:', error);
+      setAnalysis(mediaType === 'video' ? mockVideoAnalysis : mockImageAnalysis);
+    } finally {
+      setIsAnalyzing(false);
+    }
 
     // Auto-fetch persona feedback
     if (selectedPersona) {
@@ -318,10 +420,35 @@ export default function AdStudioPage() {
     setIsLoadingFeedback(true);
     setChatMessages([]);
 
-    await new Promise((r) => setTimeout(r, 1000));
-    const feedback = mockPersonaFeedback[selectedPersona.name] || mockPersonaFeedback['Spararen'];
-    setPersonaFeedback(feedback);
-    setIsLoadingFeedback(false);
+    try {
+      const res = await fetch('/api/persona-react', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          personaName: selectedPersona.name,
+          personaTraits: selectedPersona.traits,
+          personaPainPoints: selectedPersona.pain_points,
+          personaSystemPrompt: selectedPersona.system_prompt,
+          responseStyle: selectedPersona.response_style,
+          copy: { headline, body: bodyText, cta },
+          channel,
+          isVideo: mediaType === 'video',
+        }),
+      });
+      const data = await res.json();
+      setPersonaFeedback({
+        impression: data.firstImpression || 'Intressant annons.',
+        clickProbability: data.wouldClick || 50,
+        concerns: data.objections || [],
+        videoSpecific: data.videoSpecific || undefined,
+      });
+    } catch (error) {
+      console.error('Error getting persona feedback:', error);
+      const feedback = mockPersonaFeedback[selectedPersona.name] || mockPersonaFeedback['Spararen'];
+      setPersonaFeedback(feedback);
+    } finally {
+      setIsLoadingFeedback(false);
+    }
   };
 
   // Chat

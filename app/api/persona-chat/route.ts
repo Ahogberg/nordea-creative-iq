@@ -1,54 +1,100 @@
 import { NextResponse } from 'next/server';
-import { callClaudeChat } from '@/lib/ai/anthropic';
-import { personaSimulationPrompt } from '@/lib/ai/prompts/persona-simulation';
+import { getClaudeClient } from '@/lib/claude';
 import { defaultPersonas } from '@/lib/constants/personas';
-import type { Persona } from '@/types/database';
+
+interface PersonaChatRequest {
+  personaName: string;
+  personaDescription?: string;
+  personaTraits?: string[];
+  personaPainPoints?: string[];
+  personaAge?: { min: number; max: number };
+  responseStyle?: string;
+  adContext?: {
+    headline: string;
+    body: string;
+    cta: string;
+    channel: string;
+  };
+  messages: Array<{
+    role: 'user' | 'persona' | 'assistant';
+    content: string;
+  }>;
+  adContent?: string;
+  newMessage?: string;
+}
 
 const mockResponses: Record<string, string[]> = {
   'Ung Förstagångsköpare': [
-    'Hmm, det låter intressant men jag undrar... vad är den faktiska totalkostnaden? Jag har läst att det finns en massa dolda avgifter som bankerna inte alltid är tydliga med.',
-    'Okej, men hur jämför det sig med andra banker? Jag har kollat runt lite och det verkar som att det finns billigare alternativ. Kan ni matcha det?',
-    'Jag uppskattar att ni försöker förklara, men kan ni vara mer specifika? Typ, exakt hur mycket behöver jag ha i kontantinsats för en tvåa i Stockholm?',
-    'Det där med "enkel digital ansökan" – hur enkel är den egentligen? Förra gången jag försökte göra något digitalt hos en bank tog det typ en timme...',
-    'Jag gillar att ni är transparenta med kostnaderna. Det är precis vad jag letar efter. Men kan jag verkligen lita på att det inte tillkommer något extra sen?',
+    'Hmm, det låter intressant men jag undrar... vad är den faktiska totalkostnaden?',
+    'Okej, men hur jämför det sig med andra banker?',
+    'Jag uppskattar att ni försöker förklara, men kan ni vara mer specifika?',
+    'Det där med "enkel digital ansökan" – hur enkel är den egentligen?',
   ],
-  'Spararen': [
-    'Intressant, men vad är den faktiska avgiften? Jag har sett att många fonder har dolda avgifter som äter upp avkastningen.',
-    'Hur ser den historiska avkastningen ut jämfört med en vanlig indexfond? Jag vill se siffror, inte bara löften.',
-    'Jag förstår att ni rekommenderar det här, men jag vill gärna jämföra med andra alternativ först. Har ni någon jämförelsetjänst?',
-    'Vad händer om marknaden går ner? Hur skyddade är mina pengar egentligen?',
-    'Det låter rimligt. Men jag vill tänka på det ett tag innan jag bestämmer mig. Kan ni skicka mer info?',
+  Spararen: [
+    'Intressant, men vad är den faktiska avgiften?',
+    'Hur ser den historiska avkastningen ut jämfört med en indexfond?',
+    'Jag vill gärna jämföra med andra alternativ först.',
+    'Vad händer om marknaden går ner?',
   ],
-  'Familjeföräldern': [
-    'Det låter bra men jag har inte så mycket tid att sätta mig in i det. Kan ni göra det enkelt för mig? Typ, vad behöver jag faktiskt göra?',
-    'Vi har pratat om att börja spara till barnen, men det finns så många alternativ. Vad rekommenderar ni om man inte vill behöva tänka på det hela tiden?',
-    'Okej, men kostar det något extra? Vi har redan ganska höga utgifter varje månad med bolån och dagis.',
-    'Det viktigaste för mig är att det är tryggt och enkelt. Jag vill inte sitta och flytta pengar hela tiden.',
-    'Tack, det var tydligt! Kan min partner också få tillgång till kontot så vi kan kolla tillsammans?',
+  Familjeföräldern: [
+    'Det låter bra men jag har inte så mycket tid. Kan ni göra det enkelt?',
+    'Vi har pratat om att börja spara till barnen, men det finns så många alternativ.',
+    'Okej, men kostar det något extra?',
+    'Det viktigaste för mig är att det är tryggt och enkelt.',
   ],
-  'Pensionsspararen': [
-    'Jag vet inte riktigt om jag litar på de här digitala lösningarna. Kan jag inte prata med någon istället? En riktig person som kan förklara?',
-    'Hur vet jag att mina pengar är säkra? Jag har jobbat hela livet för det här och vill inte riskera att förlora det.',
-    'Det där med pension är så förvirrande. Allmän pension, tjänstepension, privat pension... kan ni inte bara säga rakt ut om jag har tillräckligt?',
-    'Min kompis gick till en annan bank och fick mycket bättre villkor. Varför ska jag stanna hos er?',
-    'Jag uppskattar att ni tar er tid att förklara. Det är inte alla som gör det. Men jag vill gärna ha det på papper också.',
+  Pensionsspararen: [
+    'Jag vet inte riktigt om jag litar på de här digitala lösningarna.',
+    'Hur vet jag att mina pengar är säkra?',
+    'Det där med pension är så förvirrande.',
+    'Min kompis gick till en annan bank och fick bättre villkor.',
   ],
 };
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { personaName, messages, adContent } = body;
+    const body: PersonaChatRequest = await request.json();
+    const { personaName, messages, adContent, adContext, newMessage } = body;
 
     // Find persona data
-    const persona = defaultPersonas.find(p => p.name === personaName);
-    if (!persona) {
-      return NextResponse.json({ reply: 'Persona hittades inte.', sentiment: 'neutral' });
-    }
+    const persona = defaultPersonas.find((p) => p.name === personaName);
+    const traits = body.personaTraits || persona?.traits || [];
+    const painPoints = body.personaPainPoints || persona?.pain_points || [];
+    const ageContext = body.personaAge
+      ? `${body.personaAge.min}-${body.personaAge.max} år`
+      : persona
+        ? `${persona.age_min}-${persona.age_max} år`
+        : '';
+    const responseStyle = body.responseStyle || persona?.response_style || 'neutral';
+    const description = body.personaDescription || persona?.description || '';
+    const systemPromptExtra = persona?.system_prompt || '';
 
-    const systemPrompt = personaSimulationPrompt(persona as unknown as Persona);
+    const adInfo = adContext
+      ? `ANNONS SOM DISKUTERAS:\n- Rubrik: ${adContext.headline}\n- Brödtext: ${adContext.body}\n- CTA: ${adContext.cta}\n- Kanal: ${adContext.channel}`
+      : adContent
+        ? `ANNONS SOM DISKUTERAS:\n${adContent}`
+        : '';
 
-    // Build conversation history for Claude
+    const systemPrompt = `Du är "${personaName}", en fiktiv persona som diskuterar en bankannons från Nordea.
+
+DIN PROFIL:
+${ageContext ? `- Ålder: ${ageContext}` : ''}
+- Beskrivning: ${description}
+- Karaktärsdrag: ${traits.join(', ')}
+- Smärtpunkter: ${painPoints.join(', ')}
+- Responsstil: ${responseStyle}
+
+${adInfo}
+
+${systemPromptExtra}
+
+INSTRUKTIONER:
+- Svara som ${personaName} skulle svara
+- Håll dig i karaktär hela tiden
+- Ge korta, naturliga svar (1-3 meningar)
+- Var ärlig och autentisk
+- Om frågan är om annonsen, relatera till dina egna behov och smärtpunkter`;
+
+    // Build conversation history
     const chatMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
 
     if (messages && messages.length > 0) {
@@ -58,23 +104,39 @@ export async function POST(request: Request) {
           content: msg.content,
         });
       }
-    } else {
+    }
+
+    if (newMessage) {
+      chatMessages.push({ role: 'user', content: newMessage });
+    }
+
+    if (chatMessages.length === 0) {
       chatMessages.push({
         role: 'user',
-        content: adContent || 'Hej! Vad tycker du om den här annonsen?',
+        content: 'Hej! Vad tycker du om den här annonsen?',
       });
     }
 
-    const result = await callClaudeChat(systemPrompt, chatMessages, {
-      maxTokens: 512,
-      temperature: 0.9,
-    });
+    const anthropic = getClaudeClient();
+    if (anthropic) {
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 500,
+        temperature: 0.9,
+        system: systemPrompt,
+        messages: chatMessages,
+      });
 
-    if (result) {
-      const sentiment = persona.response_style === 'skeptical' ? 'skeptical'
-        : persona.response_style === 'curious' ? 'neutral'
-        : 'neutral';
-      return NextResponse.json({ reply: result, sentiment });
+      const content = response.content[0];
+      if (content.type === 'text') {
+        const sentiment =
+          responseStyle === 'skeptical'
+            ? 'skeptical'
+            : responseStyle === 'curious'
+              ? 'curious'
+              : 'neutral';
+        return NextResponse.json({ reply: content.text, sentiment });
+      }
     }
 
     // Fallback to mock
@@ -88,7 +150,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('[CreativeIQ] Persona-chat error:', error);
-    await new Promise((resolve) => setTimeout(resolve, 800));
     return NextResponse.json({
       reply: 'Jag förstår inte riktigt vad du menar. Kan du förklara lite mer?',
       sentiment: 'neutral',

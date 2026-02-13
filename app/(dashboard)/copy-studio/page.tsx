@@ -265,9 +265,25 @@ export default function CopyStudioPage() {
   // Handlers
   const handleGenerate = async () => {
     setIsGenerating(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setVariants(generateMockVariants());
-    setIsGenerating(false);
+    setVariants([]);
+    setSelectedVariant(null);
+
+    try {
+      const response = await fetch('/api/generate-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel, objective, topic }),
+      });
+
+      if (!response.ok) throw new Error('Failed to generate');
+      const data = await response.json();
+      setVariants(data.variants || []);
+    } catch (error) {
+      console.error('Error generating copy:', error);
+      setVariants(generateMockVariants());
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleSelectVariant = (variant: CopyVariant) => {
@@ -278,9 +294,35 @@ export default function CopyStudioPage() {
   const handleAnalyze = async () => {
     if (!improveHeadline.trim() && !improveBody.trim()) return;
     setIsAnalyzing(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setImprovedCopy(generateMockImprovement());
-    setIsAnalyzing(false);
+    setImprovedCopy(null);
+
+    try {
+      const response = await fetch('/api/improve-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel,
+          headline: improveHeadline,
+          body: improveBody,
+          cta: improveCta,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to improve');
+      const data = await response.json();
+      setImprovedCopy({
+        headline: data.improved?.headline || improveHeadline,
+        body: data.improved?.body || improveBody,
+        cta: data.improved?.cta || improveCta,
+        toneScores: data.analysis?.toneScores || {},
+        suggestions: data.suggestions || [],
+      });
+    } catch (error) {
+      console.error('Error improving copy:', error);
+      setImprovedCopy(generateMockImprovement());
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleUseImproved = () => {
