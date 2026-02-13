@@ -2,60 +2,49 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { NordeaLogo } from '@/components/brand/NordeaLogo';
-import {
-  LayoutDashboard,
-  Palette,
-  PenTool,
-  BarChart3,
-  Globe,
-  Users,
-  Settings,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { LayoutDashboard, Image, PenLine, Calendar, Globe, Users, Settings } from 'lucide-react';
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/ad-studio', label: 'Ad Studio', icon: Palette },
-  { href: '/copy-studio', label: 'Copy Studio', icon: PenTool },
-  { href: '/campaign-planner', label: 'Kampanjplanerare', icon: BarChart3 },
-  { href: '/localization', label: 'Lokalisering', icon: Globe },
-  { href: '/personas', label: 'Personas', icon: Users },
-  { href: '/settings', label: 'Inställningar', icon: Settings },
+const nav = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Ad Studio', href: '/ad-studio', icon: Image },
+  { name: 'Copy Studio', href: '/copy-studio', icon: PenLine },
+  { name: 'Kampanjplanerare', href: '/campaign-planner', icon: Calendar },
+  { name: 'Lokalisering', href: '/localization', icon: Globe },
+  { name: 'Personas', href: '/personas', icon: Users },
+  { name: 'Inställningar', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-gray-200">
-      <div className="flex items-center h-16 px-6 border-b border-gray-200">
-        <Link href="/dashboard">
-          <NordeaLogo />
+    <aside className="fixed inset-y-0 left-0 w-56 bg-white border-r border-gray-200 z-30 hidden lg:block">
+      <div className="h-16 flex items-center px-5 border-b border-gray-100">
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-[#0000A0] rounded-md flex items-center justify-center">
+            <span className="text-white font-bold text-sm">N</span>
+          </div>
+          <span className="font-semibold text-gray-900">Nordea</span>
         </Link>
       </div>
-
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+      <nav className="p-3 space-y-0.5">
+        {nav.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const Icon = item.icon;
           return (
             <Link
-              key={item.href}
+              key={item.name}
               href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-[#0000A0] text-white'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              )}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                isActive ? 'bg-[#0000A0] text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              {item.label}
+              <Icon className="w-[18px] h-[18px]" />
+              {item.name}
             </Link>
           );
         })}
       </nav>
-
     </aside>
   );
 }

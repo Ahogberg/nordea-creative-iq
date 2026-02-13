@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { NordeaLogo } from '@/components/brand/NordeaLogo';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,9 +17,9 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
-  Palette,
-  PenTool,
-  BarChart3,
+  Image,
+  PenLine,
+  Calendar,
   Globe,
   Users,
 } from 'lucide-react';
@@ -28,9 +27,9 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/ad-studio', label: 'Ad Studio', icon: Palette },
-  { href: '/copy-studio', label: 'Copy Studio', icon: PenTool },
-  { href: '/campaign-planner', label: 'Kampanjplanerare', icon: BarChart3 },
+  { href: '/ad-studio', label: 'Ad Studio', icon: Image },
+  { href: '/copy-studio', label: 'Copy Studio', icon: PenLine },
+  { href: '/campaign-planner', label: 'Kampanjplanerare', icon: Calendar },
   { href: '/localization', label: 'Lokalisering', icon: Globe },
   { href: '/personas', label: 'Personas', icon: Users },
   { href: '/settings', label: 'Inställningar', icon: Settings },
@@ -66,8 +65,13 @@ export function Header({ user }: HeaderProps) {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
-          <div className="flex items-center h-16 px-6 border-b border-gray-200">
-            <NordeaLogo />
+          <div className="flex items-center h-16 px-5 border-b border-gray-100">
+            <Link href="/dashboard" className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-[#0000A0] rounded-md flex items-center justify-center">
+                <span className="text-white font-bold text-sm">N</span>
+              </div>
+              <span className="font-semibold text-gray-900">Nordea</span>
+            </Link>
           </div>
           <nav className="px-3 py-4 space-y-1">
             {navItems.map((item) => {
@@ -92,8 +96,11 @@ export function Header({ user }: HeaderProps) {
         </SheetContent>
       </Sheet>
 
-      <div className="lg:hidden">
-        <NordeaLogo />
+      <div className="lg:hidden flex items-center gap-2">
+        <div className="w-7 h-7 bg-[#0000A0] rounded-md flex items-center justify-center">
+          <span className="text-white font-bold text-xs">N</span>
+        </div>
+        <span className="font-semibold text-gray-900 text-sm">Nordea</span>
       </div>
 
       {/* Spacer for desktop */}
