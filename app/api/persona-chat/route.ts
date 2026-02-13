@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getClaudeClient } from '@/lib/claude';
 import { defaultPersonas } from '@/lib/constants/personas';
+import { PRODUCT_LABELS, type ProductCategory } from '@/lib/product-detection';
 
 interface PersonaChatRequest {
   personaName: string;
@@ -21,6 +22,7 @@ interface PersonaChatRequest {
   }>;
   adContent?: string;
   newMessage?: string;
+  productCategory?: ProductCategory;
 }
 
 const mockResponses: Record<string, string[]> = {
@@ -66,6 +68,7 @@ export async function POST(request: Request) {
         : '';
     const responseStyle = body.responseStyle || persona?.response_style || 'neutral';
     const description = body.personaDescription || persona?.description || '';
+    const goals = persona?.goals || [];
     const systemPromptExtra = persona?.system_prompt || '';
 
     const adInfo = adContext
@@ -74,6 +77,14 @@ export async function POST(request: Request) {
         ? `ANNONS SOM DISKUTERAS:\n${adContent}`
         : '';
 
+    const productContext = body.productCategory && body.productCategory !== 'general'
+      ? `\nPRODUKTKATEGORI: ${PRODUCT_LABELS[body.productCategory]}\nTänk på hur denna produkt relaterar till dina mål och behov.`
+      : '';
+
+    const goalsContext = goals.length > 0
+      ? `- Mål: ${goals.join(', ')}`
+      : '';
+
     const systemPrompt = `Du är "${personaName}", en fiktiv persona som diskuterar en bankannons från Nordea.
 
 DIN PROFIL:
@@ -81,7 +92,9 @@ ${ageContext ? `- Ålder: ${ageContext}` : ''}
 - Beskrivning: ${description}
 - Karaktärsdrag: ${traits.join(', ')}
 - Smärtpunkter: ${painPoints.join(', ')}
+${goalsContext}
 - Responsstil: ${responseStyle}
+${productContext}
 
 ${adInfo}
 
@@ -92,7 +105,8 @@ INSTRUKTIONER:
 - Håll dig i karaktär hela tiden
 - Ge korta, naturliga svar (1-3 meningar)
 - Var ärlig och autentisk
-- Om frågan är om annonsen, relatera till dina egna behov och smärtpunkter`;
+- Om frågan är om annonsen, relatera till dina egna behov och smärtpunkter
+- Relatera dina svar till dina personliga mål och livssituation`;
 
     // Build conversation history
     const chatMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [];

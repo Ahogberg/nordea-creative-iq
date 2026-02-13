@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getClaudeClient } from '@/lib/claude';
+import { PRODUCT_LABELS, type ProductCategory } from '@/lib/product-detection';
 
 interface PersonaReactRequest {
   personaName: string;
@@ -18,11 +19,12 @@ interface PersonaReactRequest {
   channel: string;
   imageDescription?: string;
   isVideo?: boolean;
+  productCategory?: ProductCategory;
 }
 
 const mockReactions: Record<
   string,
-  { firstImpression: string; wouldClick: number; objections: string[] }
+  { firstImpression: string; wouldClick: number; objections: string[]; relevance?: { score: number }; whatWorked?: string; suggestion?: string }
 > = {
   'Ung Förstagångsköpare': {
     firstImpression:
@@ -33,6 +35,9 @@ const mockReactions: Record<
       'Finns det dolda avgifter?',
       'Hur lång tid tar processen?',
     ],
+    relevance: { score: 80 },
+    whatWorked: 'Tydligt budskap utan övertydligt säljtryck',
+    suggestion: 'Visa ett konkret prisexempel eller räntesats',
   },
   Spararen: {
     firstImpression:
@@ -43,12 +48,18 @@ const mockReactions: Record<
       'Vilka avgifter tillkommer?',
       'Var är den konkreta informationen?',
     ],
+    relevance: { score: 55 },
+    whatWorked: 'Professionellt intryck',
+    suggestion: 'Lägg till jämförande data eller konkreta siffror',
   },
   Familjeföräldern: {
     firstImpression:
       'Bra att det är enkelt och inte kräver mycket tid. "Steg för steg" låter bra när man har tusen andra saker att tänka på.',
     wouldClick: 80,
     objections: ['Hur lång tid tar det egentligen?', 'Kan min partner också se kalkylen?'],
+    relevance: { score: 75 },
+    whatWorked: 'Kort, kärnfullt och respekterar min tid',
+    suggestion: 'Nämn att det går att göra snabbt i appen',
   },
   Pensionsspararen: {
     firstImpression:
@@ -59,6 +70,9 @@ const mockReactions: Record<
       'Finns det ett kontor jag kan besöka?',
       'Jag litar inte riktigt på att göra detta själv online',
     ],
+    relevance: { score: 40 },
+    whatWorked: 'Ämnet pension är relevant för mig',
+    suggestion: 'Erbjud möjlighet att boka ett personligt rådgivningsmöte',
   },
 };
 
@@ -76,6 +90,11 @@ export async function POST(request: Request) {
 
     const mediaType = body.isVideo ? 'videoannons' : 'annons';
 
+    const productContext = body.productCategory && body.productCategory !== 'general'
+      ? `\nPRODUKTKATEGORI: ${PRODUCT_LABELS[body.productCategory]}
+Tänk på hur relevant denna produktkategori är för dig utifrån din livssituation och dina behov.`
+      : '';
+
     const systemPrompt = `Du är "${body.personaName}", en fiktiv persona som ska reagera på en bankannons från Nordea.
 
 DIN PROFIL:
@@ -87,11 +106,13 @@ ${body.personaDigitalMaturity ? `- Digital mognad: ${body.personaDigitalMaturity
 - Smärtpunkter/utmaningar: ${body.personaPainPoints?.join(', ') || 'N/A'}
 - Responsstil: ${body.responseStyle}
 ${body.personaSystemPrompt ? `\nInstruktioner: ${body.personaSystemPrompt}` : ''}
+${productContext}
 
 INSTRUKTIONER:
 - Reagera som denna persona skulle reagera i verkligheten
 - Var ärlig och autentisk – om annonsen inte tilltalar dig, säg det
 - Tänk på dina specifika smärtpunkter och hur annonsen adresserar (eller missar) dem
+- Bedöm relevansen utifrån din specifika livssituation och behov
 
 Svara ENDAST i följande JSON-format:
 {
@@ -107,6 +128,7 @@ Svara ENDAST i följande JSON-format:
     "score": 0-100,
     "explanation": "Hur trovärdig känns annonsen?"
   },
+  "whatWorked": "Vad i annonsen fungerade bra för dig? (1 mening)",
   "missingInfo": "Vad saknar du för att ta nästa steg?"${
     body.isVideo
       ? `,
@@ -153,6 +175,7 @@ Ge din ärliga reaktion som ${body.personaName}.`;
             objections: Array.isArray(parsed.objections) ? parsed.objections : [],
             relevance: parsed.relevance || null,
             trustLevel: parsed.trustLevel || null,
+            whatWorked: parsed.whatWorked || null,
             missingInfo: parsed.missingInfo || null,
             videoSpecific: parsed.videoSpecific || null,
             suggestion: parsed.suggestion || null,
@@ -170,6 +193,9 @@ Ge din ärliga reaktion som ${body.personaName}.`;
       firstImpression: reaction.firstImpression,
       wouldClick: reaction.wouldClick,
       objections: reaction.objections,
+      relevance: reaction.relevance || null,
+      whatWorked: reaction.whatWorked || null,
+      suggestion: reaction.suggestion || null,
     });
   } catch (error) {
     console.error('[CreativeIQ] Persona-react error:', error);
