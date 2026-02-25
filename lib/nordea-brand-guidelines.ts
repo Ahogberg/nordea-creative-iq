@@ -336,6 +336,95 @@ ${NORDEA_TONE_OF_VOICE.selfCheckQuestions.ansvarsfulla.map(q => `- ${q}`).join('
 `;
 
 // ----------------------------------------------------------------------------
+// CHANNEL SPECS
+// ----------------------------------------------------------------------------
+
+export const CHANNEL_SPECS = {
+  meta: {
+    name: 'Meta/Instagram',
+    headline: { min: 25, max: 40, ideal: 30 },
+    body: { min: 60, max: 125, ideal: 90 },
+    cta: ['Läs mer', 'Kom igång', 'Ansök nu', 'Boka möte', 'Se mer', 'Testa gratis'],
+    tips: [
+      'Första meningen är kritisk - fånga uppmärksamheten direkt',
+      'Använd emojis sparsamt och professionellt',
+      'Ställ en fråga för att öka engagemang',
+    ],
+  },
+  tiktok: {
+    name: 'TikTok',
+    headline: { min: 15, max: 30, ideal: 20 },
+    body: { min: 40, max: 100, ideal: 60 },
+    cta: ['Svep upp', 'Läs mer', 'Kolla in'],
+    tips: [
+      'Var direkt och snabb - ingen lång intro',
+      'Använd talspråk, inte skriftspråk',
+      'Hook inom första 2 sekunderna',
+    ],
+  },
+  display: {
+    name: 'Display/Banners',
+    headline: { min: 15, max: 30, ideal: 20 },
+    body: { min: 20, max: 50, ideal: 35 },
+    cta: ['Läs mer', 'Kom igång', 'Se erbjudande'],
+    tips: [
+      'Extremt kort och kärnfullt',
+      'Ett budskap per banner',
+      'CTA ska synas tydligt',
+    ],
+  },
+  linkedin: {
+    name: 'LinkedIn',
+    headline: { min: 30, max: 50, ideal: 40 },
+    body: { min: 100, max: 200, ideal: 150 },
+    cta: ['Läs mer', 'Kontakta oss', 'Se hur'],
+    tips: [
+      'Mer professionell ton',
+      'Kan vara längre och mer detaljerad',
+      'Fokus på värde och insikter',
+    ],
+  },
+  email: {
+    name: 'E-post',
+    headline: { min: 30, max: 60, ideal: 45 },
+    body: { min: 100, max: 300, ideal: 200 },
+    cta: ['Läs mer', 'Kom igång', 'Boka tid', 'Se erbjudande'],
+    tips: [
+      'Ämnesrad är kritisk - max 50 tecken',
+      'Personlig ton',
+      'Tydlig CTA ovanför "the fold"',
+    ],
+  },
+} as const;
+
+// ----------------------------------------------------------------------------
+// CAMPAIGN OBJECTIVES
+// ----------------------------------------------------------------------------
+
+export const CAMPAIGN_OBJECTIVES = {
+  awareness: {
+    name: 'Kännedom',
+    description: 'Bygg varumärkeskännedom',
+    toneAdjustment: 'Fokusera på Nordeas värderingar och vad vi står för. Mindre produktfokus, mer emotionellt.',
+  },
+  consideration: {
+    name: 'Övervägande',
+    description: 'Få målgruppen att överväga Nordea',
+    toneAdjustment: 'Balans mellan emotionellt och rationellt. Lyft unika fördelar utan att vara säljig.',
+  },
+  conversion: {
+    name: 'Konvertering',
+    description: 'Driva konkreta handlingar',
+    toneAdjustment: 'Tydlig CTA, konkreta erbjudanden. Fortfarande on-brand men mer handlingsorienterad.',
+  },
+  retention: {
+    name: 'Lojalitet',
+    description: 'Behåll och utveckla befintliga kunder',
+    toneAdjustment: 'Varm och personlig ton. Visa uppskattning, erbjud mervärde.',
+  },
+} as const;
+
+// ----------------------------------------------------------------------------
 // EXPORT FÖR ANVÄNDNING I API:er
 // ----------------------------------------------------------------------------
 
