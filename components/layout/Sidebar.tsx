@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Image, PenLine, Calendar, Globe, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, Image, PenLine, Video, Calendar, Globe, Users, Settings, Film } from 'lucide-react';
 
 const nav = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Skapa', href: '/create', icon: Video, isNew: true },
   { name: 'Ad Studio', href: '/ad-studio', icon: Image },
   { name: 'Copy Studio', href: '/copy-studio', icon: PenLine },
+  { name: 'Creative Studio', href: '/creative-studio', icon: Film },
   { name: 'Kampanjplanerare', href: '/campaign-planner', icon: Calendar },
   { name: 'Lokalisering', href: '/localization', icon: Globe },
   { name: 'Personas', href: '/personas', icon: Users },
@@ -41,6 +43,11 @@ export function Sidebar() {
             >
               <Icon className="w-[18px] h-[18px]" />
               {item.name}
+              {'isNew' in item && item.isNew && !isActive && (
+                <span className="ml-auto text-[10px] bg-[#0000A0]/20 text-[#0000A0] px-1.5 py-0.5 rounded font-medium">
+                  NY
+                </span>
+              )}
             </Link>
           );
         })}

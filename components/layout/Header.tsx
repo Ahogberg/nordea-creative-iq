@@ -19,6 +19,8 @@ import {
   LayoutDashboard,
   Image,
   PenLine,
+  Video,
+  Film,
   Calendar,
   Globe,
   Users,
@@ -27,8 +29,10 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/create', label: 'Skapa', icon: Video },
   { href: '/ad-studio', label: 'Ad Studio', icon: Image },
   { href: '/copy-studio', label: 'Copy Studio', icon: PenLine },
+  { href: '/creative-studio', label: 'Creative Studio', icon: Film },
   { href: '/campaign-planner', label: 'Kampanjplanerare', icon: Calendar },
   { href: '/localization', label: 'Lokalisering', icon: Globe },
   { href: '/personas', label: 'Personas', icon: Users },
