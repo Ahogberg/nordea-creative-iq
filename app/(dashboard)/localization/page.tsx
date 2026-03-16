@@ -256,7 +256,7 @@ export default function LocalizationPage() {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-12 text-center">
                 <Globe className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500">Välj målmarknader och klicka "Lokalisera" för att se resultat</p>
+                <p className="text-gray-500">Välj målmarknader och klicka &ldquo;Lokalisera&rdquo; för att se resultat</p>
               </CardContent>
             </Card>
           ) : (

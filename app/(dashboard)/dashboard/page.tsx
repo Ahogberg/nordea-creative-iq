@@ -1,12 +1,11 @@
-import { MetricCard, SectionHeader } from '@/components/ui/nordea';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, TrendingUp, Clock, Target, Zap, Shield } from 'lucide-react';
 
 export default function DashboardPage() {
   const metrics = [
-    { label: 'Annonser analyserade', value: '2,412', change: { value: '+12%', positive: true } },
-    { label: 'Genomsn. Brand Fit', value: '78.4', change: { value: '+3.1', positive: true } },
-    { label: 'Compliance-kvot', value: '94%', change: { value: '+0.5%', positive: true } },
-    { label: 'Tid sparad', value: '142h', sublabel: 'denna månad' },
+    { label: 'Annonser analyserade', value: '2,412', change: '+12%', positive: true, icon: Target },
+    { label: 'Genomsn. Brand Fit', value: '78.4', change: '+3.1', positive: true, icon: Zap },
+    { label: 'Compliance-kvot', value: '94%', change: '+0.5%', positive: true, icon: Shield },
+    { label: 'Tid sparad', value: '142h', sublabel: 'denna månad', icon: Clock },
   ];
 
   const recentAnalyses = [
@@ -17,65 +16,106 @@ export default function DashboardPage() {
     { name: 'Mobilbank-kampanj', channel: 'TikTok', time: '2 dagar sedan', score: 77 },
   ];
 
-  const brandHealth = { visual: 82, toneOfVoice: 88, compliance: 94 };
+  const brandHealth = [
+    { name: 'Visuell identitet', value: 82 },
+    { name: 'Tone of Voice', value: 88 },
+    { name: 'Compliance', value: 94 },
+  ];
+
+  const getScoreClass = (score: number) => {
+    if (score >= 80) return 'high';
+    if (score >= 60) return 'medium';
+    return 'low';
+  };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <SectionHeader title="Dashboard" description="Översikt av er kreativa prestation" />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {metrics.map((m, i) => <MetricCard key={i} {...m} />)}
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
+        <p className="text-white/60">Översikt av er kreativa prestation</p>
       </div>
 
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {metrics.map((metric, i) => {
+          const Icon = metric.icon;
+          return (
+            <div key={i} className="metric-card">
+              <div className="flex items-start justify-between mb-3">
+                <span className="metric-label">{metric.label}</span>
+                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                  <Icon className="w-4 h-4 text-nordea-medium" />
+                </div>
+              </div>
+              <div className="flex items-baseline">
+                <span className="metric-value">{metric.value}</span>
+                {metric.change && (
+                  <span className={`metric-change ${metric.positive ? 'positive' : 'negative'}`}>
+                    <TrendingUp className="w-3 h-3 mr-1 inline" />
+                    {metric.change}
+                  </span>
+                )}
+                {metric.sublabel && (
+                  <span className="text-sm text-white/40 ml-2">{metric.sublabel}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-lg">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h3 className="font-medium text-gray-900">Senaste analyser</h3>
+        {/* Recent Analyses */}
+        <div className="lg:col-span-2 glass-card p-0 overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/5">
+            <h3 className="font-semibold text-white">Senaste analyser</h3>
           </div>
-          <div className="divide-y divide-gray-100">
-            {recentAnalyses.map((a, i) => (
-              <div key={i} className="px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer">
+          <div className="divide-y divide-white/5">
+            {recentAnalyses.map((analysis, i) => (
+              <div
+                key={i}
+                className="px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer"
+              >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center">
-                    <ArrowUpRight className="w-4 h-4 text-gray-400" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nordea-blue/20 to-nordea-vivid/20 flex items-center justify-center">
+                    <ArrowUpRight className="w-4 h-4 text-nordea-medium" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{a.name}</p>
-                    <p className="text-sm text-gray-500">{a.channel} &middot; {a.time}</p>
+                    <p className="font-medium text-white">{analysis.name}</p>
+                    <p className="text-sm text-white/50">{analysis.channel} · {analysis.time}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-lg font-semibold text-gray-900">{a.score}</span>
-                  <span className="text-sm text-gray-400">/100</span>
+                <div className={`score-badge ${getScoreClass(analysis.score)}`}>
+                  {analysis.score}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h3 className="font-medium text-gray-900">Varumärkeshälsa</h3>
-          </div>
-          <div className="p-5 space-y-5">
-            {Object.entries(brandHealth).map(([key, value]) => (
-              <div key={key}>
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm text-gray-600">
-                    {key === 'visual' ? 'Visuell identitet' : key === 'toneOfVoice' ? 'Tone of Voice' : 'Compliance'}
-                  </span>
-                  <span className="text-sm font-medium text-gray-900">{value}</span>
+        {/* Brand Health */}
+        <div className="glass-card">
+          <h3 className="font-semibold text-white mb-6">Varumärkeshälsa</h3>
+          <div className="space-y-5">
+            {brandHealth.map((item, i) => (
+              <div key={i}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-white/70">{item.name}</span>
+                  <span className="text-sm font-semibold text-white">{item.value}</span>
                 </div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#0000A0] rounded-full" style={{ width: `${value}%` }} />
+                <div className="progress-bar">
+                  <div className="progress-bar-fill" style={{ width: `${item.value}%` }} />
                 </div>
               </div>
             ))}
-            <div className="pt-4 mt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">
-                Tone of Voice har förbättrats med 3.1 poäng senaste månaden.
-              </p>
-            </div>
+          </div>
+
+          <div className="mt-6 pt-5 border-t border-white/5">
+            <p className="text-xs text-white/50">
+              Tone of Voice har förbättrats med 3.1 poäng senaste månaden. Fortsätt använda enkla, tydliga formuleringar.
+            </p>
           </div>
         </div>
       </div>

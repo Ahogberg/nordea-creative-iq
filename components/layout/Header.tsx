@@ -17,7 +17,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
-  Image,
+  Sparkles,
   PenLine,
   Calendar,
   Globe,
@@ -27,7 +27,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/ad-studio', label: 'Ad Studio', icon: Image },
+  { href: '/ad-studio', label: 'Ad Studio', icon: Sparkles },
   { href: '/copy-studio', label: 'Copy Studio', icon: PenLine },
   { href: '/campaign-planner', label: 'Kampanjplanerare', icon: Calendar },
   { href: '/localization', label: 'Lokalisering', icon: Globe },
@@ -56,21 +56,21 @@ export function Header({ user }: HeaderProps) {
     : 'U';
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8">
+    <header className="h-16 bg-transparent backdrop-blur-sm border-b border-white/5 flex items-center justify-between px-4 lg:px-8">
       {/* Mobile menu */}
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="lg:hidden">
+          <Button variant="ghost" size="icon" className="lg:hidden text-white/70 hover:text-white hover:bg-white/10">
             <Menu className="w-5 h-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
-          <div className="flex items-center h-16 px-5 border-b border-gray-100">
+        <SheetContent side="left" className="w-64 p-0 bg-[#0a0a2e] border-white/10">
+          <div className="flex items-center h-16 px-5 border-b border-white/6">
             <Link href="/dashboard" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-[#0000A0] rounded-md flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-nordea-blue to-nordea-vivid rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">N</span>
               </div>
-              <span className="font-semibold text-gray-900">Nordea</span>
+              <span className="font-semibold text-white">CreativeIQ</span>
             </Link>
           </div>
           <nav className="px-3 py-4 space-y-1">
@@ -83,8 +83,8 @@ export function Header({ user }: HeaderProps) {
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-[#0000A0] text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-gradient-to-r from-nordea-blue to-nordea-vivid text-white shadow-lg shadow-nordea-blue/30'
+                      : 'text-white/60 hover:bg-white/5 hover:text-white'
                   )}
                 >
                   <item.icon className="w-5 h-5" />
@@ -97,10 +97,10 @@ export function Header({ user }: HeaderProps) {
       </Sheet>
 
       <div className="lg:hidden flex items-center gap-2">
-        <div className="w-7 h-7 bg-[#0000A0] rounded-md flex items-center justify-center">
+        <div className="w-7 h-7 bg-gradient-to-br from-nordea-blue to-nordea-vivid rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-xs">N</span>
         </div>
-        <span className="font-semibold text-gray-900 text-sm">Nordea</span>
+        <span className="font-semibold text-white text-sm">CreativeIQ</span>
       </div>
 
       {/* Spacer for desktop */}
@@ -109,35 +109,35 @@ export function Header({ user }: HeaderProps) {
       {/* User menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#0000A0] flex items-center justify-center text-white text-xs font-medium">
+          <Button variant="ghost" className="flex items-center gap-2 hover:bg-white/5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-nordea-blue to-nordea-vivid flex items-center justify-center text-white text-xs font-medium">
               {initials}
             </div>
-            <span className="hidden md:inline text-sm text-gray-700">
+            <span className="hidden md:inline text-sm text-white/70">
               {userEmail}
             </span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <div className="px-2 py-1.5">
-            <p className="text-sm font-medium">{userEmail.split('@')[0]}</p>
-            <p className="text-xs text-gray-500">{userEmail}</p>
+            <p className="text-sm font-medium text-white">{userEmail.split('@')[0]}</p>
+            <p className="text-xs text-white/50">{userEmail}</p>
           </div>
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="bg-white/10" />
           <DropdownMenuItem asChild>
-            <Link href="/settings" className="flex items-center gap-2">
+            <Link href="/settings" className="flex items-center gap-2 text-white/70 hover:text-white">
               <User className="w-4 h-4" />
               Profil
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/settings" className="flex items-center gap-2">
+            <Link href="/settings" className="flex items-center gap-2 text-white/70 hover:text-white">
               <Settings className="w-4 h-4" />
               Inställningar
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+          <DropdownMenuSeparator className="bg-white/10" />
+          <DropdownMenuItem onClick={handleLogout} className="text-nordea-accent-red cursor-pointer">
             <LogOut className="w-4 h-4 mr-2" />
             Logga ut
           </DropdownMenuItem>

@@ -7,7 +7,6 @@ export async function POST(request: Request) {
   try {
     const { headline, body, cta, channel } = await request.json();
 
-    const fullText = `${headline} ${body} ${cta}`;
     const product = detectProductFromText(headline || '', body || '', cta || '');
     const channelContext = getChannelContext(channel);
     const complianceContext = getComplianceContext(product.category);

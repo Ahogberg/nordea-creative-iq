@@ -85,6 +85,26 @@ interface ChannelResult {
   frequency: number;
 }
 
+function CampaignMetricCard({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+}) {
+  return (
+    <Card className="border-0 shadow-sm">
+      <CardContent className="p-5">
+        <p className="text-sm text-gray-500 mb-1">{label}</p>
+        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function CampaignPlannerPage() {
   // Tab state
   const [activeTab, setActiveTab] = useState<'planner' | 'calculator'>('planner');
@@ -220,25 +240,6 @@ export default function CampaignPlannerPage() {
       `Total kanalfordelning overstiger 100% (${totalAllocation}%). Justera fordelningen.`
     );
   }
-
-  // ---- Metric card helper ----
-  const MetricCard = ({
-    label,
-    value,
-    sub,
-  }: {
-    label: string;
-    value: string;
-    sub?: string;
-  }) => (
-    <Card className="border-0 shadow-sm">
-      <CardContent className="p-5">
-        <p className="text-sm text-gray-500 mb-1">{label}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
-      </CardContent>
-    </Card>
-  );
 
   return (
     <div className="space-y-8">
@@ -495,42 +496,42 @@ export default function CampaignPlannerPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <MetricCard
+                <CampaignMetricCard
                   label="Unik rackvidd"
                   value={formatNumber(uniqueReach)}
                   sub="Estimerade unika personer"
                 />
-                <MetricCard
+                <CampaignMetricCard
                   label="Totala visningar"
                   value={formatNumber(totalImpressions)}
                   sub="Impressions totalt"
                 />
-                <MetricCard
+                <CampaignMetricCard
                   label="Klick"
                   value={formatNumber(totalClicks)}
                   sub="Estimerade klick"
                 />
-                <MetricCard
+                <CampaignMetricCard
                   label="Frekvens"
                   value={avgFrequency.toFixed(1)}
                   sub="Snittvisningar per person"
                 />
-                <MetricCard
+                <CampaignMetricCard
                   label="CPM"
                   value={formatCurrency(avgCPM)}
                   sub="Kostnad per 1 000 visningar"
                 />
-                <MetricCard
+                <CampaignMetricCard
                   label="CPC"
                   value={formatCurrency(avgCPC)}
                   sub="Kostnad per klick"
                 />
-                <MetricCard
+                <CampaignMetricCard
                   label="Rackvidd %"
                   value={formatPercent(reachPercentage)}
                   sub="Av total målgrupp"
                 />
-                <MetricCard
+                <CampaignMetricCard
                   label="Daglig budget"
                   value={formatCurrency(duration > 0 ? budget / duration : 0)}
                   sub={`Over ${duration} dagar`}

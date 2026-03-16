@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,26 +18,30 @@ import { Badge } from '@/components/ui/badge';
 import { Save, User, Globe, Bell, Shield, Key } from 'lucide-react';
 import { toast } from 'sonner';
 
+function getStoredUser(): { email: string; fullName: string } {
+  if (typeof window === 'undefined') return { email: '', fullName: '' };
+  try {
+    const user = localStorage.getItem('nordea-user');
+    if (user) {
+      const parsed = JSON.parse(user);
+      return {
+        email: parsed.email || '',
+        fullName: parsed.full_name || parsed.email?.split('@')[0]?.replace('.', ' ') || '',
+      };
+    }
+  } catch {
+    // ignore
+  }
+  return { email: '', fullName: '' };
+}
+
 export default function SettingsPage() {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState(() => getStoredUser().fullName);
+  const [email, setEmail] = useState(() => getStoredUser().email);
   const [department, setDepartment] = useState('Marketing');
   const [language, setLanguage] = useState('sv');
   const [notifications, setNotifications] = useState(true);
   const [autoSave, setAutoSave] = useState(true);
-
-  useEffect(() => {
-    const user = localStorage.getItem('nordea-user');
-    if (user) {
-      try {
-        const parsed = JSON.parse(user);
-        setEmail(parsed.email || '');
-        setFullName(parsed.full_name || parsed.email?.split('@')[0]?.replace('.', ' ') || '');
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
 
   const handleSave = () => {
     const user = localStorage.getItem('nordea-user');

@@ -133,6 +133,15 @@ function InfoTip({ term }: { term: string }) {
 // Component
 // ---------------------------------------------------------------------------
 
+function ResultMetric({ label, value, large }: { label: string; value: string; large?: boolean }) {
+  return (
+    <div className="bg-gray-50 rounded-xl p-4">
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className={`font-bold text-gray-900 ${large ? 'text-2xl' : 'text-lg'}`}>{value}</p>
+    </div>
+  );
+}
+
 export function MediaCalculator() {
   const exportRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -242,14 +251,6 @@ Faktisk kostnad: ${formatNumber(results.actualSpend)} SEK`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   }, []);
-
-  // ---- Metric card ----
-  const ResultMetric = ({ label, value, large }: { label: string; value: string; large?: boolean }) => (
-    <div className="bg-gray-50 rounded-xl p-4">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className={`font-bold text-gray-900 ${large ? 'text-2xl' : 'text-lg'}`}>{value}</p>
-    </div>
-  );
 
   return (
     <TooltipProvider>
