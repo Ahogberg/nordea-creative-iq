@@ -201,6 +201,29 @@ export function templateToVideoConfig(
   };
 }
 
+// ============================================================================
+// VIDEO FORMATS
+// ============================================================================
+
+export interface VideoFormat {
+  id: string;
+  label: string;
+  description: string;
+  width: number;
+  height: number;
+}
+
+export const VIDEO_FORMATS: VideoFormat[] = [
+  { id: 'story', label: 'Story / Reel', description: '9:16', width: 1080, height: 1920 },
+  { id: 'feed', label: 'Feed', description: '1:1', width: 1080, height: 1080 },
+  { id: 'landscape', label: 'Landskap', description: '16:9', width: 1920, height: 1080 },
+  { id: 'vertical', label: 'Vertikal', description: '4:5', width: 1080, height: 1350 },
+];
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
 /** Calculate total video combinations from variants and formats */
 export function calculateTotalVideos(variants: ProductionVariants, formats: string[]): number {
   const headlines = Math.max(variants.headlines.length, 1);

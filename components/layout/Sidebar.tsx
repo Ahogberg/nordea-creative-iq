@@ -10,12 +10,16 @@ import {
   Globe,
   Users,
   Settings,
+  LayoutGrid,
+  Package,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Ad Studio', href: '/ad-studio', icon: Sparkles },
   { name: 'Copy Studio', href: '/copy-studio', icon: PenLine },
+  { name: 'Mallar', href: '/templates', icon: LayoutGrid },
+  { name: 'Produktion', href: '/produce', icon: Package },
   { name: 'Kampanjplanerare', href: '/campaign-planner', icon: Calendar },
   { name: 'Lokalisering', href: '/localization', icon: Globe },
   { name: 'Personas', href: '/personas', icon: Users },
