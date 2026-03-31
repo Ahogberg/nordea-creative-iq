@@ -12,6 +12,7 @@ import {
   Settings,
   LayoutGrid,
   Package,
+  Film,
 } from 'lucide-react';
 
 const navigation = [
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Copy Studio', href: '/copy-studio', icon: PenLine },
   { name: 'Mallar', href: '/templates', icon: LayoutGrid },
   { name: 'Produktion', href: '/produce', icon: Package },
+  { name: 'Motion Studio', href: '/motion-studio', icon: Film },
   { name: 'Kampanjplanerare', href: '/campaign-planner', icon: Calendar },
   { name: 'Lokalisering', href: '/localization', icon: Globe },
   { name: 'Personas', href: '/personas', icon: Users },
