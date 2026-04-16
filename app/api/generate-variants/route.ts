@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
-
-const anthropic = new Anthropic();
+import { getClaudeClient } from '@/lib/claude';
 
 export async function POST(request: Request) {
   try {
@@ -40,27 +38,58 @@ Svara ENDAST med JSON i detta format:
   "ctas": ["cta1", "cta2", ...]
 }`;
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    });
+    const anthropic = getClaudeClient();
+    if (anthropic) {
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      });
 
-    const content = response.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Unexpected response type');
+      const content = response.content[0];
+      if (content.type === 'text') {
+        const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const variants = JSON.parse(jsonMatch[0]);
+          return NextResponse.json({
+            variants,
+            context: {
+              originalHeadline: existingHeadline,
+              originalBody: existingBody,
+              originalCta: existingCta,
+            },
+          });
+        }
+      }
     }
 
-    // Parse JSON from response
-    const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('No JSON found in response');
-    }
-
-    const variants = JSON.parse(jsonMatch[0]);
-
+    // Fallback to mock
+    console.log('[CreativeIQ] Generate-variants fallback till mockdata');
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     return NextResponse.json({
-      variants,
+      variants: {
+        headlines: [
+          'Ditt första hem börjar här',
+          'Räkna ut ditt bolån på 2 minuter',
+          'Vi gör bostadsdrömmen möjlig',
+          'Starta din bostadsresa idag',
+          'Se vad du har råd med — direkt',
+        ],
+        bodies: [
+          'Vi hjälper dig hela vägen från dröm till nyckel.',
+          'Snabb kalkyl, tydliga svar, inga förpliktelser.',
+          'Personlig rådgivning anpassad för just dig.',
+          'Enkel bolånekalkyl — svar på några minuter.',
+          'Trygg finansiering med Nordens största bank.',
+        ],
+        ctas: [
+          'Beräkna nu',
+          'Kom igång',
+          'Se din kalkyl',
+          'Boka rådgivning',
+          'Läs mer',
+        ],
+      },
       context: {
         originalHeadline: existingHeadline,
         originalBody: existingBody,

@@ -45,8 +45,6 @@ const GEOGRAPHIES = [
   { code: 'DK', label: 'Danmark' },
   { code: 'NO', label: 'Norge' },
   { code: 'FI', label: 'Finland' },
-  { code: 'EE', label: 'Estland' },
-  { code: 'LT', label: 'Litauen' },
 ];
 
 // ---------------------------------------------------------------------------

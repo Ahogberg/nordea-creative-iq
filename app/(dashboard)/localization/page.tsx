@@ -73,32 +73,6 @@ const mockLocalizations: Record<string, LocalizedResult> = {
       { text: 'Ensiasunnon ostajan laskuri – nopea ja helppo', confidence: 86 },
     ],
   },
-  ee: {
-    market: 'ee',
-    headline: 'Sinu esimene kodu algab lihtsa kalkulatsiooniga',
-    body: 'Esimese kodu ostmine on suur samm. Teame, et see võib tunduda üle jõu käiv. Seetõttu oleme teinud selle lihtsaks. Meie kodulaenukalkulaatoriga saad vastused mõne minutiga – ilma kohustusteta.',
-    cta: 'Proovi kalkulaatorit',
-    scores: { linguistic: 85, cultural: 82, legal: 88 },
-    adaptations: [
-      { type: 'cultural', original: 'Nordea-specifik', adapted: 'digital-first approach', reason: 'Estland är digitalt föregångsland – betonar digital enkelhet' },
-    ],
-    alternativeHeadlines: [
-      { text: 'Kui palju sa saad endale lubada? Uuri siit', confidence: 84 },
-    ],
-  },
-  lt: {
-    market: 'lt',
-    headline: 'Jūsų pirmasis būstas prasideda nuo paprasto skaičiavimo',
-    body: 'Pirmojo būsto pirkimas yra didelis žingsnis. Žinome, kad tai gali atrodyti sudėtinga. Todėl padarėme tai paprastą. Su mūsų būsto paskolos skaičiuokle gausite atsakymus per kelias minutes – be jokių įsipareigojimų.',
-    cta: 'Išbandykite skaičiuoklę',
-    scores: { linguistic: 83, cultural: 80, legal: 86 },
-    adaptations: [
-      { type: 'cultural', original: 'lagom approach', adapted: 'family-oriented messaging', reason: 'Litauisk kultur är familjeorienterad' },
-    ],
-    alternativeHeadlines: [
-      { text: 'Kiek galite sau leisti? Sužinokite čia', confidence: 82 },
-    ],
-  },
 };
 
 export default function LocalizationPage() {
@@ -121,17 +95,43 @@ export default function LocalizationPage() {
     );
   };
 
-  const handleLocalize = () => {
+  const handleLocalize = async () => {
     if (targetMarkets.length === 0) return;
     setLoading(true);
-    setTimeout(() => {
-      const res = targetMarkets
-        .map((m) => mockLocalizations[m])
-        .filter(Boolean);
-      setResults(res);
-      setLoading(false);
-      if (res.length > 0) setExpandedMarket(res[0].market);
-    }, 1500);
+    setResults([]);
+
+    const localizedResults: LocalizedResult[] = [];
+
+    for (const market of targetMarkets) {
+      try {
+        const res = await fetch('/api/localize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceMarket,
+            targetMarket: market,
+            content: { headline, body, cta },
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.headline) {
+            localizedResults.push({ market, ...data });
+            continue;
+          }
+        }
+      } catch (e) {
+        console.error(`Localization failed for ${market}:`, e);
+      }
+      // Fallback to mock data
+      const mock = mockLocalizations[market];
+      if (mock) localizedResults.push(mock);
+    }
+
+    setResults(localizedResults);
+    setLoading(false);
+    if (localizedResults.length > 0) setExpandedMarket(localizedResults[0].market);
   };
 
   const copyToClipboard = (text: string, field: string) => {

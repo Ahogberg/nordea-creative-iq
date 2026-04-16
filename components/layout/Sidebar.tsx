@@ -9,14 +9,16 @@ import {
   Calendar,
   Users,
   Film,
+  Rocket,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Kampanjer', href: '/campaigns', icon: Rocket },
   { name: 'Ad Studio', href: '/ad-studio', icon: Sparkles },
   { name: 'Copy Studio', href: '/copy-studio', icon: PenLine },
   { name: 'Motion Studio', href: '/motion-studio', icon: Film },
-  { name: 'Kampanjer', href: '/campaign-planner', icon: Calendar },
+  { name: 'Mediaplanering', href: '/campaign-planner', icon: Calendar },
   { name: 'Personas', href: '/personas', icon: Users },
 ];
 

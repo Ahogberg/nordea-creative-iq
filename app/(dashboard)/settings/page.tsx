@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +15,10 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Save, User, Globe, Bell, Shield, Key } from 'lucide-react';
+import { Save, User, Globe, Bell, Shield, Key, Languages } from 'lucide-react';
 import { toast } from 'sonner';
+import { nordicMarkets } from '@/lib/constants/markets';
+import { getUserPrefs, saveUserPrefs } from '@/lib/campaigns';
 
 function getStoredUser(): { email: string; fullName: string } {
   if (typeof window === 'undefined') return { email: '', fullName: '' };
@@ -42,6 +44,17 @@ export default function SettingsPage() {
   const [language, setLanguage] = useState('sv');
   const [notifications, setNotifications] = useState(true);
   const [autoSave, setAutoSave] = useState(true);
+  const [autoLocalizeMarkets, setAutoLocalizeMarkets] = useState<string[]>([]);
+
+  useEffect(() => {
+    setAutoLocalizeMarkets(getUserPrefs().autoLocalizeMarkets);
+  }, []);
+
+  const toggleMarket = (id: string) => {
+    setAutoLocalizeMarkets((prev) =>
+      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+    );
+  };
 
   const handleSave = () => {
     const user = localStorage.getItem('nordea-user');
@@ -52,6 +65,7 @@ export default function SettingsPage() {
         JSON.stringify({ ...parsed, full_name: fullName, language })
       );
     }
+    saveUserPrefs({ autoLocalizeMarkets });
     toast.success('Inställningar sparade');
   };
 
@@ -126,6 +140,44 @@ export default function SettingsPage() {
               Ändrar språket i gränssnittet. AI-genererat innehåll kan fortfarande vara på andra språk.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Auto-localization */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Languages className="w-5 h-5 text-gray-500" />
+            <CardTitle className="text-base">Auto-lokalisering</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-gray-500">
+            Välj vilka nordiska marknader allt innehåll ska auto-lokaliseras till. Gäller för
+            kampanjer, copy och annat material du skapar i plattformen.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {nordicMarkets.map((market) => {
+              const selected = autoLocalizeMarkets.includes(market.id);
+              return (
+                <button
+                  key={market.id}
+                  onClick={() => toggleMarket(market.id)}
+                  className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                    selected
+                      ? 'border-[#0000A0] bg-blue-50 text-[#0000A0] font-medium'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
+                  <span className="mr-2">{market.flag}</span>
+                  {market.name}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-gray-400">
+            Lämna tomt för att skapa innehåll utan auto-lokalisering.
+          </p>
         </CardContent>
       </Card>
 
