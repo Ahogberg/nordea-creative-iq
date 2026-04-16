@@ -18,6 +18,12 @@ export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'signup' | 'magic'>('login');
   const [message, setMessage] = useState('');
 
+  const handleDemoLogin = () => {
+    document.cookie = 'demo-session=true; path=/; max-age=86400; SameSite=Lax';
+    router.push('/dashboard');
+    router.refresh();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -72,13 +78,31 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500 mt-1">Logga in för att fortsätta</p>
         </div>
 
+        {/* Demo login */}
+        <Button
+          type="button"
+          onClick={handleDemoLogin}
+          className="w-full mb-6 bg-[#0000A0] hover:bg-[#000080]"
+        >
+          Logga in som demo-användare
+        </Button>
+
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-2 text-gray-400">eller med Supabase</span>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">E-postadress</Label>
             <Input
               id="email"
               type="email"
-              placeholder="din.email@exempel.com"
+              placeholder="din.email@nordea.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -114,14 +138,15 @@ export default function LoginPage() {
 
           <Button
             type="submit"
+            variant="outline"
             disabled={loading}
-            className="w-full bg-[#0000A0] hover:bg-[#000080]"
+            className="w-full"
           >
-            {loading ? 'Vänta...' : mode === 'signup' ? 'Skapa konto' : mode === 'magic' ? 'Skicka länk' : 'Logga in'}
+            {loading ? 'Vänta...' : mode === 'signup' ? 'Skapa konto' : mode === 'magic' ? 'Skicka Magic Link' : 'Logga in med lösenord'}
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm space-x-4">
+        <div className="mt-4 text-center text-sm space-x-4">
           {mode === 'login' && (
             <>
               <button type="button" onClick={() => setMode('magic')} className="text-[#0000A0] hover:underline">

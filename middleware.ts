@@ -20,9 +20,11 @@ export function middleware(request: NextRequest) {
 
   // Check for Supabase session cookie — no network call, just cookie presence.
   // Supabase stores the session in cookies prefixed with "sb-".
-  const hasSession = request.cookies.getAll().some(
+  const hasSupabase = request.cookies.getAll().some(
     (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
   );
+  const hasDemo = request.cookies.get('demo-session')?.value === 'true';
+  const hasSession = hasSupabase || hasDemo;
 
   if (pathname === '/') {
     return NextResponse.redirect(
