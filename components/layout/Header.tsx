@@ -46,6 +46,7 @@ export function Header({ user }: HeaderProps) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    document.cookie = 'demo-session=; path=/; max-age=0';
     router.push('/login');
     router.refresh();
   };
