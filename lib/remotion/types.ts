@@ -9,7 +9,9 @@ export type SceneType =
   | "icon-grid"
   | "cta"
   | "split"
-  | "highlight-number";
+  | "highlight-number"
+  | "lottie"
+  | "canvas";
 
 export interface SceneBase {
   type: SceneType;
@@ -85,6 +87,36 @@ export interface HighlightNumberScene extends SceneBase {
   accentColor?: string;
 }
 
+export interface CanvasScene extends SceneBase {
+  type: "canvas";
+  // TSX source — AI-generated component body. Human-readable.
+  tsxCode: string;
+  // Compiled JS (set server-side). Client executes this via scoped Function.
+  compiledJs?: string;
+  // Compile error, if any (set server-side when compilation fails)
+  compileError?: string;
+  // Short description of what the scene shows — used for UI labels
+  description?: string;
+}
+
+export interface LottieScene extends SceneBase {
+  type: "lottie";
+  // Either animationId (preferred — resolved from curated library)
+  // or animationUrl (direct URL to a Lottie JSON)
+  animationId?: string;
+  animationUrl?: string;
+  headline?: string;
+  caption?: string;
+  // Size of the animation as a percentage of canvas width (default 60)
+  sizePercent?: number;
+  // Vertical position: "top" | "center" | "bottom" (default "center")
+  position?: "top" | "center" | "bottom";
+  // Loop playback within the scene (default true)
+  loop?: boolean;
+  // Playback speed multiplier (default 1)
+  playbackSpeed?: number;
+}
+
 export type Scene =
   | TitleScene
   | CounterScene
@@ -93,7 +125,9 @@ export type Scene =
   | IconGridScene
   | CtaScene
   | SplitScene
-  | HighlightNumberScene;
+  | HighlightNumberScene
+  | LottieScene
+  | CanvasScene;
 
 export interface VideoConfig {
   id: string;

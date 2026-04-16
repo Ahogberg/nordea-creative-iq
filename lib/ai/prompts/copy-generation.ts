@@ -1,19 +1,31 @@
-import { nordeaToneOfVoice } from '@/lib/constants/tone-of-voice';
-import { copyChannels } from '@/lib/constants/channels';
+import { NORDEA_SYSTEM_PROMPT, CHANNEL_SPECS, NORDEA_AD_COPY_RULES } from '@/lib/nordea-brand-guidelines';
 
 function getChannelRequirements(channel: string): string {
-  const channelConfig = copyChannels.find(c => c.id === channel);
-  if (!channelConfig) return 'Inga specifika krav.';
+  const spec = CHANNEL_SPECS[channel as keyof typeof CHANNEL_SPECS];
+  if (!spec) return 'Inga specifika krav.';
 
-  return `Max rubrik: ${channelConfig.maxLength.headline} tecken
-Max brödtext: ${channelConfig.maxLength.body} tecken
-Kanal: ${channelConfig.label}`;
+  return `Kanal: ${spec.name}
+Max rubrik: ${spec.headline.max} tecken (idealiskt ${spec.headline.ideal})
+Max brödtext: ${spec.body.max} tecken (idealiskt ${spec.body.ideal})
+Föreslagna CTA:er: ${spec.cta.join(', ')}
+Tips: ${spec.tips.join('; ')}`;
+}
+
+function getForbiddenTerms(): string {
+  return NORDEA_AD_COPY_RULES.forbidden
+    .map(r => `- ALDRIG "${r.term}" → skriv "${r.replaceWith}" (${r.reason})`)
+    .join('\n');
 }
 
 export const copyGenerationPrompt = (channel: string, objective: string, topic: string) => `
 Du är en senior copywriter på Nordeas interna marknadsteam.
 
-${nordeaToneOfVoice}
+${NORDEA_SYSTEM_PROMPT}
+
+FÖRBJUDNA ORD/FRASER:
+${getForbiddenTerms()}
+
+CTA-PRINCIP: ${NORDEA_AD_COPY_RULES.principle}
 
 UPPDRAG:
 Skriv marknadsföringscopy för ${channel} med mål: ${objective}
@@ -42,10 +54,9 @@ Svara i JSON-format:
   "hashtags": string | null,
   "brandFitScore": number,
   "toneScores": {
-    "humanWarm": number,
-    "clearSimple": number,
-    "confidentHumble": number,
-    "forwardLooking": number
+    "personliga": number,
+    "experter": number,
+    "ansvarsfulla": number
   }
 }
 `;

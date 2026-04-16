@@ -320,6 +320,41 @@ Fonder: "Historisk avkastning är ingen garanti för framtida avkastning. Värde
 Lån: "Nordea Bank Abp, filial i Sverige. Kreditgivare. Tänk på att du alltid måste kunna betala tillbaka ett lån."
 
 ═══════════════════════════════════════════════════════════════════════════════
+STRIKTA AD-COPY-REGLER
+═══════════════════════════════════════════════════════════════════════════════
+
+FÖRBJUDNA ORD/FRASER I ANNONSTEXT:
+- ALDRIG "kort" → Skriv "kreditkort" (Nordea skriver alltid ut "kreditkort" i annonstext — aldrig förkortningen "kort".)
+- ALDRIG "fixar" → Skriv "ersätter / ingår" (Nordea lovar ersättning, inte en operativ lösning. Skriv aldrig att Nordea "fixar" något.)
+- ALDRIG "Ansök nu" → Skriv "Se dina förmåner / Kolla dina kortförmåner" (Mjuk CTA föredras — Nordeas tonalitet är lugn och rådgivande, inte pushig.)
+
+CTA-TONALITET:
+- Mjuka CTA:er: Se dina förmåner, Kolla dina kortförmåner, Läs mer
+- Frågeformat: "Försenat flyg?" → "Ersättningen ingår."
+- Med måtta — inte för pushiga säljbudskap. Nordeas tonalitet är lugn och rådgivande.
+
+═══════════════════════════════════════════════════════════════════════════════
+DISPLAY-ANNONSFORMAT (safe zones & layout)
+═══════════════════════════════════════════════════════════════════════════════
+
+MREC (300×250): Padding 18px 20px 16px. Logo-rad 40px. Ikon 38px (container 42px).
+  Headline: NordeaSansLarge-Black 20px. Subtext: NordeaSansSmall-Light 11px (margin-top 7px).
+  CTA-knapp: #40BFA3, pill radius 20px, uppercase, 8px, padding 6px 14px.
+
+BILLBOARD (980×240): Padding 0 40px. Logo NordeaSansSmall-Bold 32px vänster.
+  Textblock flex:1 centrerat. Kortbild/placeholder höger.
+  CTA: 11px, padding 11px 26px.
+
+HALF PAGE (300×600): Padding 24px. CTA: 10px, padding 9px 20px.
+
+IKONER: outline-stil, stroke rgba(255,255,255,0.4), fill rgba(255,255,255,0.12), strokeWidth 1.4.
+  Aktiva element: stroke white, strokeWidth 2.
+
+DISPLAY-FÄRGER:
+  Blå bakgrund → vit text. Sekundär text: rgba(255,255,255,0.65). Placeholder: rgba(255,255,255,0.50).
+  Peach bakgrund (#FBD9CA) → Nordea Blue (#0000A0) text.
+
+═══════════════════════════════════════════════════════════════════════════════
 SJÄLVTEST VID ANALYS
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -422,6 +457,156 @@ export const CAMPAIGN_OBJECTIVES = {
     description: 'Behåll och utveckla befintliga kunder',
     toneAdjustment: 'Varm och personlig ton. Visa uppskattning, erbjud mervärde.',
   },
+} as const;
+
+// ----------------------------------------------------------------------------
+// DISPLAY-ANNONSFORMAT & SAFE ZONES
+// Källa: officiella Nordea display-specs (billboard / half page / MREC)
+// ----------------------------------------------------------------------------
+
+export const NORDEA_AD_FORMATS = {
+  billboard: {
+    name: 'Billboard',
+    width: 980,
+    height: 240,
+    usage: 'Bred banner, topp på sida',
+    padding: { top: 0, right: 40, bottom: 0, left: 40 },
+    logo: {
+      font: 'Nordea Sans Small',
+      weight: 'bold',
+      size: 32,
+      align: 'left',
+    },
+    layout: 'logo | textblock (flex:1, centrerad) | produktbild (höger)',
+  },
+  halfPage: {
+    name: 'Half Page',
+    width: 300,
+    height: 600,
+    usage: 'Vertikal, sidopanel',
+    padding: { top: 24, right: 24, bottom: 24, left: 24 },
+  },
+  mediumRectangle: {
+    name: 'Medium Rectangle (MREC)',
+    width: 300,
+    height: 250,
+    usage: 'Standardrektangel — vanligaste displayformatet',
+    padding: { top: 18, right: 20, bottom: 16, left: 20 },
+    logoRow: { height: 40, font: 'Nordea Sans Small', weight: 'bold' },
+    iconContainer: { height: 42, iconSize: 38, align: 'center' },
+    headline: { font: 'Nordea Sans Large', weight: 'black', size: 20 },
+    subtext: { font: 'Nordea Sans Small', weight: 'light', size: 11, marginTop: 7 },
+    textBlockPadding: { y: 10, x: 0 },
+  },
+} as const;
+
+// ----------------------------------------------------------------------------
+// CTA-KNAPPAR (pill)
+// ----------------------------------------------------------------------------
+
+export const NORDEA_CTA = {
+  background: NORDEA_COLORS.accent.green.hex, // #40BFA3
+  color: '#FFFFFF',
+  borderRadius: 20, // pill-form
+  fontFamily: 'Nordea Sans Small',
+  fontWeight: 500, // Medium
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.07em',
+  // Skalning per format
+  sizes: {
+    mrec:     { fontSize: 8,  paddingY: 6,  paddingX: 14 }, // 300x250
+    halfPage: { fontSize: 10, paddingY: 9,  paddingX: 20 }, // 300x600
+    billboard:{ fontSize: 11, paddingY: 11, paddingX: 26 }, // 980x240
+  },
+} as const;
+
+// ----------------------------------------------------------------------------
+// IKONSTIL för display-annonser
+// ----------------------------------------------------------------------------
+
+export const NORDEA_ICON_STYLE = {
+  stroke: 'rgba(255,255,255,0.4)',
+  fill: 'rgba(255,255,255,0.12)',
+  strokeWidth: 1.4,
+  // För aktiva element / checkmarks:
+  activeStroke: '#FFFFFF',
+  activeStrokeWidth: 2,
+  shape: 'outline', // inte solid
+} as const;
+
+// ----------------------------------------------------------------------------
+// TYPOGRAFI — detaljerad per snitt (display-annonser)
+// ----------------------------------------------------------------------------
+
+export const NORDEA_FONT_FAMILIES = {
+  large: {
+    cssFamily: "'Nordea Sans Large', 'Nordea Sans', sans-serif",
+    usage: 'Headlines och stora rubriker',
+    weights: {
+      black:   { css: 900, usage: 'Primära headlines i display-annonser' },
+      bold:    { css: 700, usage: 'Sekundära rubriker' },
+      medium:  { css: 500, usage: 'Mellanrubriker' },
+      regular: { css: 400, usage: 'Löptext i stora format' },
+      light:   { css: 300, usage: 'Ingress i stora format' },
+    },
+  },
+  small: {
+    cssFamily: "'Nordea Sans Small', 'Nordea Sans', sans-serif",
+    usage: 'Brödtext, UI-element, knappar, logotyp',
+    weights: {
+      bold:    { css: 700, usage: 'Logotyp "Nordea", navigationstext' },
+      medium:  { css: 500, usage: 'CTA-knappar, etiketter' },
+      regular: { css: 400, usage: 'Brödtext, subtext' },
+      light:   { css: 300, usage: 'Diskret text, fotnoter' },
+    },
+  },
+} as const;
+
+// ----------------------------------------------------------------------------
+// AD-COPY TONALITET (strikt — gäller all display & video ad-text)
+// ----------------------------------------------------------------------------
+
+export const NORDEA_AD_COPY_RULES = {
+  forbidden: [
+    {
+      term: 'kort',
+      replaceWith: 'kreditkort',
+      reason: 'Nordea skriver alltid ut "kreditkort" i annonstext — aldrig förkortningen "kort".',
+    },
+    {
+      term: 'fixar',
+      replaceWith: 'ersätter / ingår',
+      reason: 'Nordea lovar ersättning, inte en operativ lösning. Skriv aldrig att Nordea "fixar" något.',
+    },
+    {
+      term: 'Ansök nu',
+      replaceWith: 'Se dina förmåner / Kolla dina kortförmåner',
+      reason: 'Mjuk CTA föredras — Nordeas tonalitet är lugn och rådgivande, inte pushig.',
+    },
+  ],
+  preferred: {
+    questionFormat: {
+      description: 'Frågeformat funkar bra för problemrubriker',
+      example: '"Försenat flyg?" → "Ersättningen ingår."',
+    },
+    softCTAs: ['Se dina förmåner', 'Kolla dina kortförmåner', 'Läs mer'],
+  },
+  principle: 'Med måtta — inte för pushiga säljbudskap. Nordeas tonalitet är lugn och rådgivande.',
+} as const;
+
+// ----------------------------------------------------------------------------
+// FÄRG-ALIAS för display-kontext
+// (pink.medium används i guidelines, men heter "Peach" i ad-specen)
+// ----------------------------------------------------------------------------
+
+export const NORDEA_DISPLAY_PALETTE = {
+  primaryBg: NORDEA_COLORS.primary.blue.hex,          // #0000A0
+  secondaryBg: NORDEA_COLORS.pink.medium.hex,         // #FBD9CA (aka "Nordea Peach")
+  ctaGreen: NORDEA_COLORS.accent.green.hex,           // #40BFA3
+  textOnBlue: '#FFFFFF',
+  textOnBlueSecondary: 'rgba(255,255,255,0.65)',
+  textOnBluePlaceholder: 'rgba(255,255,255,0.50)',
+  textOnPeach: NORDEA_COLORS.primary.blue.hex,        // alltid blå text på peach
 } as const;
 
 // ----------------------------------------------------------------------------

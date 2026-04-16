@@ -22,6 +22,10 @@ import {
   RectangleHorizontal,
   Copy,
   Check,
+  Video,
+  Trash2,
+  History,
+  X,
 } from 'lucide-react';
 import type { VideoConfig, Scene } from '@/lib/remotion/types';
 import { DEFAULT_VIDEO_CONFIG } from '@/lib/remotion/types';
@@ -58,14 +62,16 @@ const SCENE_TYPE_LABELS: Record<string, string> = {
   cta: 'Call to Action',
   split: 'Jämförelse',
   'highlight-number': 'Siffra',
+  lottie: 'Lottie-animation',
+  canvas: 'Canvas (fri komposition)',
 };
 
 const PROMPT_SUGGESTIONS = [
-  'Skapa en bolånevideo som visar kontantinsats och ränta',
-  'Gör en sparande-kampanj med fondavkastning i stapeldiagram',
-  'Visa en jämförelse mellan sparkonto och investering',
-  'Skapa en video om Nordeas mobilapp med ikoner',
-  'Gör en kampanjvideo för billån med countdown',
+  'Skapa en bolånevideo med husanimation, kontantinsats och ränta',
+  'Gör en sparande-kampanj med animerad pengatillväxt och fondavkastning',
+  'Rita en diagonal linje som avslutas med en pulserande teal-cirkel',
+  'Skapa en video med roterande prickar runt texten "Alltid i rörelse"',
+  'Gör en abstrakt intro med vågor och Nordea-logotypen i mitten',
 ];
 
 interface ChatMessage {
@@ -74,6 +80,35 @@ interface ChatMessage {
   content: string;
   config?: VideoConfig;
   timestamp: Date;
+}
+
+interface RenderRecord {
+  id: string;
+  title: string;
+  format: VideoConfig['format'];
+  durationSeconds: number;
+  fileName: string;
+  fileSize: number;
+  createdAt: string;
+  mp4Url: string;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatRelativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return 'just nu';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} min sedan`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} h sedan`;
+  const d = Math.floor(h / 24);
+  return `${d} d sedan`;
 }
 
 export default function MotionStudioPage() {
@@ -86,6 +121,11 @@ export default function MotionStudioPage() {
   const [showSceneList, setShowSceneList] = useState(true);
   const [copiedJson, setCopiedJson] = useState(false);
   const [activeFormat, setActiveFormat] = useState<FormatKey>('story');
+  const [isRendering, setIsRendering] = useState(false);
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const [showRendersPanel, setShowRendersPanel] = useState(false);
+  const [renders, setRenders] = useState<RenderRecord[]>([]);
+  const [latestRender, setLatestRender] = useState<RenderRecord | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -173,6 +213,58 @@ export default function MotionStudioPage() {
     setMessages([]);
     setActiveFormat('story');
   };
+
+  const loadRenders = useCallback(async () => {
+    try {
+      const res = await fetch('/api/motion-renders');
+      if (!res.ok) return;
+      const data = await res.json();
+      setRenders(data.records || []);
+    } catch {
+      // Silent — the list just won't populate
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showRendersPanel) loadRenders();
+  }, [showRendersPanel, loadRenders]);
+
+  const handleRender = useCallback(async () => {
+    if (isRendering) return;
+    setIsRendering(true);
+    setRenderError(null);
+    try {
+      const res = await fetch('/api/motion-render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Renderingen misslyckades');
+      }
+      setLatestRender(data.record);
+      setShowRendersPanel(true);
+      loadRenders();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Renderingsfel';
+      setRenderError(message);
+    } finally {
+      setIsRendering(false);
+    }
+  }, [config, isRendering, loadRenders]);
+
+  const handleDeleteRender = useCallback(async (id: string) => {
+    try {
+      await fetch(`/api/motion-renders?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      setRenders((prev) => prev.filter((r) => r.id !== id));
+      if (latestRender?.id === id) setLatestRender(null);
+    } catch {
+      // Silent
+    }
+  }, [latestRender]);
 
   const totalDuration = config.scenes.reduce((s, sc) => s + sc.durationSeconds, 0);
 
@@ -327,8 +419,61 @@ export default function MotionStudioPage() {
             >
               <Layers className="w-4 h-4" />
             </button>
+            <button
+              onClick={() => setShowRendersPanel(!showRendersPanel)}
+              className={`motion-toolbar-btn ${showRendersPanel ? 'active' : ''}`}
+              title="Tidigare renders"
+            >
+              <History className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleRender}
+              disabled={isRendering || config.scenes.length === 0}
+              className="motion-toolbar-btn motion-toolbar-btn-primary"
+              title="Rendera MP4"
+            >
+              {isRendering ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Renderar...</span>
+                </>
+              ) : (
+                <>
+                  <Video className="w-4 h-4" />
+                  <span>Rendera MP4</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Render error banner */}
+        {renderError && (
+          <div className="motion-render-error">
+            <span>⚠️ {renderError}</span>
+            <button onClick={() => setRenderError(null)} className="motion-render-error-close">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Latest render banner */}
+        {latestRender && !renderError && (
+          <div className="motion-render-success">
+            <div className="motion-render-success-info">
+              <Check className="w-4 h-4" />
+              <span>Klar — {latestRender.title} ({formatFileSize(latestRender.fileSize)})</span>
+            </div>
+            <a
+              href={latestRender.mp4Url}
+              download={latestRender.fileName}
+              className="motion-render-success-download"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Ladda ner
+            </a>
+          </div>
+        )}
 
         {/* Player */}
         <div className="motion-preview-container">
@@ -395,6 +540,61 @@ export default function MotionStudioPage() {
             </div>
           </div>
         )}
+
+        {/* Renders history panel */}
+        {showRendersPanel && (
+          <div className="motion-renders-panel">
+            <div className="motion-renders-header">
+              <span className="motion-renders-title">
+                <History className="w-4 h-4" />
+                Renders ({renders.length})
+              </span>
+              <button
+                onClick={() => setShowRendersPanel(false)}
+                className="motion-renders-close"
+                title="Stäng"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {renders.length === 0 ? (
+              <div className="motion-renders-empty">
+                Inga tidigare renders. Klicka på <strong>Rendera MP4</strong> för att skapa en.
+              </div>
+            ) : (
+              <div className="motion-renders-list">
+                {renders.map((r) => (
+                  <div key={r.id} className="motion-render-row">
+                    <div className="motion-render-row-info">
+                      <span className="motion-render-row-title">{r.title}</span>
+                      <span className="motion-render-row-meta">
+                        {r.format} · {r.durationSeconds.toFixed(1)}s · {formatFileSize(r.fileSize)} · {formatRelativeTime(r.createdAt)}
+                      </span>
+                    </div>
+                    <div className="motion-render-row-actions">
+                      <a
+                        href={r.mp4Url}
+                        download={r.fileName}
+                        className="motion-render-row-btn"
+                        title="Ladda ner"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
+                      <button
+                        onClick={() => handleDeleteRender(r.id)}
+                        className="motion-render-row-btn motion-render-row-btn-danger"
+                        title="Ta bort"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -418,6 +618,10 @@ function getScenePreview(scene: Scene): string {
       return `${scene.leftLabel} vs ${scene.rightLabel}`;
     case 'highlight-number':
       return `${scene.number} — ${scene.label}`;
+    case 'lottie':
+      return scene.headline || scene.animationId || 'Animation';
+    case 'canvas':
+      return scene.description || (scene.compileError ? `⚠️ ${scene.compileError}` : 'Fri komposition');
     default:
       return '';
   }

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<!--
+  NORDEA BOLÅNEVIDEO — REFERENSPROTOTYP
+  Används som animationsreferens för Remotion-bygget.
+  
+  VIDEO A: Räknande siffror, kontantinsats → köpkraft
+  VIDEO B: Staplar med spring-fysik, sjunkande "Sedan 1 april"-stapel
+
+  TIMING-REFERENS (ms från start):
+  ─────────────────────────────────
+  VIDEO A
+    0.1s  — Logo fade+slide in
+    0.4s  — Headline fade+slide in
+    0.65s — Subtext fade+slide in
+    0.85s — "Kontantinsats"-label fade in
+    1.0s  — Kontantbelopp fade in
+    1.2s  — Divider fade in
+    1.35s — "Tidigare"-block slide in
+    1.4s  — Counter startar: 0 → 2 000 000 kr (900ms, easeOutExpo)
+    2.1s  — "Sedan 1 april"-block slide in
+    2.2s  — Counter startar: 0 → 3 000 000 kr (900ms, easeOutExpo)
+    3.1s  — Pill-badge "+1 000 000 kr" fade in
+    3.6s  — CTA-knapp fade in
+
+  VIDEO B
+    0.1s  — Logo fade+slide in
+    0.4s  — Headline fade+slide in
+    0.65s — Subtext fade+slide in
+    0.9s  — "Tidigare"-stapel växer 0→100% (700ms, easeInOutCubic)
+    0.9s  — Counter: 0 → 450 000 kr (700ms, easeOutExpo)
+    0.9s  — Labels fade in
+    2.0s  — "Sedan 1 april"-stapel växer 0→100% (600ms, easeInOutCubic)
+    2.0s  — Counter visar 450 000 kr (statisk, matchar gamla stapeln)
+    2.7s  — SPRING: stapel sjunker 100%→67% (900ms, easeInOutCubic)
+    2.7s  — Counter räknar ner: 450 000 → 300 000 kr (900ms, easeOutExpo)
+    3.2s  — Diff-pill fade in + counter: 0 → 150 000 kr (600ms)
+    4.0s  — CTA fade in
+
+  EASING-FUNKTIONER:
+  ─────────────────
+  easeOutExpo(t)     = t===1 ? 1 : 1 - Math.pow(2, -10*t)   // för räknande siffror
+  easeInOutCubic(t)  = t<0.5 ? 4t³ : 1-(−2t+2)³/2           // för stapelrörelser
+
+  STAPELPROPORTIONER (Video B):
+  ──────────────────────────────
+  Max stapelhöjd:    200px
+  "Tidigare":        100% = 200px  (450 000 kr, bolånetak 85%)
+  "Sedan 1 april":   peak 100% → final 67% = 134px  (300 000 kr, bolånetak 90%)
+  Proportion: 300000/450000 = 0.6667
+
+  FÄRGER:
+  ───────
+  Bakgrund:          #0000A0  (Nordea Blue)
+  Teal/CTA:          #40BFA3
+  Vit text:          #FFFFFF
+  Subtext:           rgba(255,255,255,0.65)
+  Diskret text:      rgba(255,255,255,0.45)
+  Bar "Tidigare":    rgba(255,255,255,0.28)
+  Bar "Sedan":       #40BFA3
+  Pill bg:           rgba(64,191,163,0.14)
+  Pill border:       rgba(64,191,163,0.35)
+
+  TYPOGRAFI (använd NordeaSansLarge/NordeaSansSmall från /brand/fonts/):
+  ───────────────────────────────────────────────────────────────────────
+  Logo:              NordeaSansSmall-Bold, 52px hög (SVG)
+  Headline (B):      NordeaSansLarge-Black, 21px
+  Kontantbelopp (A): NordeaSansLarge-Black, 40px
+  Resultatbelopp:    NordeaSansLarge-Black, 38px
+  Stapelbelopp:      NordeaSansSmall-Bold, 16px
+  Labels/tags:       NordeaSansSmall-Medium, 11-12px, uppercase, tracking 0.09em
+  Brödtext:          NordeaSansSmall-Regular, 13-14px
+  CTA-knapp:         NordeaSansSmall-Medium, 11px, uppercase, tracking 0.09em
+
+  FORMAT: 1080×1920px (9:16), 30fps
+-->
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #111; display: flex; gap: 24px; justify-content: center; padding: 32px; flex-wrap: wrap; }
+
+.scene {
+  background: #0000A0;
+  width: 340px;
+  height: 604px; /* 9:16 vid 340px bredd */
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 28px 32px;
+  flex-shrink: 0;
+}
+
+/* ── GEMENSAMMA ELEMENT ── */
+.logo-wrap { display: flex; justify-content: center; margin-bottom: 28px; opacity: 0; animation: fup 0.5s 0.1s ease forwards; }
+.logo-wrap img { height: 52px; width: auto; }
+
+@keyframes fup { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fin  { from{opacity:0} to{opacity:1} }
+
+/* ── VIDEO A ── */
+.scene-a .kontant-lbl {
+  font-family: sans-serif; font-size: 12px; font-weight: 500;
+  color: rgba(255,255,255,0.55); letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 5px; opacity: 0; animation: fup 0.5s 0.85s ease forwards;
+}
+.scene-a .kontant-val {
+  font-family: sans-serif; font-size: 40px; font-weight: 700; color: #fff;
+  opacity: 0; animation: fup 0.5s 1.0s ease forwards; margin-bottom: 28px;
+}
+.scene-a .divider {
+  width: 36px; height: 2px; background: rgba(255,255,255,0.18);
+  border-radius: 1px; opacity: 0; animation: fin 0.4s 1.2s ease forwards; margin-bottom: 28px;
+}
+.scene-a .headline {
+  font-family: sans-serif; font-size: 21px; font-weight: 700; color: #fff;
+  line-height: 1.25; opacity: 0; animation: fup 0.6s 0.4s ease forwards; margin-bottom: 6px;
+}
+.result-block { opacity: 0; }
+.result-block.r1 { animation: fup 0.55s 1.35s ease forwards; margin-bottom: 24px; }
+.result-block.r2 { animation: fup 0.55s 2.1s  ease forwards; }
+.rtag { font-family: sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 4px; color: rgba(255,255,255,0.4); }
+.rtag.teal { color: #40BFA3; }
+.rdesc { font-family: sans-serif; font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 6px; line-height: 1.4; }
+.ramt  { font-family: sans-serif; font-size: 38px; font-weight: 700; color: #fff; }
+.rpill {
+  display: inline-block; background: rgba(64,191,163,0.16); border: 1px solid rgba(64,191,163,0.38);
+  border-radius: 18px; padding: 4px 12px; font-family: sans-serif; font-size: 11px;
+  font-weight: 600; color: #40BFA3; margin-top: 8px; opacity: 0; animation: fin 0.5s 3.1s ease forwards;
+}
+
+/* ── VIDEO B ── */
+.scene-b .headline {
+  font-family: sans-serif; font-size: 21px; font-weight: 700; color: #fff;
+  line-height: 1.25; opacity: 0; animation: fup 0.6s 0.4s ease forwards; margin-bottom: 6px;
+}
+.scene-b .sub {
+  font-family: sans-serif; font-size: 13px; color: rgba(255,255,255,0.6);
+  line-height: 1.45; opacity: 0; animation: fup 0.5s 0.65s ease forwards; margin-bottom: 24px;
+}
+.bars-area { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 18px; }
+.bars-row  { display: flex; align-items: flex-end; gap: 16px; height: 200px; }
+.bar-col   { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.bar-amount { font-family: sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 7px; opacity: 0; min-height: 22px; }
+.bar-track  { width: 100%; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
+.bar-fill   { width: 100%; border-radius: 5px 5px 0 0; height: 0; }
+.bar-fill.old { background: rgba(255,255,255,0.28); }
+.bar-fill.new { background: #40BFA3; }
+.bar-lbl { font-family: sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; margin-top: 9px; text-align: center; color: rgba(255,255,255,0.45); opacity: 0; }
+.bar-lbl.teal { color: rgba(64,191,163,0.85); }
+.bar-pct { font-family: sans-serif; font-size: 11px; color: rgba(255,255,255,0.35); text-align: center; margin-top: 2px; opacity: 0; }
+.diff-pill {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  background: rgba(64,191,163,0.14); border: 1px solid rgba(64,191,163,0.35);
+  border-radius: 10px; padding: 11px 14px; margin-bottom: 14px; opacity: 0;
+}
+.diff-text { font-family: sans-serif; font-size: 13px; color: rgba(255,255,255,0.65); }
+.diff-num  { font-family: sans-serif; font-size: 17px; font-weight: 700; color: #40BFA3; }
+.cta {
+  display: block; width: 100%; padding: 11px 0; background: #40BFA3; border: none;
+  border-radius: 22px; font-family: sans-serif; font-size: 11px; font-weight: 700;
+  color: #fff; letter-spacing: 0.09em; text-transform: uppercase; text-align: center;
+  cursor: pointer; opacity: 0;
+}
+.replay {
+  display: block; width: 100%; margin-top: 9px; padding: 7px 0; background: transparent;
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 22px; font-family: sans-serif;
+  font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.07em;
+  text-transform: uppercase; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- VIDEO A -->
+<div class="scene scene-a" id="scA">
+  <div class="logo-wrap"><img src="N_L1_Neg.svg" alt="Nordea"></div>
+  <div class="kontant-lbl">Kontantinsats</div>
+  <div class="kontant-val">300 000 kr</div>
+  <div class="divider"></div>
+  <div class="result-block r1">
+    <div class="rtag">Tidigare</div>
+    <div class="rdesc">Bolånetak 85 % — så mycket kunde du köpa för</div>
+    <div class="ramt" id="aOld">0 kr</div>
+  </div>
+  <div class="result-block r2">
+    <div class="rtag teal">Sedan 1 april</div>
+    <div class="rdesc">Bolånetak 90 % — så mycket kan du köpa för</div>
+    <div class="ramt" id="aNew">0 kr</div>
+    <div class="rpill">+1 000 000 kr mer att köpa för</div>
+  </div>
+</div>
+
+<!-- VIDEO B -->
+<div class="scene scene-b" id="scB">
+  <div class="logo-wrap"><img src="N_L1_Neg.svg" alt="Nordea"></div>
+  <div class="headline">Ska du köpa för 3 000 000 kr?</div>
+  <div class="sub">Sedan 1 april räcker lägre kontantinsats.</div>
+  <div class="bars-area">
+    <div class="bars-row">
+      <div class="bar-col">
+        <div class="bar-amount" id="bOldAmt">0 kr</div>
+        <div class="bar-track"><div class="bar-fill old" id="bOldBar"></div></div>
+        <div class="bar-lbl"      id="bOldLbl">Tidigare</div>
+        <div class="bar-pct"      id="bOldPct">Bolånetak 85 %</div>
+      </div>
+      <div class="bar-col">
+        <div class="bar-amount" id="bNewAmt">0 kr</div>
+        <div class="bar-track"><div class="bar-fill new" id="bNewBar"></div></div>
+        <div class="bar-lbl teal" id="bNewLbl">Sedan 1 april</div>
+        <div class="bar-pct"      id="bNewPct">Bolånetak 90 %</div>
+      </div>
+    </div>
+  </div>
+  <div class="diff-pill" id="bDiff">
+    <span class="diff-text">Du sparar</span>
+    <span class="diff-num" id="bDiffNum">0 kr</span>
+    <span class="diff-text">i kontantinsats</span>
+  </div>
+  <div class="cta"    id="bCta">Se dina bolånemöjligheter</div>
+  <button class="replay" id="bReplay">Spela igen</button>
+</div>
+
+<script>
+/* ── EASING ── */
+function easeOutExpo(t)    { return t===1 ? 1 : 1-Math.pow(2,-10*t); }
+function easeInOutCubic(t) { return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+
+function fmt(n) { return Math.round(n).toLocaleString('sv-SE')+' kr'; }
+
+/* ── ANIMATIONSHJÄLPARE ── */
+function animCount(el, from, to, dur, delayMs, t0) {
+  const start = t0 + delayMs;
+  function tick(now) {
+    if (now < start) { requestAnimationFrame(tick); return; }
+    const t = Math.min((now-start)/dur, 1);
+    el.textContent = fmt(from + (to-from)*easeOutExpo(t));
+    el.style.opacity = '1';
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function animBar(el, fromPct, toPct, maxPx, dur, delayMs, t0) {
+  const start = t0 + delayMs;
+  function tick(now) {
+    if (now < start) { requestAnimationFrame(tick); return; }
+    const t = Math.min((now-start)/dur, 1);
+    el.style.height = ((fromPct+(toPct-fromPct)*easeInOutCubic(t))*maxPx/100)+'px';
+    el.style.opacity = '1';
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function fadeIn(el, delayMs, t0) {
+  const start = t0 + delayMs;
+  function tick(now) {
+    if (now < start) { requestAnimationFrame(tick); return; }
+    el.style.opacity = '1';
+    el.style.transition = 'opacity 0.4s ease';
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ── KONSTANTER ── */
+const BAR_MAX      = 200;   // px
+const OLD_PCT      = 100;   // 450 000 kr = full höjd
+const NEW_PEAK_PCT = 100;   // stiger till samma höjd som "Tidigare"
+const NEW_FINAL_PCT = 66.7; // 300 000/450 000 = 0.667
+
+/* ── VIDEO A ── */
+function runVideoA(t0) {
+  animCount(document.getElementById('aOld'), 0, 2000000, 900, 1400, t0);
+  animCount(document.getElementById('aNew'), 0, 3000000, 900, 2200, t0);
+}
+
+/* ── VIDEO B ── */
+function runVideoB(t0) {
+  const bOldBar = document.getElementById('bOldBar');
+  const bNewBar = document.getElementById('bNewBar');
+  const bOldAmt = document.getElementById('bOldAmt');
+  const bNewAmt = document.getElementById('bNewAmt');
+
+  /* Gamla stapeln */
+  animBar(bOldBar, 0, OLD_PCT, BAR_MAX, 700, 900, t0);
+  animCount(bOldAmt, 0, 450000, 700, 900, t0);
+  fadeIn(document.getElementById('bOldLbl'), 900, t0);
+  fadeIn(document.getElementById('bOldPct'), 1000, t0);
+
+  /* Nya stapeln: stiger till toppen... */
+  animBar(bNewBar, 0, NEW_PEAK_PCT, BAR_MAX, 600, 2000, t0);
+  animCount(bNewAmt, 450000, 450000, 1, 2000, t0); /* statisk vid peak */
+  fadeIn(document.getElementById('bNewLbl'), 2100, t0);
+  fadeIn(document.getElementById('bNewPct'), 2200, t0);
+
+  /* ...sen sjunker den med spring-känsla */
+  const dropDelay = 2000 + 700; /* peak nådd + liten paus */
+  setTimeout(() => {
+    const t1 = performance.now();
+    animBar(bNewBar, NEW_PEAK_PCT, NEW_FINAL_PCT, BAR_MAX, 900, 0, t1);
+    animCount(bNewAmt, 450000, 300000, 900, 0, t1);
+  }, dropDelay);
+
+  /* Diff-pill */
+  setTimeout(() => {
+    document.getElementById('bDiff').style.cssText += 'opacity:1;transition:opacity 0.5s ease';
+    animCount(document.getElementById('bDiffNum'), 0, 150000, 600, 0, performance.now());
+  }, 3200);
+
+  /* CTA */
+  setTimeout(() => {
+    document.getElementById('bCta').style.cssText += 'opacity:1;transition:opacity 0.5s ease';
+  }, 4000);
+}
+
+/* ── REPLAY ── */
+function reset() {
+  ['bOldBar','bNewBar'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.height = '0'; el.style.opacity = '0';
+  });
+  ['bOldAmt','bNewAmt','bDiffNum'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = '0 kr'; el.style.opacity = '0';
+  });
+  ['bOldLbl','bNewLbl','bOldPct','bNewPct','bDiff','bCta'].forEach(id => {
+    document.getElementById(id).style.opacity = '0';
+  });
+  ['aOld','aNew'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = '0 kr'; el.style.opacity = '0';
+  });
+}
+
+document.getElementById('bReplay').addEventListener('click', () => {
+  reset();
+  setTimeout(() => {
+    const t0 = performance.now();
+    runVideoA(t0);
+    runVideoB(t0);
+  }, 100);
+});
+
+/* ── START ── */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const t0 = performance.now();
+    runVideoA(t0);
+    runVideoB(t0);
+  }, 300);
+});
+</script>
+</body>
+</html>

@@ -12,6 +12,8 @@ import { IconGridSceneComponent } from "./scenes/IconGridScene";
 import { CtaSceneComponent } from "./scenes/CtaScene";
 import { SplitSceneComponent } from "./scenes/SplitScene";
 import { HighlightNumberSceneComponent } from "./scenes/HighlightNumberScene";
+import { LottieSceneComponent } from "./scenes/LottieScene";
+import { CanvasSceneComponent } from "./scenes/CanvasScene";
 
 const FPS = 30;
 
@@ -33,6 +35,10 @@ function renderScene(scene: Scene, width: number) {
       return <SplitSceneComponent scene={scene} width={width} />;
     case "highlight-number":
       return <HighlightNumberSceneComponent scene={scene} width={width} />;
+    case "lottie":
+      return <LottieSceneComponent scene={scene} width={width} />;
+    case "canvas":
+      return <CanvasSceneComponent scene={scene} width={width} />;
     default:
       return null;
   }
