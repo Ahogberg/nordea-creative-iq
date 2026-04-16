@@ -22,10 +22,10 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // If Supabase is not configured, let everything through (dev mode)
+  // If Supabase is not configured, let everything through
   if (!supabaseUrl || !supabaseKey) {
     if (pathname === '/') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
     return NextResponse.next();
   }
@@ -47,25 +47,27 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  let user = null;
+  // Use getSession() instead of getUser() — it reads from cookies locally
+  // without making a network request to Supabase, avoiding Edge timeout.
+  let session = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    session = data.session;
   } catch {
-    // Supabase unreachable — fail open so the app doesn't 504
+    // Fail open
   }
 
   if (pathname === '/') {
     return NextResponse.redirect(
-      new URL(user ? '/dashboard' : '/login', request.url)
+      new URL(session ? '/dashboard' : '/login', request.url)
     );
   }
 
-  if (!user && !PUBLIC_PATHS.includes(pathname)) {
+  if (!session && !PUBLIC_PATHS.includes(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (user && pathname === '/login') {
+  if (session && pathname === '/login') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -74,7 +76,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all paths except static files and Next internals
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
