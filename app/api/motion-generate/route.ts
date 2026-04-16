@@ -12,9 +12,20 @@ import {
 
 export const runtime = "nodejs";
 
-const SYSTEM_PROMPT = `Du är en kreativ motion graphics-designer på Nordea. Du genererar JSON-konfigurationer för animerade videos.
+const SYSTEM_PROMPT = `Du är en kreativ motion graphics-designer på Nordea. Du hjälper användare skapa animerade videos genom konversation.
 
-VIKTIGT: Du returnerar ENBART valid JSON — ingen markdown, inga code-fences, ingen förklaring.
+Du svarar ALLTID med ett JSON-objekt med denna form:
+{
+  "message": "<ditt svar till användaren — kort, vänligt, beskriv vad du gjort eller ger råd>",
+  "config": <VideoConfig-objekt OM du skapar/uppdaterar en video, annars null>
+}
+
+VIKTIGT:
+- Svara ENBART med valid JSON — ingen markdown, inga code-fences utanför JSON-strängen.
+- "message" är ALLTID med — beskriv vad du gjort, föreslå förbättringar, eller svara på frågor.
+- "config" är med när du skapar en ny video eller ändrar en befintlig. Utelämna (null) om användaren bara frågar något.
+- Om användaren ber dig ändra en befintlig video, utgå från currentConfig och modifiera enbart det som efterfrågas.
+- Var kreativ men koncis i message — max 2-3 meningar. Nämn specifikt vad du ändrade.
 
 ═══ NORDEAS TONE OF VOICE ═══
 Ledord: ${NORDEA_TONE_OF_VOICE.keywords.join(', ')}.
@@ -152,7 +163,7 @@ Returnera ett JSON-objekt med denna struktur:
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, currentConfig } = await req.json();
+    const { prompt, currentConfig, history } = await req.json();
 
     if (!prompt || typeof prompt !== "string") {
       return NextResponse.json(
@@ -164,41 +175,67 @@ export async function POST(req: NextRequest) {
     const client = getClaudeClient();
 
     if (!client) {
-      // Fallback: return a mock config based on the prompt
       const mockConfig = generateMockConfig(prompt);
-      return NextResponse.json({ config: mockConfig, source: "mock" });
+      return NextResponse.json({
+        config: mockConfig,
+        message: `Här är en video baserad på "${prompt.slice(0, 50)}". Jag har skapat ${mockConfig.scenes.length} scener. ⚡ Mock-data (ingen API-nyckel konfigurerad).`,
+        source: "mock",
+      });
     }
 
-    const userMessage = currentConfig
-      ? `Nuvarande video-konfiguration:\n${JSON.stringify(currentConfig, null, 2)}\n\nAnvändarens instruktion: ${prompt}`
-      : prompt;
+    // Build conversation messages
+    const messages: Array<{ role: "user" | "assistant"; content: string }> = [];
+
+    // Include conversation history (last 10 turns max to stay within context)
+    if (Array.isArray(history)) {
+      const recent = history.slice(-10);
+      for (const msg of recent) {
+        if (msg.role === "user" || msg.role === "assistant") {
+          messages.push({ role: msg.role, content: msg.content });
+        }
+      }
+    }
+
+    // Build the current user message with config context
+    let userMessage = prompt;
+    if (currentConfig) {
+      userMessage = `Nuvarande video-konfiguration:\n${JSON.stringify(currentConfig, null, 2)}\n\nAnvändarens instruktion: ${prompt}`;
+    }
+    messages.push({ role: "user", content: userMessage });
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-5-20250514",
-      // Larger budget so canvas scenes (which include full TSX code) fit.
       max_tokens: 8192,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
+      messages,
     });
 
     const text =
       response.content[0].type === "text" ? response.content[0].text : "";
 
-    // Parse the JSON from Claude's response
-    let config: VideoConfig;
+    // Parse the JSON response { message, config }
+    let parsed: { message?: string; config?: VideoConfig };
     try {
-      // Try to extract JSON if wrapped in code fences
-      const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) || [
-        null,
-        text,
-      ];
-      config = JSON.parse(jsonMatch[1]!.trim());
+      const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, text];
+      parsed = JSON.parse(jsonMatch[1]!.trim());
     } catch {
       console.error("Failed to parse Claude response:", text);
       return NextResponse.json(
         { error: "Kunde inte tolka AI-svaret", raw: text },
         { status: 500 }
       );
+    }
+
+    const assistantMessage = parsed.message || "Video uppdaterad.";
+    const config = parsed.config;
+
+    if (!config) {
+      // Claude responded with just a message (no config change)
+      return NextResponse.json({
+        config: null,
+        message: assistantMessage,
+        source: "claude",
+      });
     }
 
     // Validate basic structure
@@ -209,15 +246,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ensure totalDurationSeconds is correct
     config.totalDurationSeconds = config.scenes.reduce(
       (sum, s) => sum + (s.durationSeconds || 2),
       0
     );
 
-    // Compile any canvas scenes server-side. If compilation fails, attach
-    // the error to the scene so the UI shows a clear message instead of
-    // failing the entire generation.
     config.scenes = await Promise.all(
       config.scenes.map(async (scene: Scene) => {
         if (scene.type !== "canvas") return scene;
@@ -232,7 +265,11 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    return NextResponse.json({ config, source: "claude" });
+    return NextResponse.json({
+      config,
+      message: assistantMessage,
+      source: "claude",
+    });
   } catch (error) {
     console.error("Motion generate error:", error);
     return NextResponse.json(

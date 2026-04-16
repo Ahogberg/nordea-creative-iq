@@ -154,29 +154,38 @@ export default function MotionStudioPage() {
     setIsGenerating(true);
 
     try {
+      // Build history from previous messages for conversational context
+      const history = [...messages, userMessage]
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({ role: m.role, content: m.content }));
+
       const res = await fetch('/api/motion-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: text,
           currentConfig: messages.length > 0 ? config : undefined,
+          history: history.slice(0, -1), // Exclude last user msg (sent separately as prompt)
         }),
       });
 
       if (!res.ok) throw new Error('Generation failed');
 
       const data = await res.json();
-      const newConfig = data.config as VideoConfig;
+      const newConfig = data.config as VideoConfig | null;
+      const responseMessage = data.message || 'Video uppdaterad.';
 
-      setConfig(newConfig);
-      setActiveFormat(newConfig.format);
-      setIsPlaying(true);
+      if (newConfig) {
+        setConfig(newConfig);
+        setActiveFormat(newConfig.format);
+        setIsPlaying(true);
+      }
 
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: `Video "${newConfig.title}" skapad med ${newConfig.scenes.length} scener (${newConfig.totalDurationSeconds}s). ${data.source === 'mock' ? '⚡ Mock-data (ingen API-nyckel)' : '✨ Genererad med AI'}`,
-        config: newConfig,
+        content: responseMessage,
+        config: newConfig || undefined,
         timestamp: new Date(),
       };
 
@@ -192,7 +201,7 @@ export default function MotionStudioPage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [input, isGenerating, config, messages.length]);
+  }, [input, isGenerating, config, messages]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
