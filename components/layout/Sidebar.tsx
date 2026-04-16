@@ -7,11 +7,7 @@ import {
   Sparkles,
   PenLine,
   Calendar,
-  Globe,
   Users,
-  Settings,
-  LayoutGrid,
-  Package,
   Film,
 } from 'lucide-react';
 
@@ -19,16 +15,9 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Ad Studio', href: '/ad-studio', icon: Sparkles },
   { name: 'Copy Studio', href: '/copy-studio', icon: PenLine },
-  { name: 'Mallar', href: '/templates', icon: LayoutGrid },
-  { name: 'Produktion', href: '/produce', icon: Package },
   { name: 'Motion Studio', href: '/motion-studio', icon: Film },
-  { name: 'Kampanjplanerare', href: '/campaign-planner', icon: Calendar },
-  { name: 'Lokalisering', href: '/localization', icon: Globe },
+  { name: 'Kampanjer', href: '/campaign-planner', icon: Calendar },
   { name: 'Personas', href: '/personas', icon: Users },
-];
-
-const secondaryNav = [
-  { name: 'Inställningar', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
@@ -64,27 +53,10 @@ export function Sidebar() {
           );
         })}
 
-        <div className="sidebar-section-title mt-6">System</div>
-
-        {secondaryNav.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.href);
-
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`sidebar-item ${active ? 'active' : ''}`}
-            >
-              <Icon />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
       </nav>
 
       {/* User section */}
-      <div className="p-4 border-t border-white/5">
+      <div className="p-4 border-t border-white/[0.06]">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-nordea-blue to-nordea-vivid flex items-center justify-center text-white text-sm font-medium">
             AH

@@ -87,13 +87,21 @@ export default function TemplatesPage() {
               {templates.length} {templates.length === 1 ? 'mall' : 'mallar'}
             </p>
           </div>
-          <Link
-            href="/ad-studio"
+          <button
+            onClick={() => {
+              const name = prompt('Namn på ny mall:');
+              if (!name) return;
+              fetch('/api/templates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description: '', formats: ['story'], text_structure: [], background: { type: 'solid', solidColor: '#0000A0' } }),
+              }).then(() => fetchTemplates());
+            }}
             className="px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Skapa ny
-          </Link>
+          </button>
         </div>
 
         {/* Search and filters */}
@@ -195,13 +203,21 @@ function EmptyState() {
       <p className="text-sm text-white/50 mb-6 max-w-sm mx-auto">
         Skapa en annons i editorn och spara den som mall för att komma igång med bulk-produktion.
       </p>
-      <Link
-        href="/ad-studio"
+      <button
+        onClick={() => {
+          const name = prompt('Namn på ny mall:');
+          if (!name) return;
+          fetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description: '', formats: ['story'], text_structure: [], background: { type: 'solid', solidColor: '#0000A0' } }),
+          }).then(() => window.location.reload());
+        }}
         className="inline-flex items-center gap-2 px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors"
       >
         <Plus className="w-4 h-4" />
         Skapa första mallen
-      </Link>
+      </button>
     </div>
   );
 }
@@ -307,7 +323,7 @@ function TemplateCard({
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-8 z-20 bg-[#1a1a2e] border border-white/10 rounded-lg py-1 shadow-xl min-w-[140px]">
+                <div className="absolute right-0 top-8 z-20 bg-[#1A1F2E] border border-white/10 rounded-lg py-1 shadow-xl min-w-[140px]">
                   <Link
                     href={`/produce?template=${template.id}`}
                     className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:bg-white/5"

@@ -26,6 +26,10 @@ import {
   Trash2,
   History,
   X,
+  GripVertical,
+  Pencil,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import type { VideoConfig, Scene } from '@/lib/remotion/types';
 import { DEFAULT_VIDEO_CONFIG } from '@/lib/remotion/types';
@@ -266,6 +270,55 @@ export default function MotionStudioPage() {
     }
   }, [latestRender]);
 
+  const [editingScene, setEditingScene] = useState<number | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const updateScene = useCallback((index: number, updates: Partial<Scene>) => {
+    setConfig((prev) => {
+      const scenes = [...prev.scenes];
+      scenes[index] = { ...scenes[index], ...updates } as Scene;
+      const totalDurationSeconds = scenes.reduce((s, sc) => s + sc.durationSeconds, 0);
+      return { ...prev, scenes, totalDurationSeconds };
+    });
+  }, []);
+
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (targetIndex: number) => {
+    if (dragIndex === null || dragIndex === targetIndex) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    setConfig((prev) => {
+      const scenes = [...prev.scenes];
+      const [moved] = scenes.splice(dragIndex, 1);
+      scenes.splice(targetIndex, 0, moved);
+      return { ...prev, scenes };
+    });
+    if (editingScene === dragIndex) setEditingScene(targetIndex);
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const deleteScene = (index: number) => {
+    setConfig((prev) => {
+      const scenes = prev.scenes.filter((_, i) => i !== index);
+      const totalDurationSeconds = scenes.reduce((s, sc) => s + sc.durationSeconds, 0);
+      return { ...prev, scenes, totalDurationSeconds };
+    });
+    if (editingScene === index) setEditingScene(null);
+    else if (editingScene !== null && editingScene > index) setEditingScene(editingScene - 1);
+  };
+
   const totalDuration = config.scenes.reduce((s, sc) => s + sc.durationSeconds, 0);
 
   return (
@@ -419,61 +472,8 @@ export default function MotionStudioPage() {
             >
               <Layers className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => setShowRendersPanel(!showRendersPanel)}
-              className={`motion-toolbar-btn ${showRendersPanel ? 'active' : ''}`}
-              title="Tidigare renders"
-            >
-              <History className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleRender}
-              disabled={isRendering || config.scenes.length === 0}
-              className="motion-toolbar-btn motion-toolbar-btn-primary"
-              title="Rendera MP4"
-            >
-              {isRendering ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Renderar...</span>
-                </>
-              ) : (
-                <>
-                  <Video className="w-4 h-4" />
-                  <span>Rendera MP4</span>
-                </>
-              )}
-            </button>
           </div>
         </div>
-
-        {/* Render error banner */}
-        {renderError && (
-          <div className="motion-render-error">
-            <span>⚠️ {renderError}</span>
-            <button onClick={() => setRenderError(null)} className="motion-render-error-close">
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
-        {/* Latest render banner */}
-        {latestRender && !renderError && (
-          <div className="motion-render-success">
-            <div className="motion-render-success-info">
-              <Check className="w-4 h-4" />
-              <span>Klar — {latestRender.title} ({formatFileSize(latestRender.fileSize)})</span>
-            </div>
-            <a
-              href={latestRender.mp4Url}
-              download={latestRender.fileName}
-              className="motion-render-success-download"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Ladda ner
-            </a>
-          </div>
-        )}
 
         {/* Player */}
         <div className="motion-preview-container">
@@ -482,7 +482,7 @@ export default function MotionStudioPage() {
           </div>
         </div>
 
-        {/* Scene timeline */}
+        {/* Scene editor */}
         {showSceneList && (
           <div className="motion-scene-list">
             <div className="motion-scene-list-header">
@@ -496,15 +496,17 @@ export default function MotionStudioPage() {
               </span>
             </div>
 
+            {/* Timeline */}
             <div className="motion-scene-timeline">
               {config.scenes.map((scene, i) => {
                 const widthPercent = (scene.durationSeconds / totalDuration) * 100;
                 return (
                   <div
                     key={i}
-                    className="motion-scene-block"
+                    className={`motion-scene-block ${editingScene === i ? 'editing' : ''}`}
                     style={{ width: `${widthPercent}%` }}
                     title={`${SCENE_TYPE_LABELS[scene.type]} — ${scene.durationSeconds}s`}
+                    onClick={() => setEditingScene(editingScene === i ? null : i)}
                   >
                     <div className="motion-scene-block-inner">
                       <span className="motion-scene-block-label">
@@ -519,10 +521,22 @@ export default function MotionStudioPage() {
               })}
             </div>
 
-            {/* Scene details */}
+            {/* Draggable scene rows */}
             <div className="motion-scene-details">
               {config.scenes.map((scene, i) => (
-                <div key={i} className="motion-scene-detail-row">
+                <div
+                  key={i}
+                  draggable
+                  onDragStart={() => handleDragStart(i)}
+                  onDragOver={(e) => handleDragOver(e, i)}
+                  onDrop={() => handleDrop(i)}
+                  onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                  className={`motion-scene-detail-row ${editingScene === i ? 'active' : ''} ${dragOverIndex === i ? 'drag-over' : ''} ${dragIndex === i ? 'dragging' : ''}`}
+                  onClick={() => setEditingScene(editingScene === i ? null : i)}
+                >
+                  <div className="motion-scene-drag-handle" title="Dra för att ändra ordning">
+                    <GripVertical className="w-3.5 h-3.5" />
+                  </div>
                   <div className="motion-scene-detail-index">{i + 1}</div>
                   <div className="motion-scene-detail-info">
                     <span className="motion-scene-detail-type">
@@ -532,67 +546,163 @@ export default function MotionStudioPage() {
                       {getScenePreview(scene)}
                     </span>
                   </div>
-                  <span className="motion-scene-detail-duration">
-                    {scene.durationSeconds}s
-                  </span>
+                  <div className="motion-scene-duration-ctrl" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="motion-scene-dur-btn"
+                      onClick={() => updateScene(i, { durationSeconds: Math.max(0.5, scene.durationSeconds - 0.5) })}
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <span className="motion-scene-dur-val">{scene.durationSeconds}s</span>
+                    <button
+                      className="motion-scene-dur-btn"
+                      onClick={() => updateScene(i, { durationSeconds: scene.durationSeconds + 0.5 })}
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <button
+                    className="motion-scene-delete-btn"
+                    onClick={(e) => { e.stopPropagation(); deleteScene(i); }}
+                    title="Ta bort scen"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               ))}
             </div>
+
+            {/* Inline scene editor */}
+            {editingScene !== null && config.scenes[editingScene] && (
+              <SceneEditor
+                scene={config.scenes[editingScene]}
+                onChange={(updates) => updateScene(editingScene, updates)}
+              />
+            )}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
 
-        {/* Renders history panel */}
-        {showRendersPanel && (
-          <div className="motion-renders-panel">
-            <div className="motion-renders-header">
-              <span className="motion-renders-title">
-                <History className="w-4 h-4" />
-                Renders ({renders.length})
-              </span>
-              <button
-                onClick={() => setShowRendersPanel(false)}
-                className="motion-renders-close"
-                title="Stäng"
-              >
-                <X className="w-4 h-4" />
-              </button>
+function SceneEditor({ scene, onChange }: { scene: Scene; onChange: (updates: Partial<Scene>) => void }) {
+  const fieldClass = "w-full px-3 py-2 rounded-lg text-sm text-white font-medium";
+
+  const renderField = (label: string, value: string, key: string) => (
+    <div>
+      <label className="motion-editor-label">{label}</label>
+      <input
+        className={fieldClass}
+        value={value}
+        onChange={(e) => onChange({ [key]: e.target.value } as Partial<Scene>)}
+      />
+    </div>
+  );
+
+  return (
+    <div className="motion-scene-editor">
+      <div className="motion-editor-header">
+        <Pencil className="w-3.5 h-3.5" />
+        <span>Redigera scen</span>
+      </div>
+      <div className="motion-editor-fields">
+        {scene.type === 'title' && (
+          <>
+            {renderField('Rubrik', scene.headline, 'headline')}
+            {renderField('Undertext', scene.subtitle || '', 'subtitle')}
+          </>
+        )}
+        {scene.type === 'counter' && (
+          <>
+            {renderField('Etikett', scene.label, 'label')}
+            <div className="motion-editor-row">
+              <div>
+                <label className="motion-editor-label">Från</label>
+                <input className={fieldClass} type="number" value={scene.fromValue} onChange={(e) => onChange({ fromValue: Number(e.target.value) } as Partial<Scene>)} />
+              </div>
+              <div>
+                <label className="motion-editor-label">Till</label>
+                <input className={fieldClass} type="number" value={scene.toValue} onChange={(e) => onChange({ toValue: Number(e.target.value) } as Partial<Scene>)} />
+              </div>
             </div>
-
-            {renders.length === 0 ? (
-              <div className="motion-renders-empty">
-                Inga tidigare renders. Klicka på <strong>Rendera MP4</strong> för att skapa en.
+            {renderField('Suffix', scene.suffix || '', 'suffix')}
+          </>
+        )}
+        {scene.type === 'text-reveal' && (
+          <div>
+            <label className="motion-editor-label">Textrader (en per rad)</label>
+            <textarea
+              className={`${fieldClass} min-h-[80px] resize-y`}
+              value={scene.lines.join('\n')}
+              onChange={(e) => onChange({ lines: e.target.value.split('\n') } as Partial<Scene>)}
+            />
+          </div>
+        )}
+        {scene.type === 'cta' && (
+          <>
+            {renderField('Rubrik', scene.headline, 'headline')}
+            {renderField('Knapptext', scene.buttonText, 'buttonText')}
+            {renderField('Undertext', scene.subtitle || '', 'subtitle')}
+          </>
+        )}
+        {scene.type === 'split' && (
+          <>
+            {renderField('Vänster etikett', scene.leftLabel, 'leftLabel')}
+            {renderField('Höger etikett', scene.rightLabel, 'rightLabel')}
+            <div className="motion-editor-row">
+              <div>
+                <label className="motion-editor-label">Vänster värde</label>
+                <input className={fieldClass} value={scene.leftValue} onChange={(e) => onChange({ leftValue: e.target.value } as Partial<Scene>)} />
               </div>
-            ) : (
-              <div className="motion-renders-list">
-                {renders.map((r) => (
-                  <div key={r.id} className="motion-render-row">
-                    <div className="motion-render-row-info">
-                      <span className="motion-render-row-title">{r.title}</span>
-                      <span className="motion-render-row-meta">
-                        {r.format} · {r.durationSeconds.toFixed(1)}s · {formatFileSize(r.fileSize)} · {formatRelativeTime(r.createdAt)}
-                      </span>
-                    </div>
-                    <div className="motion-render-row-actions">
-                      <a
-                        href={r.mp4Url}
-                        download={r.fileName}
-                        className="motion-render-row-btn"
-                        title="Ladda ner"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
-                      <button
-                        onClick={() => handleDeleteRender(r.id)}
-                        className="motion-render-row-btn motion-render-row-btn-danger"
-                        title="Ta bort"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <label className="motion-editor-label">Höger värde</label>
+                <input className={fieldClass} value={scene.rightValue} onChange={(e) => onChange({ rightValue: e.target.value } as Partial<Scene>)} />
               </div>
-            )}
+            </div>
+          </>
+        )}
+        {scene.type === 'highlight-number' && (
+          <>
+            {renderField('Siffra', scene.number, 'number')}
+            {renderField('Etikett', scene.label, 'label')}
+            {renderField('Beskrivning', scene.description || '', 'description')}
+          </>
+        )}
+        {scene.type === 'icon-grid' && (
+          <>
+            {renderField('Titel', scene.title, 'title')}
+          </>
+        )}
+        {scene.type === 'bars' && (
+          <div>
+            <label className="motion-editor-label">Staplar</label>
+            {scene.bars.map((bar, bi) => (
+              <div key={bi} className="motion-editor-row" style={{ marginBottom: '0.375rem' }}>
+                <input className={fieldClass} value={bar.label} onChange={(e) => {
+                  const bars = [...scene.bars];
+                  bars[bi] = { ...bars[bi], label: e.target.value };
+                  onChange({ bars } as Partial<Scene>);
+                }} placeholder="Etikett" />
+                <input className={fieldClass} type="number" value={bar.value} onChange={(e) => {
+                  const bars = [...scene.bars];
+                  bars[bi] = { ...bars[bi], value: Number(e.target.value) };
+                  onChange({ bars } as Partial<Scene>);
+                }} placeholder="Värde" style={{ maxWidth: '80px' }} />
+              </div>
+            ))}
+          </div>
+        )}
+        {scene.type === 'lottie' && (
+          <>
+            {renderField('Rubrik', scene.headline || '', 'headline')}
+            {renderField('Bildtext', scene.caption || '', 'caption')}
+          </>
+        )}
+        {scene.type === 'canvas' && (
+          <div>
+            <label className="motion-editor-label">Beskrivning</label>
+            <p className="text-xs text-white/40 mt-1">Canvas-scener redigeras via prompt</p>
           </div>
         )}
       </div>
