@@ -34,13 +34,29 @@ export const VIDEO_FPS = 30;
 export const VIDEO_WIDTH = 1080;
 export const VIDEO_HEIGHT = 1920;
 
-// Format presets
+// Format presets (HD baseline, 1080-wide design canvas)
 export const FORMAT_PRESETS = {
   story: { width: 1080, height: 1920, label: "Story / Reel (9:16)" },
   feed: { width: 1080, height: 1080, label: "Feed (1:1)" },
   landscape: { width: 1920, height: 1080, label: "Landscape (16:9)" },
   vertical: { width: 1080, height: 1350, label: "Vertical (4:5)" },
 } as const;
+
+export type QualityTier = "hd" | "4k";
+
+// 4K = 2x HD preset. Scenes are laid out against the HD width so the preview
+// stays identical; we just upscale the render composition for sharper output.
+export function getDimensions(
+  format: keyof typeof FORMAT_PRESETS,
+  quality: QualityTier = "hd"
+): { width: number; height: number } {
+  const preset = FORMAT_PRESETS[format] || FORMAT_PRESETS.story;
+  const multiplier = quality === "4k" ? 2 : 1;
+  return {
+    width: preset.width * multiplier,
+    height: preset.height * multiplier,
+  };
+}
 
 // ── SAFE AREA ──
 export const safeArea = {

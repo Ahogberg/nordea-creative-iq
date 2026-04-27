@@ -32,8 +32,8 @@ export default function DashboardPage() {
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-        <p className="text-white/60">Översikt av er kreativa prestation</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+        <p className="text-gray-500">Översikt av er kreativa prestation</p>
       </div>
 
       {/* Metrics Grid */}
@@ -44,8 +44,8 @@ export default function DashboardPage() {
             <div key={i} className="metric-card">
               <div className="flex items-start justify-between mb-3">
                 <span className="metric-label">{metric.label}</span>
-                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                  <Icon className="w-4 h-4 text-nordea-medium" />
+                <div className="w-8 h-8 rounded-lg bg-[#EBF2FF] flex items-center justify-center">
+                  <Icon className="w-4 h-4 text-[#0000A0]" />
                 </div>
               </div>
               <div className="flex items-baseline">
@@ -57,7 +57,7 @@ export default function DashboardPage() {
                   </span>
                 )}
                 {metric.sublabel && (
-                  <span className="text-sm text-white/40 ml-2">{metric.sublabel}</span>
+                  <span className="text-sm text-gray-400 ml-2">{metric.sublabel}</span>
                 )}
               </div>
             </div>
@@ -69,22 +69,22 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Analyses */}
         <div className="lg:col-span-2 glass-card p-0 overflow-hidden">
-          <div className="px-6 py-4 border-b border-white/5">
-            <h3 className="font-semibold text-white">Senaste analyser</h3>
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="font-semibold text-gray-900">Senaste analyser</h3>
           </div>
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-gray-100">
             {recentAnalyses.map((analysis, i) => (
               <div
                 key={i}
-                className="px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer"
+                className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nordea-blue/20 to-nordea-vivid/20 flex items-center justify-center">
-                    <ArrowUpRight className="w-4 h-4 text-nordea-medium" />
+                  <div className="w-10 h-10 rounded-xl bg-[#EBF2FF] flex items-center justify-center">
+                    <ArrowUpRight className="w-4 h-4 text-[#0000A0]" />
                   </div>
                   <div>
-                    <p className="font-medium text-white">{analysis.name}</p>
-                    <p className="text-sm text-white/50">{analysis.channel} · {analysis.time}</p>
+                    <p className="font-medium text-gray-900">{analysis.name}</p>
+                    <p className="text-sm text-gray-500">{analysis.channel} · {analysis.time}</p>
                   </div>
                 </div>
                 <div className={`score-badge ${getScoreClass(analysis.score)}`}>
@@ -97,13 +97,13 @@ export default function DashboardPage() {
 
         {/* Brand Health */}
         <div className="glass-card">
-          <h3 className="font-semibold text-white mb-6">Varumärkeshälsa</h3>
+          <h3 className="font-semibold text-gray-900 mb-6">Varumärkeshälsa</h3>
           <div className="space-y-5">
             {brandHealth.map((item, i) => (
               <div key={i}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-white/70">{item.name}</span>
-                  <span className="text-sm font-semibold text-white">{item.value}</span>
+                  <span className="text-sm text-gray-600">{item.name}</span>
+                  <span className="text-sm font-semibold text-gray-900">{item.value}</span>
                 </div>
                 <div className="progress-bar">
                   <div className="progress-bar-fill" style={{ width: `${item.value}%` }} />
@@ -112,8 +112,8 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="mt-6 pt-5 border-t border-white/5">
-            <p className="text-xs text-white/50">
+          <div className="mt-6 pt-5 border-t border-gray-200">
+            <p className="text-xs text-gray-500">
               Tone of Voice har förbättrats med 3.1 poäng senaste månaden. Fortsätt använda enkla, tydliga formuleringar.
             </p>
           </div>

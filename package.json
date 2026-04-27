@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",
+    "@imgly/background-removal": "^1.7.0",
     "@remotion/bundler": "^4.0.443",
     "@remotion/cli": "^4.0.443",
     "@remotion/lottie": "^4.0.443",
@@ -28,6 +29,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-moveable": "^0.56.0",
     "remotion": "^4.0.443",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0"

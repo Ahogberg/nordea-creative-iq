@@ -56,60 +56,110 @@ function computeSceneTimings(scenes: Scene[]) {
 }
 
 // ── Logo overlay ──
-const NordeaLogo: React.FC<{ width: number }> = ({ width }) => {
+// Renders either the uploaded logo image (if logo.url set) or the default
+// "N + Nordea" text lockup. Position/size honour logo.transform when provided;
+// otherwise falls back to top-center at ~15% canvas width.
+const LogoOverlay: React.FC<{
+  width: number;
+  height: number;
+  logo?: VideoConfig["logo"];
+}> = ({ width, height, logo }) => {
   const frame = useCurrentFrame();
   const opacity = fadeIn(frame, 5, 20);
   const scale = width / 1080;
 
+  const transform = logo?.transform;
+  const hasCustomPosition = !!transform;
+
+  // Default logo width = 15% of canvas width
+  const baseWidthPx = width * 0.15;
+  const renderScale = transform?.scale ?? 1;
+  const logoWidthPx = baseWidthPx * renderScale;
+
+  // Position: transform.x/y are fractions of canvas (0-1), pointing to element center.
+  // Default: top-center, 5% from top.
+  const xFrac = transform?.x ?? 0.5;
+  const yFrac = transform?.y ?? 0.05;
+  const rotation = transform?.rotation ?? 0;
+
+  const posStyle: React.CSSProperties = hasCustomPosition
+    ? {
+        position: "absolute",
+        left: `${xFrac * 100}%`,
+        top: `${yFrac * 100}%`,
+        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+        width: logoWidthPx,
+        opacity,
+        zIndex: 100,
+      }
+    : {
+        position: "absolute",
+        top: 60 * scale,
+        left: "50%",
+        transform: `translateX(-50%) rotate(${rotation}deg)`,
+        width: logoWidthPx,
+        opacity,
+        zIndex: 100,
+      };
+
+  // Custom uploaded logo
+  if (logo?.url) {
+    return (
+      <div style={posStyle}>
+        <img
+          src={logo.url}
+          alt="Logo"
+          style={{
+            width: "100%",
+            height: "auto",
+            display: "block",
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Default "N + Nordea" text lockup (legacy)
   return (
     <div
       style={{
-        position: "absolute",
-        top: 60 * scale,
-        left: 0,
-        right: 0,
+        ...posStyle,
         display: "flex",
+        alignItems: "center",
         justifyContent: "center",
-        opacity,
-        zIndex: 100,
+        width: hasCustomPosition ? logoWidthPx : undefined,
+        gap: 12 * scale,
       }}
     >
       <div
         style={{
+          width: 44 * scale,
+          height: 44 * scale,
+          borderRadius: 10 * scale,
+          backgroundColor: "rgba(255,255,255,0.15)",
           display: "flex",
           alignItems: "center",
-          gap: 12 * scale,
+          justifyContent: "center",
+          fontFamily: fonts.headline,
+          fontSize: Math.round(26 * scale),
+          fontWeight: 900,
+          color: colors.white,
+          flexShrink: 0,
         }}
       >
-        <div
-          style={{
-            width: 44 * scale,
-            height: 44 * scale,
-            borderRadius: 10 * scale,
-            backgroundColor: "rgba(255,255,255,0.15)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: fonts.headline,
-            fontSize: Math.round(26 * scale),
-            fontWeight: 900,
-            color: colors.white,
-          }}
-        >
-          N
-        </div>
-        <span
-          style={{
-            fontFamily: fonts.headline,
-            fontSize: Math.round(28 * scale),
-            fontWeight: 700,
-            color: colors.white,
-            letterSpacing: "0.04em",
-          }}
-        >
-          Nordea
-        </span>
+        N
       </div>
+      <span
+        style={{
+          fontFamily: fonts.headline,
+          fontSize: Math.round(28 * scale),
+          fontWeight: 700,
+          color: colors.white,
+          letterSpacing: "0.04em",
+        }}
+      >
+        Nordea
+      </span>
     </div>
   );
 };
@@ -117,7 +167,7 @@ const NordeaLogo: React.FC<{ width: number }> = ({ width }) => {
 // ── Main dynamic video composition ──
 export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
   const format = FORMAT_PRESETS[config.format] || FORMAT_PRESETS.story;
-  const { width } = format;
+  const { width, height } = format;
   const timings = useMemo(() => computeSceneTimings(config.scenes), [config.scenes]);
 
   return (
@@ -136,7 +186,9 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
         );
       })}
 
-      {config.showLogo && <NordeaLogo width={width} />}
+      {config.showLogo && (
+        <LogoOverlay width={width} height={height} logo={config.logo} />
+      )}
     </AbsoluteFill>
   );
 };

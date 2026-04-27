@@ -2,7 +2,7 @@ import "./fonts.css";
 import React from "react";
 import { Composition } from "remotion";
 import { DynamicVideo } from "../lib/remotion/DynamicVideo";
-import { FORMAT_PRESETS } from "../lib/remotion/styles";
+import { FORMAT_PRESETS, getDimensions } from "../lib/remotion/styles";
 import { DEFAULT_VIDEO_CONFIG, type VideoConfig } from "../lib/remotion/types";
 
 const FPS = 30;
@@ -22,7 +22,7 @@ export const RemotionRoot: React.FC = () => {
       defaultProps={{ config: DEFAULT_VIDEO_CONFIG }}
       calculateMetadata={({ props }) => {
         const config = props.config as VideoConfig;
-        const format = FORMAT_PRESETS[config.format] || FORMAT_PRESETS.story;
+        const { width, height } = getDimensions(config.format, config.quality);
         const totalSeconds = config.scenes.reduce(
           (sum, s) => sum + (s.durationSeconds || 2),
           0
@@ -30,8 +30,8 @@ export const RemotionRoot: React.FC = () => {
         return {
           durationInFrames: Math.max(1, Math.round(totalSeconds * FPS)),
           fps: FPS,
-          width: format.width,
-          height: format.height,
+          width,
+          height,
         };
       }}
     />

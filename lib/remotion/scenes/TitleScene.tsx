@@ -2,8 +2,15 @@ import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { fadeSlideUp, fadeIn } from "../utils";
 import { colors, fonts } from "../styles";
+import { positionedElement, isInline } from "../scene-utils";
 import type { TitleScene as TitleSceneProps } from "../types";
 
+/**
+ * Element IDs for per-element transforms:
+ *   "line"     — decorative teal accent bar
+ *   "headline" — main title text
+ *   "subtitle" — subtitle text (optional)
+ */
 export const TitleSceneComponent: React.FC<{
   scene: TitleSceneProps;
   width: number;
@@ -17,6 +24,52 @@ export const TitleSceneComponent: React.FC<{
 
   const isCenter = scene.alignment !== "left";
 
+  const lineNode = (
+    <div
+      style={{
+        width: 60 * scale,
+        height: 4 * scale,
+        backgroundColor: colors.teal,
+        borderRadius: 2 * scale,
+        marginBottom: 30 * scale,
+        opacity: lineOpacity,
+      }}
+    />
+  );
+
+  const headlineNode = (
+    <h1
+      style={{
+        fontFamily: fonts.headline,
+        fontSize: Math.round(68 * scale),
+        fontWeight: 900,
+        color: colors.white,
+        lineHeight: 1.15,
+        textAlign: isCenter ? "center" : "left",
+        margin: 0,
+        ...headlineAnim,
+      }}
+    >
+      {scene.headline}
+    </h1>
+  );
+
+  const subtitleNode = scene.subtitle ? (
+    <p
+      style={{
+        fontFamily: fonts.body,
+        fontSize: Math.round(32 * scale),
+        fontWeight: 400,
+        color: "rgba(255,255,255,0.75)",
+        marginTop: 20 * scale,
+        textAlign: isCenter ? "center" : "left",
+        ...subtitleAnim,
+      }}
+    >
+      {scene.subtitle}
+    </p>
+  ) : null;
+
   return (
     <AbsoluteFill
       style={{
@@ -26,50 +79,16 @@ export const TitleSceneComponent: React.FC<{
         justifyContent: "center",
         alignItems: isCenter ? "center" : "flex-start",
         padding: `0 ${110 * scale}px`,
+        position: "relative",
       }}
     >
-      {/* Decorative line */}
-      <div
-        style={{
-          width: 60 * scale,
-          height: 4 * scale,
-          backgroundColor: colors.teal,
-          borderRadius: 2 * scale,
-          marginBottom: 30 * scale,
-          opacity: lineOpacity,
-        }}
-      />
+      {isInline(scene, "line") && lineNode}
+      {isInline(scene, "headline") && headlineNode}
+      {isInline(scene, "subtitle") && subtitleNode}
 
-      <h1
-        style={{
-          fontFamily: fonts.headline,
-          fontSize: Math.round(68 * scale),
-          fontWeight: 900,
-          color: colors.white,
-          lineHeight: 1.15,
-          textAlign: isCenter ? "center" : "left",
-          margin: 0,
-          ...headlineAnim,
-        }}
-      >
-        {scene.headline}
-      </h1>
-
-      {scene.subtitle && (
-        <p
-          style={{
-            fontFamily: fonts.body,
-            fontSize: Math.round(32 * scale),
-            fontWeight: 400,
-            color: "rgba(255,255,255,0.75)",
-            marginTop: 20 * scale,
-            textAlign: isCenter ? "center" : "left",
-            ...subtitleAnim,
-          }}
-        >
-          {scene.subtitle}
-        </p>
-      )}
+      {positionedElement(scene, "line", lineNode)}
+      {positionedElement(scene, "headline", headlineNode)}
+      {subtitleNode && positionedElement(scene, "subtitle", subtitleNode)}
     </AbsoluteFill>
   );
 };

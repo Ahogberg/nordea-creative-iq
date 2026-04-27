@@ -2,8 +2,12 @@ import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { counterValue, fadeSlideUp, fadeIn, scalePop, s2f } from "../utils";
 import { colors, fonts } from "../styles";
+import { positionedElement, isInline } from "../scene-utils";
 import type { CounterScene as CounterSceneProps } from "../types";
 
+/**
+ * Element IDs for per-element transforms: "label", "value", "description"
+ */
 export const CounterSceneComponent: React.FC<{
   scene: CounterSceneProps;
   width: number;
@@ -23,6 +27,56 @@ export const CounterSceneComponent: React.FC<{
     ? `${scene.prefix}${Math.round(value).toLocaleString("sv-SE")}${scene.suffix || ""}`
     : `${Math.round(value).toLocaleString("sv-SE")}${scene.suffix || ""}`;
 
+  const labelNode = (
+    <div
+      style={{
+        fontFamily: fonts.body,
+        fontSize: Math.round(38 * scale),
+        fontWeight: 500,
+        color: "rgba(255,255,255,0.8)",
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        ...labelAnim,
+      }}
+    >
+      {scene.label}
+    </div>
+  );
+
+  const valueNode = (
+    <div
+      style={{
+        fontFamily: fonts.headline,
+        fontSize: Math.round(120 * scale),
+        fontWeight: 900,
+        color: colors.white,
+        marginTop: 10 * scale,
+        opacity: counterOpacity,
+        transform: `scale(${counterScale})`,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {formatted}
+    </div>
+  );
+
+  const descNode = scene.description ? (
+    <div
+      style={{
+        fontFamily: fonts.body,
+        fontSize: Math.round(32 * scale),
+        fontWeight: 400,
+        color: "rgba(255,255,255,0.7)",
+        marginTop: 20 * scale,
+        textAlign: "center",
+        lineHeight: 1.4,
+        ...descAnim,
+      }}
+    >
+      {scene.description}
+    </div>
+  ) : null;
+
   return (
     <AbsoluteFill
       style={{
@@ -32,56 +86,16 @@ export const CounterSceneComponent: React.FC<{
         justifyContent: "center",
         alignItems: "center",
         padding: `0 ${110 * scale}px`,
+        position: "relative",
       }}
     >
-      {/* Label */}
-      <div
-        style={{
-          fontFamily: fonts.body,
-          fontSize: Math.round(38 * scale),
-          fontWeight: 500,
-          color: "rgba(255,255,255,0.8)",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          ...labelAnim,
-        }}
-      >
-        {scene.label}
-      </div>
+      {isInline(scene, "label") && labelNode}
+      {isInline(scene, "value") && valueNode}
+      {isInline(scene, "description") && descNode}
 
-      {/* Counter */}
-      <div
-        style={{
-          fontFamily: fonts.headline,
-          fontSize: Math.round(120 * scale),
-          fontWeight: 900,
-          color: colors.white,
-          marginTop: 10 * scale,
-          opacity: counterOpacity,
-          transform: `scale(${counterScale})`,
-          whiteSpace: "nowrap",
-        }}
-      >
-        {formatted}
-      </div>
-
-      {/* Description */}
-      {scene.description && (
-        <div
-          style={{
-            fontFamily: fonts.body,
-            fontSize: Math.round(32 * scale),
-            fontWeight: 400,
-            color: "rgba(255,255,255,0.7)",
-            marginTop: 20 * scale,
-            textAlign: "center",
-            lineHeight: 1.4,
-            ...descAnim,
-          }}
-        >
-          {scene.description}
-        </div>
-      )}
+      {positionedElement(scene, "label", labelNode)}
+      {positionedElement(scene, "value", valueNode)}
+      {descNode && positionedElement(scene, "description", descNode)}
     </AbsoluteFill>
   );
 };

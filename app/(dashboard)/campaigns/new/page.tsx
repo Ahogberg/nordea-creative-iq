@@ -317,10 +317,10 @@ function WizardContent() {
           <Badge
             className={
               campaign.status === 'approved'
-                ? 'bg-green-100 text-green-700'
+                ? 'bg-[#0000A0] text-white'
                 : campaign.status === 'exported'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-yellow-100 text-yellow-700'
+                ? 'bg-[#EBF2FF] text-[#0000A0]'
+                : 'bg-gray-100 text-gray-700'
             }
           >
             {campaign.status === 'approved'
@@ -353,7 +353,7 @@ function WizardContent() {
                     current
                       ? 'bg-[#0000A0] text-white ring-4 ring-[#0000A0]/15'
                       : completed
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-[#0000A0] text-white'
                       : 'bg-gray-100 text-gray-400'
                   }`}
                 >
@@ -759,8 +759,8 @@ function MaterialStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-6">
-            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
-              <Film className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 rounded-lg bg-[#EBF2FF] flex items-center justify-center mb-4">
+              <Film className="w-5 h-5 text-[#0000A0]" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Motion Studio</h3>
             <p className="text-sm text-gray-500 mb-4">
@@ -775,7 +775,7 @@ function MaterialStep({
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-6">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
+            <div className="w-10 h-10 rounded-lg bg-[#EBF2FF] flex items-center justify-center mb-4">
               <ImageIcon className="w-5 h-5 text-[#0000A0]" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Ad Studio</h3>
@@ -898,10 +898,10 @@ function PersonaTestStep({
                     <Badge
                       className={
                         r.wouldClick >= 60
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-[#0000A0] text-white'
                           : r.wouldClick >= 40
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
+                          ? 'bg-[#EBF2FF] text-[#0000A0]'
+                          : 'bg-gray-100 text-gray-600'
                       }
                     >
                       {r.wouldClick}% klick
@@ -1012,12 +1012,12 @@ function ComplianceStep({
                   <div
                     key={i}
                     className={`p-3 rounded-lg flex items-start gap-3 ${
-                      f.severity === 'high' ? 'bg-red-50' : 'bg-yellow-50'
+                      f.severity === 'high' ? 'bg-[#FC6161]/10' : 'bg-gray-50'
                     }`}
                   >
                     <AlertCircle
                       className={`w-4 h-4 mt-0.5 ${
-                        f.severity === 'high' ? 'text-red-500' : 'text-yellow-500'
+                        f.severity === 'high' ? 'text-[#FC6161]' : 'text-gray-500'
                       }`}
                     />
                     <div className="flex-1">
@@ -1038,8 +1038,8 @@ function ComplianceStep({
             <CardContent className="p-6">
               {campaign.approvedBy ? (
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 rounded-full bg-[#EBF2FF] flex items-center justify-center">
+                    <CheckCircle2 className="w-5 h-5 text-[#0000A0]" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Godkänd av {campaign.approvedBy}</p>
@@ -1059,7 +1059,7 @@ function ComplianceStep({
                   </p>
                   <Button
                     onClick={onApprove}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-[#0000A0] hover:bg-[#000080]"
                     disabled={hasHighFlags}
                   >
                     <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -1091,9 +1091,9 @@ function ExportStep({
 
   return (
     <div className="space-y-6">
-      <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-transparent">
+      <Card className="border-0 shadow-sm bg-gradient-to-br from-[#0000A0]/5 to-transparent">
         <CardContent className="p-6 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-[#0000A0] flex items-center justify-center">
             <Rocket className="w-6 h-6 text-white" />
           </div>
           <div>

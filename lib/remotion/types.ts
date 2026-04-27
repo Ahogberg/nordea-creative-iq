@@ -13,10 +13,23 @@ export type SceneType =
   | "lottie"
   | "canvas";
 
+// Transform applied to a draggable/resizable element on the canvas.
+// x/y are fractions of canvas width/height (0-1). scale is a multiplier
+// around the element's natural size. rotation is in degrees.
+export interface ElementTransform {
+  x: number;
+  y: number;
+  scale: number;
+  rotation?: number;
+}
+
 export interface SceneBase {
   type: SceneType;
   durationSeconds: number;
   background?: string;
+  // Per-element transforms keyed by element id ("headline", "value", "cta", etc).
+  // Scenes that support draggable elements read from this to place them.
+  elementTransforms?: Record<string, ElementTransform>;
 }
 
 export interface TitleScene extends SceneBase {
@@ -129,14 +142,23 @@ export type Scene =
   | LottieScene
   | CanvasScene;
 
+export interface LogoConfig {
+  // Public/data URL of the uploaded logo image (PNG/SVG, ideally transparent)
+  url?: string;
+  // Position + size of the logo overlay. Defaults to top-center if omitted.
+  transform?: ElementTransform;
+}
+
 export interface VideoConfig {
   id: string;
   title: string;
   format: "story" | "feed" | "landscape" | "vertical";
+  quality?: "hd" | "4k";
   backgroundColor: string;
   accentColor: string;
   scenes: Scene[];
   showLogo: boolean;
+  logo?: LogoConfig;
   totalDurationSeconds: number;
 }
 
