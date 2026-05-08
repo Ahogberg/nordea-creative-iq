@@ -23,7 +23,11 @@ export function proxy(request: NextRequest) {
   const hasSupabase = request.cookies.getAll().some(
     (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
   );
-  const hasDemo = request.cookies.get('demo-session')?.value === 'true';
+  // Demo bypass is gated by env flag — must be unset in production so the
+  // @nordea.com Supabase login is the only way in.
+  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true';
+  const hasDemo =
+    demoEnabled && request.cookies.get('demo-session')?.value === 'true';
   const hasSession = hasSupabase || hasDemo;
 
   if (pathname === '/') {

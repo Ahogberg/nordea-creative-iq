@@ -10,7 +10,9 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const isDemo = cookieStore.get('demo-session')?.value === 'true';
+  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true';
+  const isDemo =
+    demoEnabled && cookieStore.get('demo-session')?.value === 'true';
 
   let user = null;
 
