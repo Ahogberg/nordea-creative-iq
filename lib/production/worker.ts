@@ -19,9 +19,21 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { createWriteStream } from 'node:fs';
-import archiver from 'archiver';
+import { createRequire } from 'node:module';
 
 import { createServiceClient } from '@/lib/supabase/service';
+
+// archiver is a CommonJS-only package whose main export is the factory
+// function itself (module.exports = factory). Turbopack's ESM treatment
+// rejects `import archiver from 'archiver'` because there is no `default`
+// export to alias, so we go through createRequire to keep the runtime
+// shape predictable. Type-only import is safe — it doesn't emit runtime code.
+import type { Archiver } from 'archiver';
+const require = createRequire(import.meta.url);
+const archiver = require('archiver') as (
+  format: string,
+  options?: { zlib?: { level?: number } }
+) => Archiver;
 import { enumerateProductionConfigs } from '@/lib/video-types';
 import type {
   ProductionVariants,
