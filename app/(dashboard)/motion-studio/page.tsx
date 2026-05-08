@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   Play,
@@ -30,11 +31,13 @@ import {
   Pencil,
   Plus,
   Minus,
+  Save,
 } from 'lucide-react';
 import type { VideoConfig, Scene, ElementTransform, LogoConfig } from '@/lib/remotion/types';
 import { DEFAULT_VIDEO_CONFIG } from '@/lib/remotion/types';
 import { FORMAT_PRESETS } from '@/lib/remotion/styles';
 import { LogoUploader } from '@/components/motion-studio/LogoUploader';
+import { SaveTemplateModal } from '@/components/modals/save-template-modal';
 
 // Dynamic import — react-moveable pulls in a non-trivial dep tree and is
 // only needed when the user opens edit mode.
@@ -139,7 +142,9 @@ export default function MotionStudioPage() {
   const [renders, setRenders] = useState<RenderRecord[]>([]);
   const [latestRender, setLatestRender] = useState<RenderRecord | null>(null);
   const [editingLogo, setEditingLogo] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
+  const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const previewFrameRef = useRef<HTMLDivElement | null>(null);
@@ -489,6 +494,13 @@ export default function MotionStudioPage() {
 
           <div className="motion-toolbar-actions">
             <button
+              onClick={() => setShowSaveModal(true)}
+              className="motion-toolbar-btn"
+              title="Spara som mall"
+            >
+              <Save className="w-4 h-4" />
+            </button>
+            <button
               onClick={handleCopyJson}
               className="motion-toolbar-btn"
               title="Kopiera JSON"
@@ -642,6 +654,16 @@ export default function MotionStudioPage() {
           </div>
         )}
       </div>
+
+      <SaveTemplateModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        config={config}
+        onSaved={() => {
+          setShowSaveModal(false);
+          router.push('/templates');
+        }}
+      />
     </div>
   );
 }

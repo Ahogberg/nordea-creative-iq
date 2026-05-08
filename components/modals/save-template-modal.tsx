@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, Save, Loader2 } from 'lucide-react';
-import type { VideoConfig } from '@/lib/video-types';
+import type { VideoConfig } from '@/lib/remotion/types';
 import { videoConfigToTemplate } from '@/lib/video-types';
 
 interface SaveTemplateModalProps {
@@ -50,12 +50,14 @@ export function SaveTemplateModal({ isOpen, onClose, config, onSaved }: SaveTemp
     }
   };
 
+  const sceneCount = config.scenes.length;
+  const durationSeconds = config.totalDurationSeconds.toFixed(1);
+  const formatLabel = config.format;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
       <div className="relative bg-[#0a0a1a] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
         <button
           onClick={onClose}
@@ -66,7 +68,8 @@ export function SaveTemplateModal({ isOpen, onClose, config, onSaved }: SaveTemp
 
         <h2 className="text-xl font-semibold text-white mb-1">Spara som mall</h2>
         <p className="text-sm text-white/50 mb-6">
-          Mallen sparar design och timing. Texterna blir variabla platshållare.
+          Mallen sparar scener, format och logo. Texterna blir variabla
+          slottar i Producera-läget.
         </p>
 
         <div className="space-y-4">
@@ -76,7 +79,7 @@ export function SaveTemplateModal({ isOpen, onClose, config, onSaved }: SaveTemp
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="T.ex. Sparande Q1 2025"
+              placeholder="T.ex. Sparande Q1 2026"
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
             />
           </div>
@@ -92,14 +95,13 @@ export function SaveTemplateModal({ isOpen, onClose, config, onSaved }: SaveTemp
             />
           </div>
 
-          {/* Preview what will be saved */}
           <div className="bg-white/5 rounded-lg p-4">
             <p className="text-xs text-white/40 mb-2">Sparas i mallen:</p>
             <ul className="text-xs text-white/60 space-y-1">
-              <li>• Bakgrund: {config.background.type}</li>
-              <li>• Logo: {config.logo.visible ? config.logo.position : 'Dold'}</li>
-              <li>• Textplattor: {config.textPlates.length} st</li>
-              <li>• Duration: {(config.durationInFrames / config.fps).toFixed(1)}s</li>
+              <li>• Scener: {sceneCount} st ({config.scenes.map((s) => s.type).join(', ')})</li>
+              <li>• Format: {formatLabel}</li>
+              <li>• Logo: {config.showLogo && config.logo?.url ? 'Ja' : 'Nej'}</li>
+              <li>• Längd: {durationSeconds}s</li>
             </ul>
           </div>
 

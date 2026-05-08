@@ -14,7 +14,7 @@ import {
   Package,
 } from 'lucide-react';
 import type { Template } from '@/lib/video-types';
-import { VIDEO_FORMATS, templateToVideoConfig, calculateTotalVideos } from '@/lib/video-types';
+import { VIDEO_FORMATS, extractVariantSeeds } from '@/lib/video-types';
 
 function ProduceContent() {
   const searchParams = useSearchParams();
@@ -44,14 +44,11 @@ function ProduceContent() {
         const { template } = await res.json();
         setTemplate(template);
 
-        const defaultHeadline = template.default_texts.find((t: { placeholder: string; text: string }) => t.placeholder === 'headline')?.text || '';
-        const defaultBody = template.default_texts.find((t: { placeholder: string; text: string }) => t.placeholder === 'body')?.text || '';
-        const defaultCta = template.default_texts.find((t: { placeholder: string; text: string }) => t.placeholder === 'cta')?.text || '';
-
-        setHeadlines([defaultHeadline]);
-        setBodies([defaultBody]);
-        setCtas([defaultCta]);
-        setSelectedFormats(template.formats || ['story', 'feed']);
+        const seeds = extractVariantSeeds(template.config);
+        setHeadlines([seeds.headline]);
+        setBodies([seeds.body]);
+        setCtas([seeds.cta]);
+        setSelectedFormats([template.config.format]);
       }
     } catch (error) {
       console.error('Error fetching template:', error);
@@ -322,13 +319,11 @@ function ProduceContent() {
                   style={{
                     width: previewFormat.height > previewFormat.width ? 200 : 340,
                     height: previewFormat.height > previewFormat.width ? 355 : 191,
-                    background: template.background.type === 'gradient'
-                      ? `linear-gradient(${template.background.gradientAngle}deg, ${template.background.gradientStart}, ${template.background.gradientEnd})`
-                      : template.background.solidColor || '#00005E',
+                    backgroundColor: template.config.backgroundColor || '#00005E',
                   }}
                 >
                   {/* Logo placeholder */}
-                  {template.logo.visible && (
+                  {template.config.showLogo && (
                     <div className="absolute top-4 left-1/2 -translate-x-1/2">
                       <div className="w-8 h-8 bg-white/20 rounded flex items-center justify-center text-white text-xs font-bold">N</div>
                     </div>

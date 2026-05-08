@@ -87,21 +87,13 @@ export default function TemplatesPage() {
               {templates.length} {templates.length === 1 ? 'mall' : 'mallar'}
             </p>
           </div>
-          <button
-            onClick={() => {
-              const name = prompt('Namn på ny mall:');
-              if (!name) return;
-              fetch('/api/templates', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, description: '', formats: ['story'], text_structure: [], background: { type: 'solid', solidColor: '#0000A0' } }),
-              }).then(() => fetchTemplates());
-            }}
+          <Link
+            href="/motion-studio"
             className="px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Skapa ny
-          </button>
+            Skapa ny i Motion Studio
+          </Link>
         </div>
 
         {/* Search and filters */}
@@ -203,21 +195,13 @@ function EmptyState() {
       <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
         Skapa en annons i editorn och spara den som mall för att komma igång med bulk-produktion.
       </p>
-      <button
-        onClick={() => {
-          const name = prompt('Namn på ny mall:');
-          if (!name) return;
-          fetch('/api/templates', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, description: '', formats: ['story'], text_structure: [], background: { type: 'solid', solidColor: '#0000A0' } }),
-          }).then(() => window.location.reload());
-        }}
+      <Link
+        href="/motion-studio"
         className="inline-flex items-center gap-2 px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors"
       >
         <Plus className="w-4 h-4" />
-        Skapa första mallen
-      </button>
+        Skapa i Motion Studio
+      </Link>
     </div>
   );
 }
@@ -235,25 +219,28 @@ function TemplateCard({
 }) {
   const [showMenu, setShowMenu] = useState(false);
 
-  const formatsLabel = template.formats.map(f => {
+  const formatLabel = (() => {
+    const f = template.config.format;
     if (f === 'story') return '9:16';
     if (f === 'feed') return '1:1';
     if (f === 'landscape') return '16:9';
+    if (f === 'vertical') return '4:5';
     return f;
-  }).join(', ');
+  })();
+  const sceneCount = template.config.scenes.length;
 
   if (viewMode === 'list') {
     return (
       <div className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors group">
         <div
           className="w-16 h-16 rounded-lg flex-shrink-0"
-          style={{ backgroundColor: template.background.solidColor || '#00005E' }}
+          style={{ backgroundColor: template.config.backgroundColor || '#00005E' }}
         />
 
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-gray-900 truncate">{template.name}</h3>
           <p className="text-sm text-gray-500">
-            {template.text_structure.length} textplattor &bull; {formatsLabel}
+            {sceneCount} scener &bull; {formatLabel}
           </p>
         </div>
 
@@ -280,11 +267,7 @@ function TemplateCard({
       {/* Thumbnail */}
       <div
         className="aspect-video relative"
-        style={{
-          background: template.background.type === 'gradient'
-            ? `linear-gradient(${template.background.gradientAngle}deg, ${template.background.gradientStart}, ${template.background.gradientEnd})`
-            : template.background.solidColor || '#00005E'
-        }}
+        style={{ backgroundColor: template.config.backgroundColor || '#00005E' }}
       >
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
           <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -308,7 +291,7 @@ function TemplateCard({
           <div className="min-w-0">
             <h3 className="font-medium text-gray-900 truncate">{template.name}</h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              {template.text_structure.length} textplattor &bull; {formatsLabel}
+              {sceneCount} scener &bull; {formatLabel}
             </p>
           </div>
 

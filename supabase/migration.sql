@@ -300,19 +300,17 @@ ON CONFLICT DO NOTHING;
 -- user_id is intentionally TEXT (not UUID + auth.users FK) per
 -- CREATIVEIQ-ROADMAP.md Sprint 3 spec. RBAC + RLS hardening
 -- is scoped to Sprint 11 (Enterprise Prep).
+--
+-- `config` stores the full Motion Studio VideoConfig JSON (lib/remotion/types).
+-- Storing it verbatim means the render pipeline can re-render templates
+-- without any field-name translation.
 CREATE TABLE IF NOT EXISTS public.templates (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id TEXT NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
   thumbnail_url TEXT,
-  duration_frames INTEGER NOT NULL DEFAULT 450,
-  fps INTEGER NOT NULL DEFAULT 30,
-  background JSONB NOT NULL DEFAULT '{}',
-  logo JSONB NOT NULL DEFAULT '{}',
-  text_structure JSONB NOT NULL DEFAULT '[]',
-  default_texts JSONB NOT NULL DEFAULT '[]',
-  formats TEXT[] NOT NULL DEFAULT ARRAY['story', 'feed'],
+  config JSONB NOT NULL,
   is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
   use_count INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
