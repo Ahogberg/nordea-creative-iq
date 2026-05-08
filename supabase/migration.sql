@@ -295,6 +295,66 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- ============================================
+-- TEMPLATES (Sprint 3 — Mallbibliotek)
+-- ============================================
+-- user_id is intentionally TEXT (not UUID + auth.users FK) per
+-- CREATIVEIQ-ROADMAP.md Sprint 3 spec. RBAC + RLS hardening
+-- is scoped to Sprint 11 (Enterprise Prep).
+CREATE TABLE IF NOT EXISTS public.templates (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  thumbnail_url TEXT,
+  duration_frames INTEGER NOT NULL DEFAULT 450,
+  fps INTEGER NOT NULL DEFAULT 30,
+  background JSONB NOT NULL DEFAULT '{}',
+  logo JSONB NOT NULL DEFAULT '{}',
+  text_structure JSONB NOT NULL DEFAULT '[]',
+  default_texts JSONB NOT NULL DEFAULT '[]',
+  formats TEXT[] NOT NULL DEFAULT ARRAY['story', 'feed'],
+  is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
+  use_count INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Auto-update updated_at on row update
+CREATE OR REPLACE FUNCTION public.touch_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS templates_touch_updated_at ON public.templates;
+CREATE TRIGGER templates_touch_updated_at
+  BEFORE UPDATE ON public.templates
+  FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+-- ============================================
+-- PRODUCTION JOBS (Sprint 3 — Bulk Production)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.production_jobs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  template_id UUID REFERENCES public.templates(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  variants JSONB NOT NULL DEFAULT '{"headlines":[],"bodies":[],"ctas":[]}',
+  formats TEXT[] NOT NULL DEFAULT ARRAY['story'],
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  total_videos INTEGER NOT NULL DEFAULT 0,
+  completed_videos INTEGER NOT NULL DEFAULT 0,
+  output_urls TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  zip_url TEXT,
+  error_message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+-- ============================================
 -- INDEXES
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_ad_analyses_user_id ON public.ad_analyses(user_id);
@@ -302,3 +362,10 @@ CREATE INDEX IF NOT EXISTS idx_ad_analyses_created_at ON public.ad_analyses(crea
 CREATE INDEX IF NOT EXISTS idx_generated_copies_user_id ON public.generated_copies(user_id);
 CREATE INDEX IF NOT EXISTS idx_campaign_plans_user_id ON public.campaign_plans(user_id);
 CREATE INDEX IF NOT EXISTS idx_personas_is_default ON public.personas(is_default);
+CREATE INDEX IF NOT EXISTS idx_templates_user_id ON public.templates(user_id);
+CREATE INDEX IF NOT EXISTS idx_templates_updated_at ON public.templates(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_templates_favorite ON public.templates(is_favorite) WHERE is_favorite = TRUE;
+CREATE INDEX IF NOT EXISTS idx_production_jobs_user_id ON public.production_jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_production_jobs_status ON public.production_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_production_jobs_created_at ON public.production_jobs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_production_jobs_template ON public.production_jobs(template_id);
