@@ -32,12 +32,14 @@ import {
   Plus,
   Minus,
   Save,
+  Zap,
 } from 'lucide-react';
-import type { VideoConfig, Scene, ElementTransform, LogoConfig } from '@/lib/remotion/types';
-import { DEFAULT_VIDEO_CONFIG } from '@/lib/remotion/types';
+import type { VideoConfig, Scene, ElementTransform, LogoConfig, MotionConfig } from '@/lib/remotion/types';
+import { DEFAULT_VIDEO_CONFIG, DEFAULT_MOTION_CONFIG } from '@/lib/remotion/types';
 import { FORMAT_PRESETS } from '@/lib/remotion/styles';
 import { LogoUploader } from '@/components/motion-studio/LogoUploader';
 import { SaveTemplateModal } from '@/components/modals/save-template-modal';
+import { MotionPanel } from '@/components/editor/motion-panel';
 
 // Dynamic import — react-moveable pulls in a non-trivial dep tree and is
 // only needed when the user opens edit mode.
@@ -143,6 +145,7 @@ export default function MotionStudioPage() {
   const [latestRender, setLatestRender] = useState<RenderRecord | null>(null);
   const [editingLogo, setEditingLogo] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [motionOpen, setMotionOpen] = useState(false);
 
   const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -151,6 +154,10 @@ export default function MotionStudioPage() {
 
   const handleLogoChange = useCallback((logo: LogoConfig | undefined) => {
     setConfig((prev) => ({ ...prev, logo, showLogo: logo?.url ? true : prev.showLogo }));
+  }, []);
+
+  const handleMotionChange = useCallback((motion: MotionConfig) => {
+    setConfig((prev) => ({ ...prev, motion }));
   }, []);
 
   const handleLogoTransform = useCallback((transform: ElementTransform) => {
@@ -555,6 +562,34 @@ export default function MotionStudioPage() {
             {/* Logo uploader — always visible at top */}
             <div className="mb-4">
               <LogoUploader logo={config.logo} onChange={handleLogoChange} />
+            </div>
+
+            {/* Motion accordion — open to live-tune motion language while preview plays */}
+            <div className="mb-4 bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMotionOpen((v) => !v)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Zap className="w-4 h-4 text-[#0000A0] shrink-0" />
+                  <span className="text-sm font-medium text-gray-900">Motion</span>
+                  <span className="text-xs text-gray-500 truncate">
+                    · {(config.motion ?? DEFAULT_MOTION_CONFIG).logo.reveal} · {(config.motion ?? DEFAULT_MOTION_CONFIG).text.stagger} · {(config.motion ?? DEFAULT_MOTION_CONFIG).transitions.style}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${motionOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {motionOpen && (
+                <div className="px-4 pb-4 pt-3 border-t border-gray-200">
+                  <MotionPanel
+                    motion={config.motion ?? DEFAULT_MOTION_CONFIG}
+                    onChange={handleMotionChange}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="motion-scene-list-header">

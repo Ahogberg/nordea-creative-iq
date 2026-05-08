@@ -1,9 +1,13 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { counterValue, fadeSlideUp, fadeIn, scalePop, s2f } from "../utils";
+import { fadeSlideUp, fadeIn, s2f } from "../utils";
 import { colors, fonts } from "../styles";
 import { positionedElement, isInline } from "../scene-utils";
-import type { CounterScene as CounterSceneProps } from "../types";
+import type { CounterScene as CounterSceneProps, MotionConfig } from "../types";
+import { DEFAULT_MOTION_CONFIG } from "../types";
+import { CountingNumber } from "../animations/CountingNumber";
+
+const FPS = 30;
 
 /**
  * Element IDs for per-element transforms: "label", "value", "description"
@@ -11,21 +15,17 @@ import type { CounterScene as CounterSceneProps } from "../types";
 export const CounterSceneComponent: React.FC<{
   scene: CounterSceneProps;
   width: number;
-}> = ({ scene, width }) => {
+  motion?: MotionConfig;
+  durationFrames?: number;
+}> = ({ scene, width, motion }) => {
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  const m = motion ?? DEFAULT_MOTION_CONFIG;
 
   const labelAnim = fadeSlideUp(frame, 5, 15, 30);
   const counterStart = s2f(0.4);
-  const counterDuration = s2f(1.8);
-  const value = counterValue(frame, counterStart, counterDuration, scene.fromValue, scene.toValue);
   const counterOpacity = fadeIn(frame, counterStart - 3, 10);
-  const counterScale = scalePop(frame, counterStart, 22, 1.08);
   const descAnim = fadeSlideUp(frame, s2f(1.5), 15, 25);
-
-  const formatted = scene.prefix
-    ? `${scene.prefix}${Math.round(value).toLocaleString("sv-SE")}${scene.suffix || ""}`
-    : `${Math.round(value).toLocaleString("sv-SE")}${scene.suffix || ""}`;
 
   const labelNode = (
     <div
@@ -43,7 +43,24 @@ export const CounterSceneComponent: React.FC<{
     </div>
   );
 
-  const valueNode = (
+  // When numbers.enabled, animate the count-up via CountingNumber.
+  // When disabled, render the to-value as a static, faded-in label.
+  const valueNode = m.numbers.enabled ? (
+    <div style={{ marginTop: 10 * scale }}>
+      <CountingNumber
+        from={scene.fromValue}
+        to={scene.toValue}
+        startFrame={counterStart}
+        durationFrames={m.numbers.duration}
+        fontSize={Math.round(120 * scale)}
+        fontWeight={900}
+        color={colors.white}
+        prefix={scene.prefix || ""}
+        suffix={scene.suffix || ""}
+        fontFamily={fonts.headline}
+      />
+    </div>
+  ) : (
     <div
       style={{
         fontFamily: fonts.headline,
@@ -52,11 +69,10 @@ export const CounterSceneComponent: React.FC<{
         color: colors.white,
         marginTop: 10 * scale,
         opacity: counterOpacity,
-        transform: `scale(${counterScale})`,
         whiteSpace: "nowrap",
       }}
     >
-      {formatted}
+      {`${scene.prefix || ""}${Math.round(scene.toValue).toLocaleString("sv-SE")}${scene.suffix || ""}`}
     </div>
   );
 
