@@ -44,6 +44,7 @@ import { MotionPanel } from '@/components/editor/motion-panel';
 import { QAModal } from '@/components/qa/qa-modal';
 import { extractVariantSeeds } from '@/lib/video-types';
 import type { QAReport } from '@/lib/qa/types';
+import { CostTracker } from '@/components/ai/cost-tracker';
 
 // Dynamic import — react-moveable pulls in a non-trivial dep tree and is
 // only needed when the user opens edit mode.
@@ -645,6 +646,12 @@ export default function MotionStudioPage() {
                   />
                 </div>
               )}
+            </div>
+
+            {/* AI usage / cost tracker — visible budget signal so the user
+                sees if external providers are being called (or stubbed). */}
+            <div className="mb-4">
+              <CostTracker variant="light" />
             </div>
 
             <div className="motion-scene-list-header">

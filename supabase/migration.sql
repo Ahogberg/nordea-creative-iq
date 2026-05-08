@@ -419,6 +419,46 @@ INSERT INTO public.qa_thresholds (product_type, required_disclaimers) VALUES
 ON CONFLICT (product_type) DO NOTHING;
 
 -- ============================================
+-- AI GENERATIONS (Sprint 6 — Provider layer)
+-- ============================================
+-- One row per provider call (video/image gen, stock search). Used for:
+--   1. Cost tracking — sum cost_usd per user_id over the period
+--   2. Cache — query by cache_key for dedup hits
+--   3. Audit — what was generated when, with what prompt
+-- Stubbed external-provider attempts also land here with status='stubbed'
+-- so we can show "N stubbed calls — pending approval" in the UI.
+CREATE TABLE IF NOT EXISTS public.ai_generations (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('video', 'image', 'stock-search')),
+  provider TEXT NOT NULL,
+  model TEXT,
+  prompt TEXT,
+  params JSONB DEFAULT '{}'::jsonb,
+  result_url TEXT,
+  thumbnail_url TEXT,
+  cache_key TEXT,
+  cache_hit BOOLEAN DEFAULT FALSE,
+  cost_usd NUMERIC DEFAULT 0,
+  cost_currency TEXT DEFAULT 'USD',
+  latency_ms INTEGER,
+  status TEXT NOT NULL CHECK (status IN ('success', 'failed', 'cached', 'stubbed')),
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
+-- USER CREDITS (Sprint 6 — monthly budget tracking)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.user_credits (
+  user_id TEXT PRIMARY KEY,
+  monthly_budget_usd NUMERIC DEFAULT 100,
+  current_period_spend_usd NUMERIC DEFAULT 0,
+  period_start DATE DEFAULT CURRENT_DATE,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
 -- INDEXES
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_ad_analyses_user_id ON public.ad_analyses(user_id);
@@ -437,3 +477,7 @@ CREATE INDEX IF NOT EXISTS idx_qa_runs_user_id ON public.qa_runs(user_id);
 CREATE INDEX IF NOT EXISTS idx_qa_runs_status ON public.qa_runs(status);
 CREATE INDEX IF NOT EXISTS idx_qa_runs_creative ON public.qa_runs(creative_kind, creative_ref);
 CREATE INDEX IF NOT EXISTS idx_qa_runs_created_at ON public.qa_runs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_gen_user ON public.ai_generations(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_gen_cache ON public.ai_generations(cache_key) WHERE cache_hit = FALSE AND status = 'success';
+CREATE INDEX IF NOT EXISTS idx_ai_gen_provider ON public.ai_generations(provider);
+CREATE INDEX IF NOT EXISTS idx_ai_gen_created_at ON public.ai_generations(created_at DESC);
