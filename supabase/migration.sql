@@ -353,6 +353,72 @@ CREATE TABLE IF NOT EXISTS public.production_jobs (
 );
 
 -- ============================================
+-- QA RUNS (Sprint 5 — Persona-driven QA Gate)
+-- ============================================
+-- One row per QA invocation. The four checks run in parallel and their
+-- results land in the *_results JSONB columns. status drives the export
+-- block in the UI: 'fail' = export disabled, 'warn' = reviewer approval,
+-- 'pass' = open. Like Sprint 3 user_id is TEXT (RLS comes in Sprint 11).
+CREATE TABLE IF NOT EXISTS public.qa_runs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  creative_kind TEXT NOT NULL CHECK (creative_kind IN ('video', 'banner', 'copy', 'template')),
+  creative_ref TEXT NOT NULL,
+  creative_metadata JSONB,
+  persona_score NUMERIC,
+  tov_score NUMERIC,
+  compliance_score NUMERIC,
+  heatmap_score NUMERIC,
+  total_score NUMERIC,
+  status TEXT NOT NULL CHECK (status IN ('pass', 'warn', 'fail', 'running', 'error')),
+  persona_results JSONB DEFAULT '{}'::jsonb,
+  tov_results JSONB DEFAULT '{}'::jsonb,
+  compliance_results JSONB DEFAULT '{}'::jsonb,
+  heatmap_results JSONB DEFAULT '{}'::jsonb,
+  blocking_issues JSONB DEFAULT '[]'::jsonb,
+  warnings JSONB DEFAULT '[]'::jsonb,
+  suggestions JSONB DEFAULT '[]'::jsonb,
+  approved_by TEXT,
+  approved_at TIMESTAMPTZ,
+  approval_note TEXT,
+  duration_ms INTEGER,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+-- ============================================
+-- QA THRESHOLDS (per product category)
+-- ============================================
+-- The code-level constants in lib/qa/thresholds.ts are the source of truth
+-- for now; this table is the future hook for per-product overrides without
+-- redeploys. Seeded with the same defaults used in code.
+CREATE TABLE IF NOT EXISTS public.qa_thresholds (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  product_type TEXT NOT NULL UNIQUE,
+  pass_threshold NUMERIC DEFAULT 80,
+  warn_threshold NUMERIC DEFAULT 70,
+  persona_weight NUMERIC DEFAULT 0.35,
+  tov_weight NUMERIC DEFAULT 0.20,
+  compliance_weight NUMERIC DEFAULT 0.30,
+  heatmap_weight NUMERIC DEFAULT 0.15,
+  required_disclaimers JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.qa_thresholds (product_type, required_disclaimers) VALUES
+  ('general', '[]'::jsonb),
+  ('mortgage', '["effective_interest_rate", "amortization_info"]'::jsonb),
+  ('savings', '["risk_warning", "past_performance_disclaimer"]'::jsonb),
+  ('loans', '["effective_interest_rate", "total_cost"]'::jsonb),
+  ('pension', '["risk_warning"]'::jsonb),
+  ('insurance', '["coverage_terms"]'::jsonb),
+  ('cards', '["interest_rate", "annual_fee"]'::jsonb),
+  ('business', '[]'::jsonb)
+ON CONFLICT (product_type) DO NOTHING;
+
+-- ============================================
 -- INDEXES
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_ad_analyses_user_id ON public.ad_analyses(user_id);
@@ -367,3 +433,7 @@ CREATE INDEX IF NOT EXISTS idx_production_jobs_user_id ON public.production_jobs
 CREATE INDEX IF NOT EXISTS idx_production_jobs_status ON public.production_jobs(status);
 CREATE INDEX IF NOT EXISTS idx_production_jobs_created_at ON public.production_jobs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_production_jobs_template ON public.production_jobs(template_id);
+CREATE INDEX IF NOT EXISTS idx_qa_runs_user_id ON public.qa_runs(user_id);
+CREATE INDEX IF NOT EXISTS idx_qa_runs_status ON public.qa_runs(status);
+CREATE INDEX IF NOT EXISTS idx_qa_runs_creative ON public.qa_runs(creative_kind, creative_ref);
+CREATE INDEX IF NOT EXISTS idx_qa_runs_created_at ON public.qa_runs(created_at DESC);

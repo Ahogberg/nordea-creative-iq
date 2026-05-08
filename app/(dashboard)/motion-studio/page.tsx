@@ -33,6 +33,7 @@ import {
   Minus,
   Save,
   Zap,
+  ShieldCheck,
 } from 'lucide-react';
 import type { VideoConfig, Scene, ElementTransform, LogoConfig, MotionConfig } from '@/lib/remotion/types';
 import { DEFAULT_VIDEO_CONFIG, DEFAULT_MOTION_CONFIG } from '@/lib/remotion/types';
@@ -40,6 +41,9 @@ import { FORMAT_PRESETS } from '@/lib/remotion/styles';
 import { LogoUploader } from '@/components/motion-studio/LogoUploader';
 import { SaveTemplateModal } from '@/components/modals/save-template-modal';
 import { MotionPanel } from '@/components/editor/motion-panel';
+import { QAModal } from '@/components/qa/qa-modal';
+import { extractVariantSeeds } from '@/lib/video-types';
+import type { QAReport } from '@/lib/qa/types';
 
 // Dynamic import — react-moveable pulls in a non-trivial dep tree and is
 // only needed when the user opens edit mode.
@@ -146,6 +150,9 @@ export default function MotionStudioPage() {
   const [editingLogo, setEditingLogo] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [motionOpen, setMotionOpen] = useState(false);
+  const [qaModalOpen, setQAModalOpen] = useState(false);
+  const [qaLoading, setQALoading] = useState(false);
+  const [qaReport, setQAReport] = useState<QAReport | null>(null);
 
   const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -159,6 +166,42 @@ export default function MotionStudioPage() {
   const handleMotionChange = useCallback((motion: MotionConfig) => {
     setConfig((prev) => ({ ...prev, motion }));
   }, []);
+
+  const handleRunQA = useCallback(async () => {
+    setQAModalOpen(true);
+    setQALoading(true);
+    setQAReport(null);
+
+    try {
+      const seeds = extractVariantSeeds(config);
+      const res = await fetch('/api/qa/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creative_kind: 'video',
+          creative_ref: 'draft',
+          metadata: {
+            headline: seeds.headline,
+            body: seeds.body,
+            cta: seeds.cta,
+            duration_s: config.totalDurationSeconds,
+            has_logo: config.showLogo,
+          },
+        }),
+      });
+
+      if (!res.ok) throw new Error('QA gate failed');
+      const report = (await res.json()) as QAReport;
+      setQAReport(report);
+    } catch (error) {
+      console.error('QA gate error:', error);
+      // Surface error in the modal — keep it open so the user sees what happened.
+      // QAReportView's loading=false + report=null branch handles this gracefully.
+      setQAReport(null);
+    } finally {
+      setQALoading(false);
+    }
+  }, [config]);
 
   const handleLogoTransform = useCallback((transform: ElementTransform) => {
     setConfig((prev) => ({
@@ -501,6 +544,18 @@ export default function MotionStudioPage() {
 
           <div className="motion-toolbar-actions">
             <button
+              onClick={handleRunQA}
+              disabled={qaLoading}
+              className="motion-toolbar-btn"
+              title="Kör QA-gate (persona-jury, ToV, compliance, heatmap)"
+            >
+              {qaLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="w-4 h-4" />
+              )}
+            </button>
+            <button
               onClick={() => setShowSaveModal(true)}
               className="motion-toolbar-btn"
               title="Spara som mall"
@@ -697,6 +752,21 @@ export default function MotionStudioPage() {
         onSaved={() => {
           setShowSaveModal(false);
           router.push('/templates');
+        }}
+      />
+
+      <QAModal
+        isOpen={qaModalOpen}
+        onClose={() => setQAModalOpen(false)}
+        report={qaReport}
+        loading={qaLoading}
+        onRetry={handleRunQA}
+        onExport={() => {
+          setQAModalOpen(false);
+          // Trigger render after a passed QA — same flow as the Render-button
+          // would. Sprint 5 leaves this as a TODO since the existing
+          // handleRender wires straight to /api/motion-render.
+          handleRender();
         }}
       />
     </div>
