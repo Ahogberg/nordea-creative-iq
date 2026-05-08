@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { calculateTotalVideos } from '@/lib/video-types';
+import { doProduction } from '@/lib/production/worker';
 
-// GET - List production jobs
+// Producer-worker kicks Chromium for every video — the request returns as
+// soon as the row is inserted, but the worker keeps running in-process.
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+// GET - List recent production jobs
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -22,20 +28,28 @@ export async function GET() {
   }
 }
 
-// POST - Create production job
+// POST - Create production job and kick off the worker. Returns the job row
+// immediately; clients poll /api/production/[id] for status + zip_url.
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const body = await request.json();
 
+    if (!body?.template_id) {
+      return NextResponse.json(
+        { error: 'template_id is required' },
+        { status: 400 }
+      );
+    }
+
     const totalVideos = calculateTotalVideos(body.variants, body.formats);
 
-    const { data, error } = await supabase
+    const { data: job, error } = await supabase
       .from('production_jobs')
       .insert({
         user_id: 'default-user',
         template_id: body.template_id,
-        name: body.name,
+        name: body.name || `Production ${new Date().toISOString()}`,
         variants: body.variants,
         formats: body.formats,
         total_videos: totalVideos,
@@ -46,10 +60,16 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    // TODO: Trigger actual video rendering job here
-    // For now, we'll simulate with a status update
+    // Fire-and-forget: worker runs after the response is sent. setImmediate
+    // detaches the promise from the request lifetime so the response isn't
+    // held open while the renders complete.
+    setImmediate(() => {
+      doProduction(job.id).catch((err) => {
+        console.error('[producer] uncaught worker error:', err);
+      });
+    });
 
-    return NextResponse.json({ job: data, totalVideos });
+    return NextResponse.json({ job, totalVideos }, { status: 202 });
   } catch (error) {
     console.error('[CreativeIQ] Error creating job:', error);
     return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });

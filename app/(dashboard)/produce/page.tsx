@@ -12,8 +12,10 @@ import {
   Loader2,
   Sparkles,
   Package,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
-import type { Template } from '@/lib/video-types';
+import type { Template, ProductionJob } from '@/lib/video-types';
 import { VIDEO_FORMATS, extractVariantSeeds } from '@/lib/video-types';
 
 function ProduceContent() {
@@ -24,6 +26,7 @@ function ProduceContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isProducing, setIsProducing] = useState(false);
+  const [activeJob, setActiveJob] = useState<ProductionJob | null>(null);
 
   // Variants state
   const [headlines, setHeadlines] = useState<string[]>(['']);
@@ -115,15 +118,46 @@ function ProduceContent() {
       });
 
       if (res.ok) {
-        const { totalVideos } = await res.json();
-        alert(`Produktion startad! ${totalVideos} videor kommer genereras.`);
+        const { job } = await res.json();
+        setActiveJob(job as ProductionJob);
+      } else {
+        const { error } = await res.json().catch(() => ({ error: 'Okänt fel' }));
+        alert(`Kunde inte starta produktion: ${error}`);
       }
     } catch (error) {
       console.error('Error starting production:', error);
+      alert('Kunde inte starta produktion. Försök igen.');
     } finally {
       setIsProducing(false);
     }
   };
+
+  // Poll the active job for progress until it lands in a terminal state.
+  useEffect(() => {
+    if (!activeJob || activeJob.status === 'completed' || activeJob.status === 'failed') {
+      return;
+    }
+    const jobId = activeJob.id;
+    let cancelled = false;
+
+    const tick = async () => {
+      try {
+        const res = await fetch(`/api/production/${jobId}`);
+        if (!res.ok) return;
+        const { job } = await res.json();
+        if (cancelled) return;
+        setActiveJob(job as ProductionJob);
+      } catch {
+        // transient — keep polling
+      }
+    };
+
+    const interval = setInterval(tick, 2000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [activeJob]);
 
   // Add/remove variant helpers
   const addHeadline = () => setHeadlines([...headlines, '']);
@@ -427,6 +461,134 @@ function ProduceContent() {
             </div>
           </div>
         </div>
+      </div>
+
+      {activeJob && (
+        <ProductionProgressOverlay
+          job={activeJob}
+          onClose={() => setActiveJob(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ProductionProgressOverlay({
+  job,
+  onClose,
+}: {
+  job: ProductionJob;
+  onClose: () => void;
+}) {
+  const isDone = job.status === 'completed';
+  const isFailed = job.status === 'failed';
+  const isRunning = job.status === 'pending' || job.status === 'processing';
+  const progressPercent =
+    job.total_videos > 0
+      ? Math.round((job.completed_videos / job.total_videos) * 100)
+      : 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={isRunning ? undefined : onClose}
+      />
+      <div className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <button
+          onClick={onClose}
+          disabled={isRunning}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+          title={isRunning ? 'Vänta tills produktionen är klar' : 'Stäng'}
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {isRunning && (
+          <>
+            <div className="flex items-center gap-3 mb-4">
+              <Loader2 className="w-5 h-5 text-nordea-blue animate-spin" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Producerar {job.total_videos} videor
+              </h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              {job.status === 'pending'
+                ? 'Förbereder rendering...'
+                : `Renderar video ${job.completed_videos + 1} av ${job.total_videos}`}
+            </p>
+            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+              <div
+                className="h-full bg-nordea-blue transition-all duration-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>{job.completed_videos} av {job.total_videos} klara</span>
+              <span>{progressPercent}%</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-4">
+              Renderingen tar tid — varje video kräver Chromium. Du kan lämna
+              den här sidan, jobbet fortsätter i bakgrunden.
+            </p>
+          </>
+        )}
+
+        {isDone && (
+          <>
+            <div className="flex items-center gap-3 mb-4">
+              <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Klar! {job.completed_videos} av {job.total_videos} videor producerade
+              </h3>
+            </div>
+            {job.error_message && (
+              <p className="text-sm text-amber-600 mb-4">{job.error_message}</p>
+            )}
+            <p className="text-sm text-gray-500 mb-6">
+              Alla videor är paketerade i en ZIP-fil — ladda ner och dela med
+              teamet.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 font-medium transition-colors"
+              >
+                Stäng
+              </button>
+              {job.zip_url && (
+                <a
+                  href={job.zip_url}
+                  download
+                  className="flex-1 px-4 py-3 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Ladda ner ZIP
+                </a>
+              )}
+            </div>
+          </>
+        )}
+
+        {isFailed && (
+          <>
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="w-6 h-6 text-red-500" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Produktionen misslyckades
+              </h3>
+            </div>
+            <p className="text-sm text-red-600 mb-6">
+              {job.error_message || 'Okänt fel. Kolla loggar för detaljer.'}
+            </p>
+            <button
+              onClick={onClose}
+              className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 font-medium transition-colors"
+            >
+              Stäng
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
