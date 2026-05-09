@@ -22,6 +22,7 @@ import {
   LogOut,
   User,
 } from 'lucide-react';
+import { NordeaLogo } from '@/components/brand/NordeaLogo';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -49,10 +50,10 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar hidden lg:flex">
-      {/* Logo */}
+      {/* Logo — uses NordeaLogo with on-disk fallback to "N + Nordea" lockup
+          if the SVG/PNG assets aren't available */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">N</div>
-        <span className="sidebar-logo-text">CreativeIQ</span>
+        <NordeaLogo variant="dark" size={32} withProductName />
       </div>
 
       {/* Main Navigation */}

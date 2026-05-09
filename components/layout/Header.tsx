@@ -24,6 +24,7 @@ import {
   Users,
 } from 'lucide-react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { NordeaLogo } from '@/components/brand/NordeaLogo';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -67,11 +68,8 @@ export function Header({ user }: HeaderProps) {
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0 bg-white border-gray-200">
           <div className="flex items-center h-16 px-5 border-b border-gray-200">
-            <Link href="/dashboard" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-[#0000A0] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">N</span>
-              </div>
-              <span className="font-semibold text-gray-900">CreativeIQ</span>
+            <Link href="/dashboard">
+              <NordeaLogo variant="dark" size={28} withProductName />
             </Link>
           </div>
           <nav className="px-3 py-4 space-y-1">
@@ -98,10 +96,7 @@ export function Header({ user }: HeaderProps) {
       </Sheet>
 
       <div className="lg:hidden flex items-center gap-2">
-        <div className="w-7 h-7 bg-[#0000A0] rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-xs">N</span>
-        </div>
-        <span className="font-semibold text-gray-900 text-sm">CreativeIQ</span>
+        <NordeaLogo variant="dark" size={24} withProductName />
       </div>
 
       {/* Spacer for desktop */}

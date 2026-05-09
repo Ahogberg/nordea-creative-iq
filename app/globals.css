@@ -1561,3 +1561,129 @@ label, [data-slot="label"] { color: var(--text-primary); }
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
 }
+
+/* ============================================================================
+   SPRINT 6.5: NORDEA DARK SURFACE TOKENS + UTILITY CLASSES
+   ============================================================================
+   The base app is LIGHT theme by design (white sidebar, #F7F8FA background,
+   Nordea-blue accents). These tokens are OPT-IN for dark Nordea surfaces —
+   modals, overlays, the Motion Studio QA/Save/Render modals, login splash.
+   They do NOT override :root or change the global theme. Apply via the
+   .nordea-dark utility class on a wrapper element to scope them.
+
+   Non-goals (deliberately excluded — see commit notes for Sprint 6.5):
+   - Changing the global background to Nordea Deep (would break hundreds of
+     existing styles)
+   - Replacing the existing .glass-card, .btn-primary, .sidebar-* classes
+   - Forcing components into dark mode
+
+   Goals:
+   - Centralised dark-Nordea palette callers can opt into
+   - Utility classes (.nordea-card, .nordea-btn-*) for new dark surfaces
+*/
+
+.nordea-dark {
+  /* Backgrounds — solid blue hierarchy on dark surfaces */
+  --nordea-bg-primary: #00005E;
+  --nordea-bg-surface: #00007A;
+  --nordea-bg-elevated: #0000A0;
+  --nordea-bg-card: rgba(255, 255, 255, 0.03);
+  --nordea-bg-hover: rgba(255, 255, 255, 0.06);
+  --nordea-bg-active: rgba(255, 255, 255, 0.08);
+
+  /* Borders */
+  --nordea-border-subtle: rgba(255, 255, 255, 0.06);
+  --nordea-border-default: rgba(255, 255, 255, 0.08);
+  --nordea-border-emphasis: rgba(255, 255, 255, 0.16);
+
+  /* Brand accents */
+  --nordea-blue: #0000A0;
+  --nordea-deep: #00005E;
+  --nordea-teal: #40BFA3;
+  --nordea-teal-hover: #4DCFB3;
+  --nordea-teal-pressed: #36A88E;
+  --nordea-amber: #E2BD2C;
+  --nordea-rose: #C8575C;
+
+  /* Text on dark */
+  --nordea-text-primary: rgba(255, 255, 255, 1);
+  --nordea-text-secondary: rgba(255, 255, 255, 0.70);
+  --nordea-text-tertiary: rgba(255, 255, 255, 0.50);
+  --nordea-text-muted: rgba(255, 255, 255, 0.30);
+  --nordea-text-on-teal: #00005E;
+
+  /* Shadows tuned for dark */
+  --nordea-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --nordea-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --nordea-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  background: var(--nordea-bg-primary);
+  color: var(--nordea-text-primary);
+}
+
+/* Cards on dark surfaces */
+.nordea-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.nordea-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Primary button — teal CTA (passes contrast on Nordea Deep + light) */
+.nordea-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #40BFA3;
+  color: #00005E;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.nordea-btn-primary:hover { background: #4DCFB3; }
+.nordea-btn-primary:active { background: #36A88E; }
+.nordea-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Secondary button — for dark surfaces */
+.nordea-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.nordea-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Status pills */
+.nordea-pill-pass { background: rgba(64, 191, 163, 0.15); color: #40BFA3; }
+.nordea-pill-warn { background: rgba(226, 189, 44, 0.15); color: #E2BD2C; }
+.nordea-pill-fail { background: rgba(200, 87, 92, 0.15); color: #C8575C; }
+.nordea-pill-pass,
+.nordea-pill-warn,
+.nordea-pill-fail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
