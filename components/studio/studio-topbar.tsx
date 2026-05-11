@@ -1,12 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { Save, Download, Sparkles, ShieldCheck, Loader2 } from "lucide-react";
 import { useStudioStore } from "@/lib/studio/store";
+import { SaveTemplateModal } from "./save-template-modal";
 
 export function StudioTopbar() {
   const config = useStudioStore((s) => s.config);
   const generateVariants = useStudioStore((s) => s.generateVariants);
   const isGeneratingVariants = useStudioStore((s) => s.isGeneratingVariants);
+
+  const [saveOpen, setSaveOpen] = useState(false);
 
   const totalDuration = config.scenes.reduce(
     (sum, s) => sum + (s.durationSeconds || 0),
@@ -40,9 +44,8 @@ export function StudioTopbar() {
         </button>
         <button
           type="button"
-          disabled
-          title="Kommer i Sprint 8b.3"
-          className="nordea-btn nordea-btn-secondary nordea-btn-sm opacity-50 cursor-not-allowed"
+          onClick={() => setSaveOpen(true)}
+          className="nordea-btn nordea-btn-secondary nordea-btn-sm"
         >
           <Save className="w-4 h-4" />
           Spara som mall
@@ -64,6 +67,8 @@ export function StudioTopbar() {
           Exportera
         </button>
       </div>
+
+      <SaveTemplateModal open={saveOpen} onClose={() => setSaveOpen(false)} />
     </div>
   );
 }
