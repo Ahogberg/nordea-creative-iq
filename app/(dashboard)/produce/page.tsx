@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowLeft,
   Wand2,
   Plus,
   X,
@@ -14,9 +13,15 @@ import {
   Package,
   CheckCircle2,
   AlertCircle,
+  Eye,
+  ArrowRight,
+  Rocket,
+  Copy as CopyIcon,
 } from 'lucide-react';
 import type { Template, ProductionJob } from '@/lib/video-types';
 import { VIDEO_FORMATS, extractVariantSeeds } from '@/lib/video-types';
+import { Topbar } from '@/components/layout/topbar';
+import { SectionTitle } from '@/components/layout/section-title';
 
 function ProduceContent() {
   const searchParams = useSearchParams();
@@ -28,16 +33,11 @@ function ProduceContent() {
   const [isProducing, setIsProducing] = useState(false);
   const [activeJob, setActiveJob] = useState<ProductionJob | null>(null);
 
-  // Variants state
   const [headlines, setHeadlines] = useState<string[]>(['']);
   const [bodies, setBodies] = useState<string[]>(['']);
   const [ctas, setCtas] = useState<string[]>(['']);
   const [selectedFormats, setSelectedFormats] = useState<string[]>(['story', 'feed']);
-
-  // AI generation
   const [productDescription, setProductDescription] = useState('');
-
-  // Preview state
   const [previewVariant, setPreviewVariant] = useState({ headline: 0, body: 0, cta: 0, format: 0 });
 
   const fetchTemplate = useCallback(async (id: string) => {
@@ -46,7 +46,6 @@ function ProduceContent() {
       if (res.ok) {
         const { template } = await res.json();
         setTemplate(template);
-
         const seeds = extractVariantSeeds(template.config);
         setHeadlines([seeds.headline]);
         setBodies([seeds.body]);
@@ -62,28 +61,21 @@ function ProduceContent() {
 
   useEffect(() => {
     if (templateId) {
-      const timer = setTimeout(() => { fetchTemplate(templateId); }, 0);
+      const timer = setTimeout(() => fetchTemplate(templateId), 0);
       return () => clearTimeout(timer);
-    } else {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }, [templateId, fetchTemplate]);
 
   const handleGenerateVariants = async () => {
     if (!template) return;
     setIsGenerating(true);
-
     try {
       const res = await fetch('/api/generate-variants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          template,
-          productDescription,
-          channel: 'meta',
-        }),
+        body: JSON.stringify({ template, productDescription, channel: 'meta' }),
       });
-
       if (res.ok) {
         const { variants } = await res.json();
         if (variants.headlines?.length) setHeadlines(variants.headlines);
@@ -100,7 +92,6 @@ function ProduceContent() {
   const handleProduce = async () => {
     if (!template) return;
     setIsProducing(true);
-
     try {
       const res = await fetch('/api/production', {
         method: 'POST',
@@ -109,14 +100,13 @@ function ProduceContent() {
           template_id: template.id,
           name: `${template.name} - ${new Date().toLocaleDateString('sv-SE')}`,
           variants: {
-            headlines: headlines.filter(h => h.trim()),
-            bodies: bodies.filter(b => b.trim()),
-            ctas: ctas.filter(c => c.trim()),
+            headlines: headlines.filter((h) => h.trim()),
+            bodies: bodies.filter((b) => b.trim()),
+            ctas: ctas.filter((c) => c.trim()),
           },
           formats: selectedFormats,
         }),
       });
-
       if (res.ok) {
         const { job } = await res.json();
         setActiveJob(job as ProductionJob);
@@ -132,14 +122,10 @@ function ProduceContent() {
     }
   };
 
-  // Poll the active job for progress until it lands in a terminal state.
   useEffect(() => {
-    if (!activeJob || activeJob.status === 'completed' || activeJob.status === 'failed') {
-      return;
-    }
+    if (!activeJob || activeJob.status === 'completed' || activeJob.status === 'failed') return;
     const jobId = activeJob.id;
     let cancelled = false;
-
     const tick = async () => {
       try {
         const res = await fetch(`/api/production/${jobId}`);
@@ -148,10 +134,9 @@ function ProduceContent() {
         if (cancelled) return;
         setActiveJob(job as ProductionJob);
       } catch {
-        // transient — keep polling
+        /* keep polling */
       }
     };
-
     const interval = setInterval(tick, 2000);
     return () => {
       cancelled = true;
@@ -159,65 +144,36 @@ function ProduceContent() {
     };
   }, [activeJob]);
 
-  // Add/remove variant helpers
-  const addHeadline = () => setHeadlines([...headlines, '']);
-  const addBody = () => setBodies([...bodies, '']);
-  const addCta = () => setCtas([...ctas, '']);
+  const validHeadlines = headlines.filter((h) => h.trim()).length || 1;
+  const validBodies = bodies.filter((b) => b.trim()).length || 1;
+  const validCtas = ctas.filter((c) => c.trim()).length || 1;
+  const totalVideos = validHeadlines * validBodies * validCtas * selectedFormats.length;
 
-  const removeHeadline = (i: number) => setHeadlines(headlines.filter((_, idx) => idx !== i));
-  const removeBody = (i: number) => setBodies(bodies.filter((_, idx) => idx !== i));
-  const removeCta = (i: number) => setCtas(ctas.filter((_, idx) => idx !== i));
-
-  const updateHeadline = (i: number, v: string) => setHeadlines(headlines.map((h, idx) => idx === i ? v : h));
-  const updateBody = (i: number, v: string) => setBodies(bodies.map((b, idx) => idx === i ? v : b));
-  const updateCta = (i: number, v: string) => setCtas(ctas.map((c, idx) => idx === i ? v : c));
-
-  const toggleFormat = (formatId: string) => {
-    setSelectedFormats(prev =>
-      prev.includes(formatId)
-        ? prev.filter(f => f !== formatId)
-        : [...prev, formatId]
-    );
+  const previewTexts = {
+    headline: headlines[previewVariant.headline] || headlines[0] || '',
+    body: bodies[previewVariant.body] || bodies[0] || '',
+    cta: ctas[previewVariant.cta] || ctas[0] || '',
   };
-
-  // Calculate totals
-  const validHeadlines = headlines.filter(h => h.trim()).length || 1;
-  const validBodies = bodies.filter(b => b.trim()).length || 1;
-  const validCtas = ctas.filter(c => c.trim()).length || 1;
-  const totalCombinations = validHeadlines * validBodies * validCtas;
-  const totalVideos = totalCombinations * selectedFormats.length;
-
-  // Get preview config for CSS-based preview
-  const getPreviewTexts = () => {
-    const h = headlines[previewVariant.headline] || headlines[0] || '';
-    const b = bodies[previewVariant.body] || bodies[0] || '';
-    const c = ctas[previewVariant.cta] || ctas[0] || '';
-    return { headline: h, body: b, cta: c };
-  };
-
-  const previewTexts = getPreviewTexts();
-  const previewFormatId = selectedFormats[previewVariant.format] || selectedFormats[0] || 'story';
-  const previewFormat = VIDEO_FORMATS.find(f => f.id === previewFormatId) || VIDEO_FORMATS[0];
 
   if (isLoading) {
     return (
-      <div className="main-content flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+      <div className="min-h-screen bg-nordea-bg flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-nordea-text-tertiary animate-spin" />
       </div>
     );
   }
 
   if (!template) {
     return (
-      <div className="main-content">
-        <div className="max-w-md mx-auto text-center py-20">
-          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Ingen mall vald</h2>
-          <p className="text-gray-500 mb-6">Välj en mall från biblioteket för att starta produktion.</p>
-          <Link
-            href="/templates"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-nordea-blue rounded-lg text-white"
-          >
+      <div className="min-h-screen bg-nordea-bg">
+        <Topbar breadcrumb={['Massproduktion']} />
+        <div className="max-w-md mx-auto text-center py-20 px-4">
+          <Package className="w-12 h-12 text-nordea-text-tertiary mx-auto mb-4" />
+          <h2 className="nordea-display text-xl text-nordea-deep mb-2">Ingen mall vald</h2>
+          <p className="text-nordea-text-tertiary mb-6">
+            Välj en mall från biblioteket för att starta massproduktion.
+          </p>
+          <Link href="/templates" className="nordea-btn nordea-btn-primary">
             Gå till mallbiblioteket
           </Link>
         </div>
@@ -226,249 +182,349 @@ function ProduceContent() {
   }
 
   return (
-    <div className="main-content">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/templates" className="p-2 text-gray-400 hover:text-gray-900 rounded-lg hover:bg-gray-50">
-            <ArrowLeft className="w-5 h-5" />
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar
+        breadcrumb={['Massproduktion', `${template.name}`]}
+        right={
+          <Link href="/templates" className="nordea-btn nordea-btn-ghost">
+            <X className="w-4 h-4" />
+            Avbryt
           </Link>
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Producera varianter</h1>
-            <p className="text-sm text-gray-500">Mall: {template.name}</p>
+        }
+      />
+
+      <div className="grid grid-cols-[1fr_380px] min-h-[calc(100vh-3.5rem)]">
+        {/* LEFT — inputs */}
+        <div className="px-10 py-8 overflow-hidden">
+          <div className="mb-6">
+            <h1 className="nordea-display text-2xl text-nordea-deep">Massproduktion</h1>
+            <p className="text-sm text-nordea-text-tertiary mt-1">
+              Kombinera varianter över olika format. Varje kombination blir en renderad video.
+            </p>
           </div>
-        </div>
 
-        <div className="grid grid-cols-12 gap-6">
-          {/* Left: Variant inputs */}
-          <div className="col-span-12 lg:col-span-5 space-y-6">
-            {/* AI Generation */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-4 h-4 text-nordea-blue" />
-                <h3 className="font-medium text-gray-900">AI-generering</h3>
+          {/* Vald mall */}
+          <div className="nordea-card p-3.5 mb-6 flex items-center gap-3.5">
+            <div className="nordea-placeholder-stripe w-20 h-12">mall</div>
+            <div className="flex-1">
+              <div className="nordea-eyebrow text-[10px] mb-1">Mall</div>
+              <div className="text-sm font-medium text-nordea-text">{template.name}</div>
+              <div className="text-[11px] text-nordea-text-tertiary mt-0.5">
+                {template.config.scenes.length} scener · varumärkesgodkänd
               </div>
-              <textarea
-                value={productDescription}
-                onChange={(e) => setProductDescription(e.target.value)}
-                placeholder="Beskriv kampanjen för att generera varianter automatiskt..."
-                className="w-full h-24 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 resize-none focus:outline-none focus:border-gray-300"
-              />
-              <button
-                onClick={handleGenerateVariants}
-                disabled={isGenerating}
-                className="w-full mt-3 px-4 py-2.5 bg-nordea-blue/10 hover:bg-nordea-blue/20 border border-nordea-blue/30 rounded-lg text-sm font-medium text-nordea-blue transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                {isGenerating ? 'Genererar...' : 'Generera varianter'}
-              </button>
             </div>
+            <Link href="/templates" className="nordea-btn nordea-btn-ghost nordea-btn-sm">
+              <CopyIcon className="w-3.5 h-3.5" />
+              Byt
+            </Link>
+          </div>
 
-            {/* Headlines */}
-            <VariantSection
-              title="Rubriker"
-              items={headlines}
-              onAdd={addHeadline}
-              onRemove={removeHeadline}
-              onUpdate={updateHeadline}
-              placeholder="Skriv rubrik..."
-              selectedIndex={previewVariant.headline}
-              onSelect={(i) => setPreviewVariant(p => ({ ...p, headline: i }))}
+          {/* AI-generering */}
+          <div className="nordea-card p-4 mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-nordea-teal" />
+              <span className="text-xs font-semibold text-nordea-teal uppercase tracking-wider">
+                AI-generering
+              </span>
+            </div>
+            <textarea
+              value={productDescription}
+              onChange={(e) => setProductDescription(e.target.value)}
+              placeholder="Beskriv kampanjen för att generera varianter automatiskt..."
+              className="w-full h-20 px-3.5 py-2.5 nordea-input resize-none text-sm"
+              style={{ height: 'auto', minHeight: '80px' }}
             />
+            <button
+              type="button"
+              onClick={handleGenerateVariants}
+              disabled={isGenerating}
+              className="nordea-btn nordea-btn-secondary nordea-btn-sm nordea-btn-full mt-3"
+            >
+              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+              {isGenerating ? 'Genererar...' : 'Föreslå varianter'}
+            </button>
+          </div>
 
-            {/* Bodies */}
+          {/* Headlines */}
+          <VariantSection
+            title="Rubriker"
+            items={headlines}
+            onAdd={() => setHeadlines([...headlines, ''])}
+            onRemove={(i) => setHeadlines(headlines.filter((_, idx) => idx !== i))}
+            onUpdate={(i, v) => setHeadlines(headlines.map((h, idx) => (idx === i ? v : h)))}
+            placeholder="Skriv rubrik..."
+            selectedIndex={previewVariant.headline}
+            onSelect={(i) => setPreviewVariant((p) => ({ ...p, headline: i }))}
+          />
+
+          <div className="grid grid-cols-2 gap-4 mt-5">
             <VariantSection
               title="Brödtexter"
               items={bodies}
-              onAdd={addBody}
-              onRemove={removeBody}
-              onUpdate={updateBody}
+              onAdd={() => setBodies([...bodies, ''])}
+              onRemove={(i) => setBodies(bodies.filter((_, idx) => idx !== i))}
+              onUpdate={(i, v) => setBodies(bodies.map((b, idx) => (idx === i ? v : b)))}
               placeholder="Skriv brödtext..."
               selectedIndex={previewVariant.body}
-              onSelect={(i) => setPreviewVariant(p => ({ ...p, body: i }))}
+              onSelect={(i) => setPreviewVariant((p) => ({ ...p, body: i }))}
               multiline
             />
-
-            {/* CTAs */}
             <VariantSection
-              title="Call-to-actions"
+              title="CTAs"
               items={ctas}
-              onAdd={addCta}
-              onRemove={removeCta}
-              onUpdate={updateCta}
+              onAdd={() => setCtas([...ctas, ''])}
+              onRemove={(i) => setCtas(ctas.filter((_, idx) => idx !== i))}
+              onUpdate={(i, v) => setCtas(ctas.map((c, idx) => (idx === i ? v : c)))}
               placeholder="Skriv CTA..."
               selectedIndex={previewVariant.cta}
-              onSelect={(i) => setPreviewVariant(p => ({ ...p, cta: i }))}
+              onSelect={(i) => setPreviewVariant((p) => ({ ...p, cta: i }))}
+              cta
             />
-
-            {/* Formats */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <h3 className="font-medium text-gray-900 mb-4">Format</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {VIDEO_FORMATS.map((format) => (
-                  <button
-                    key={format.id}
-                    onClick={() => toggleFormat(format.id)}
-                    className={`px-4 py-3 rounded-lg text-left transition-colors ${
-                      selectedFormats.includes(format.id)
-                        ? 'bg-nordea-blue/10 border border-nordea-blue/40 text-nordea-blue'
-                        : 'bg-gray-50 border border-gray-200 text-gray-500 hover:bg-gray-100'
-                    }`}
-                  >
-                    <span className="block text-sm font-medium">{format.label}</span>
-                    <span className="block text-xs opacity-60">{format.description}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
 
-          {/* Right: Preview + Summary */}
-          <div className="col-span-12 lg:col-span-7 space-y-6">
-            {/* Preview */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="font-medium text-gray-900">Förhandsvisning</h3>
-                <div className="flex gap-1">
-                  {selectedFormats.map((fid, i) => (
-                    <button
-                      key={fid}
-                      onClick={() => setPreviewVariant(p => ({ ...p, format: i }))}
-                      className={`px-3 py-1 rounded text-xs font-medium ${
-                        previewVariant.format === i
-                          ? 'bg-gray-100 text-gray-900'
-                          : 'text-gray-400 hover:text-gray-600'
+          {/* Format-väljare */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-sm font-medium text-nordea-text">Format</span>
+              <span className="text-[11px] text-nordea-text-tertiary">
+                Välj bildförhållanden att rendera
+              </span>
+            </div>
+            <div className="grid grid-cols-4 gap-2.5">
+              {VIDEO_FORMATS.map((f) => {
+                const active = selectedFormats.includes(f.id);
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedFormats((prev) =>
+                        prev.includes(f.id) ? prev.filter((x) => x !== f.id) : [...prev, f.id]
+                      )
+                    }
+                    className={`p-3.5 rounded-lg border text-left transition-colors ${
+                      active
+                        ? 'bg-nordea-blue-soft border-nordea-blue-line'
+                        : 'bg-white border-nordea-border hover:bg-nordea-bg-hover'
+                    }`}
+                  >
+                    <div
+                      className={`text-sm font-mono font-medium ${
+                        active ? 'text-nordea-blue' : 'text-nordea-text'
                       }`}
                     >
-                      {VIDEO_FORMATS.find(f => f.id === fid)?.description}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* CSS-based preview (no Remotion dependency) */}
-              <div className="flex justify-center items-center p-8 bg-gray-50 min-h-[400px]">
-                <div
-                  className="relative rounded-lg overflow-hidden shadow-2xl"
-                  style={{
-                    width: previewFormat.height > previewFormat.width ? 200 : 340,
-                    height: previewFormat.height > previewFormat.width ? 355 : 191,
-                    backgroundColor: template.config.backgroundColor || '#00005E',
-                  }}
-                >
-                  {/* Logo placeholder */}
-                  {template.config.showLogo && (
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2">
-                      <div className="w-8 h-8 bg-white/20 rounded flex items-center justify-center text-white text-xs font-bold">N</div>
+                      {f.description}
                     </div>
-                  )}
-
-                  {/* Text preview */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center gap-2">
-                    {previewTexts.headline && (
-                      <p className="text-white font-bold text-sm leading-tight">{previewTexts.headline}</p>
-                    )}
-                    {previewTexts.body && (
-                      <p className="text-white/80 text-xs leading-tight">{previewTexts.body}</p>
-                    )}
-                    {previewTexts.cta && (
-                      <div className="mt-2 px-3 py-1 bg-white/20 rounded-full">
-                        <p className="text-white text-xs font-medium">{previewTexts.cta}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Variant selector */}
-              <div className="p-4 border-t border-gray-200 flex items-center gap-4 text-xs flex-wrap">
-                <span className="text-gray-500">Visar:</span>
-                <select
-                  value={previewVariant.headline}
-                  onChange={(e) => setPreviewVariant(p => ({ ...p, headline: parseInt(e.target.value) }))}
-                  className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-gray-900"
-                >
-                  {headlines.map((_, i) => (
-                    <option key={i} value={i}>Rubrik {i + 1}</option>
-                  ))}
-                </select>
-                <select
-                  value={previewVariant.body}
-                  onChange={(e) => setPreviewVariant(p => ({ ...p, body: parseInt(e.target.value) }))}
-                  className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-gray-900"
-                >
-                  {bodies.map((_, i) => (
-                    <option key={i} value={i}>Brödtext {i + 1}</option>
-                  ))}
-                </select>
-                <select
-                  value={previewVariant.cta}
-                  onChange={(e) => setPreviewVariant(p => ({ ...p, cta: parseInt(e.target.value) }))}
-                  className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-gray-900"
-                >
-                  {ctas.map((_, i) => (
-                    <option key={i} value={i}>CTA {i + 1}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Production Summary */}
-            <div className="bg-[#EBF2FF] border border-nordea-blue/20 rounded-xl p-6">
-              <h3 className="font-medium text-gray-900 mb-4">Produktionssammanfattning</h3>
-
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-gray-900">{validHeadlines}</div>
-                  <div className="text-xs text-gray-500">Rubriker</div>
-                </div>
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-gray-900">{validBodies}</div>
-                  <div className="text-xs text-gray-500">Brödtexter</div>
-                </div>
-                <div className="text-center p-4 bg-white rounded-lg">
-                  <div className="text-3xl font-bold text-gray-900">{validCtas}</div>
-                  <div className="text-xs text-gray-500">CTAs</div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg mb-6">
-                <div>
-                  <div className="text-sm text-gray-700">
-                    {validHeadlines} &times; {validBodies} &times; {validCtas} &times; {selectedFormats.length} format
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900">= {totalVideos} videor</div>
-                </div>
-                <Package className="w-10 h-10 text-nordea-blue/50" />
-              </div>
-
-              <button
-                onClick={handleProduce}
-                disabled={isProducing || totalVideos === 0}
-                className="w-full px-6 py-4 bg-nordea-blue hover:bg-nordea-blue/80 rounded-xl text-white font-semibold transition-colors flex items-center justify-center gap-3 disabled:opacity-50"
-              >
-                {isProducing ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Download className="w-5 h-5" />
-                )}
-                {isProducing ? 'Startar produktion...' : `Producera ${totalVideos} videor`}
-              </button>
-
-              <p className="text-xs text-gray-500 text-center mt-3">
-                Videorna genereras och packas i en ZIP-fil för nedladdning
-              </p>
+                    <div className="text-[10px] text-nordea-text-tertiary mt-0.5">{f.label}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
+
+        {/* RIGHT — preview + summary */}
+        <div className="border-l border-nordea-hairline bg-white p-7 flex flex-col gap-5 overflow-y-auto">
+          {/* Preview */}
+          <div>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="nordea-eyebrow text-[10px]">Live-förhandsvisning</span>
+              <span className="text-[11px] text-nordea-teal">
+                växlar {previewVariant.headline + 1}/{validHeadlines}
+              </span>
+            </div>
+            <div
+              className="aspect-video rounded-lg overflow-hidden relative"
+              style={{ backgroundColor: template.config.backgroundColor || '#00005E' }}
+            >
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center gap-2">
+                {previewTexts.headline && (
+                  <p className="text-white font-bold text-base leading-tight">
+                    {previewTexts.headline}
+                  </p>
+                )}
+                {previewTexts.body && (
+                  <p className="text-white/80 text-xs leading-tight max-w-[80%]">
+                    {previewTexts.body}
+                  </p>
+                )}
+                {previewTexts.cta && (
+                  <div className="mt-2 px-3 py-1 bg-nordea-teal rounded-md">
+                    <p className="text-nordea-deep text-xs font-semibold">{previewTexts.cta}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-1 mt-2">
+              {headlines.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setPreviewVariant((p) => ({ ...p, headline: i }))}
+                  className={`flex-1 h-0.5 rounded ${
+                    previewVariant.headline === i ? 'bg-nordea-teal' : 'bg-nordea-border'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Sammanfattning */}
+          <div className="nordea-card p-4">
+            <SectionTitle title="Sammanfattning" />
+            <div className="font-mono text-[11px] text-nordea-text-secondary space-y-1">
+              <div className="flex justify-between">
+                <span>Rubriker</span>
+                <span className="text-nordea-text">{validHeadlines}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Brödtexter</span>
+                <span className="text-nordea-text">{validBodies}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>CTA:er</span>
+                <span className="text-nordea-text">{validCtas}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Format</span>
+                <span className="text-nordea-text">{selectedFormats.length}</span>
+              </div>
+            </div>
+            <div className="border-t border-nordea-hairline -mx-4 my-3" />
+            <div className="flex justify-between items-center font-mono text-xs">
+              <span className="text-nordea-text-secondary">
+                {validHeadlines} × {validBodies} × {validCtas} × {selectedFormats.length} =
+              </span>
+              <span className="nordea-display text-3xl font-semibold text-nordea-teal">
+                {totalVideos}
+              </span>
+            </div>
+            <div className="text-[11px] text-nordea-text-tertiary mt-1">videor att rendera</div>
+            <div className="flex justify-between text-[11px] mt-3 px-3 py-2 bg-nordea-bg-hover rounded">
+              <span className="text-nordea-text-tertiary">Beräknad renderingstid</span>
+              <span className="font-mono text-nordea-text">~{Math.ceil(totalVideos * 0.5)} min</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleProduce}
+            disabled={isProducing || totalVideos === 0}
+            className="nordea-btn nordea-btn-primary nordea-btn-lg nordea-btn-full"
+          >
+            {isProducing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Rocket className="w-4 h-4" />
+            )}
+            {isProducing ? 'Startar produktion...' : `Producera ${totalVideos} videor`}
+          </button>
+          <button
+            type="button"
+            className="nordea-btn nordea-btn-ghost nordea-btn-sm nordea-btn-full"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Förhandsgranska alla {totalVideos} miniatyrer
+          </button>
+        </div>
       </div>
 
-      {activeJob && (
-        <ProductionProgressOverlay
-          job={activeJob}
-          onClose={() => setActiveJob(null)}
-        />
-      )}
+      {activeJob && <ProductionProgressOverlay job={activeJob} onClose={() => setActiveJob(null)} />}
+    </div>
+  );
+}
+
+function VariantSection({
+  title,
+  items,
+  onAdd,
+  onRemove,
+  onUpdate,
+  placeholder,
+  selectedIndex,
+  onSelect,
+  multiline = false,
+  cta = false,
+}: {
+  title: string;
+  items: string[];
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+  onUpdate: (i: number, v: string) => void;
+  placeholder: string;
+  selectedIndex: number;
+  onSelect: (i: number) => void;
+  multiline?: boolean;
+  cta?: boolean;
+}) {
+  const validCount = items.filter((i) => i.trim()).length;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="text-sm font-medium text-nordea-text">
+          {title}{' '}
+          <span className="text-nordea-text-tertiary font-normal ml-1">{validCount}</span>
+        </span>
+      </div>
+      <div className="space-y-2">
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className={`flex gap-2 p-2 rounded-md border transition-colors cursor-pointer ${
+              selectedIndex === i
+                ? 'bg-nordea-blue-soft border-nordea-blue-line'
+                : 'bg-white border-nordea-border hover:border-nordea-border-emphasis'
+            }`}
+            onClick={() => onSelect(i)}
+          >
+            <div className="text-[11px] font-mono text-nordea-text-tertiary self-center w-5 flex-shrink-0">
+              {String(i + 1).padStart(2, '0')}
+            </div>
+            {multiline ? (
+              <textarea
+                value={item}
+                onChange={(e) => onUpdate(i, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                placeholder={placeholder}
+                rows={2}
+                className="flex-1 bg-transparent text-sm text-nordea-text placeholder:text-nordea-text-tertiary resize-none focus:outline-none"
+              />
+            ) : (
+              <input
+                type="text"
+                value={item}
+                onChange={(e) => onUpdate(i, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                placeholder={placeholder}
+                className="flex-1 bg-transparent text-sm text-nordea-text placeholder:text-nordea-text-tertiary focus:outline-none"
+              />
+            )}
+            {cta && item.trim() && (
+              <ArrowRight className="w-3 h-3 text-nordea-teal self-center flex-shrink-0" />
+            )}
+            {items.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(i);
+                }}
+                className="p-1 text-nordea-text-tertiary hover:text-nordea-rose"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onAdd}
+        className="w-full mt-2 px-3 py-2 border border-dashed border-nordea-border rounded-md text-xs text-nordea-text-tertiary hover:text-nordea-text hover:border-nordea-border-emphasis flex items-center justify-center gap-2 transition-colors"
+      >
+        <Plus className="w-3 h-3" />
+        Lägg till ny rad
+      </button>
     </div>
   );
 }
@@ -484,85 +540,70 @@ function ProductionProgressOverlay({
   const isFailed = job.status === 'failed';
   const isRunning = job.status === 'pending' || job.status === 'processing';
   const progressPercent =
-    job.total_videos > 0
-      ? Math.round((job.completed_videos / job.total_videos) * 100)
-      : 0;
+    job.total_videos > 0 ? Math.round((job.completed_videos / job.total_videos) * 100) : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={isRunning ? undefined : onClose}
-      />
-      <div className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={isRunning ? undefined : onClose} />
+      <div className="relative nordea-card w-full max-w-md p-6 shadow-lg">
         <button
+          type="button"
           onClick={onClose}
           disabled={isRunning}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
-          title={isRunning ? 'Vänta tills produktionen är klar' : 'Stäng'}
+          className="absolute top-4 right-4 text-nordea-text-tertiary hover:text-nordea-text disabled:opacity-30"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
         {isRunning && (
           <>
             <div className="flex items-center gap-3 mb-4">
-              <Loader2 className="w-5 h-5 text-nordea-blue animate-spin" />
-              <h3 className="text-lg font-semibold text-gray-900">
+              <Loader2 className="w-5 h-5 text-nordea-teal animate-spin" />
+              <h3 className="text-lg font-semibold text-nordea-text">
                 Producerar {job.total_videos} videor
               </h3>
             </div>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-nordea-text-tertiary mb-4">
               {job.status === 'pending'
                 ? 'Förbereder rendering...'
                 : `Renderar video ${job.completed_videos + 1} av ${job.total_videos}`}
             </p>
-            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+            <div className="w-full h-2 bg-nordea-bg-hover rounded-full overflow-hidden mb-2">
               <div
-                className="h-full bg-nordea-blue transition-all duration-500"
+                className="h-full bg-nordea-teal transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>{job.completed_videos} av {job.total_videos} klara</span>
+            <div className="flex justify-between text-xs text-nordea-text-tertiary">
+              <span>
+                {job.completed_videos} av {job.total_videos} klara
+              </span>
               <span>{progressPercent}%</span>
             </div>
-            <p className="text-xs text-gray-400 mt-4">
-              Renderingen tar tid — varje video kräver Chromium. Du kan lämna
-              den här sidan, jobbet fortsätter i bakgrunden.
-            </p>
           </>
         )}
 
         {isDone && (
           <>
             <div className="flex items-center gap-3 mb-4">
-              <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Klar! {job.completed_videos} av {job.total_videos} videor producerade
+              <CheckCircle2 className="w-6 h-6 text-nordea-green" />
+              <h3 className="text-lg font-semibold text-nordea-text">
+                Klar! {job.completed_videos} av {job.total_videos} videor
               </h3>
             </div>
             {job.error_message && (
-              <p className="text-sm text-amber-600 mb-4">{job.error_message}</p>
+              <p className="text-sm text-nordea-amber mb-4">{job.error_message}</p>
             )}
-            <p className="text-sm text-gray-500 mb-6">
-              Alla videor är paketerade i en ZIP-fil — ladda ner och dela med
-              teamet.
+            <p className="text-sm text-nordea-text-tertiary mb-6">
+              Alla videor är paketerade i en ZIP-fil.
             </p>
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 font-medium transition-colors"
-              >
+            <div className="flex gap-2">
+              <button type="button" onClick={onClose} className="nordea-btn nordea-btn-secondary nordea-btn-full">
                 Stäng
               </button>
               {job.zip_url && (
-                <a
-                  href={job.zip_url}
-                  download
-                  className="flex-1 px-4 py-3 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors flex items-center justify-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
+                <a href={job.zip_url} download className="nordea-btn nordea-btn-primary nordea-btn-full">
+                  <Download className="w-3.5 h-3.5" />
                   Ladda ner ZIP
                 </a>
               )}
@@ -573,18 +614,15 @@ function ProductionProgressOverlay({
         {isFailed && (
           <>
             <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="w-6 h-6 text-red-500" />
-              <h3 className="text-lg font-semibold text-gray-900">
+              <AlertCircle className="w-6 h-6 text-nordea-rose" />
+              <h3 className="text-lg font-semibold text-nordea-text">
                 Produktionen misslyckades
               </h3>
             </div>
-            <p className="text-sm text-red-600 mb-6">
-              {job.error_message || 'Okänt fel. Kolla loggar för detaljer.'}
+            <p className="text-sm text-nordea-rose mb-6">
+              {job.error_message || 'Okänt fel.'}
             </p>
-            <button
-              onClick={onClose}
-              className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-900 font-medium transition-colors"
-            >
+            <button type="button" onClick={onClose} className="nordea-btn nordea-btn-secondary nordea-btn-full">
               Stäng
             </button>
           </>
@@ -594,97 +632,15 @@ function ProductionProgressOverlay({
   );
 }
 
-function VariantSection({
-  title,
-  items,
-  onAdd,
-  onRemove,
-  onUpdate,
-  placeholder,
-  selectedIndex,
-  onSelect,
-  multiline = false,
-}: {
-  title: string;
-  items: string[];
-  onAdd: () => void;
-  onRemove: (i: number) => void;
-  onUpdate: (i: number, v: string) => void;
-  placeholder: string;
-  selectedIndex: number;
-  onSelect: (i: number) => void;
-  multiline?: boolean;
-}) {
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-gray-900">{title}</h3>
-        <span className="text-xs text-gray-500">{items.filter(i => i.trim()).length} st</span>
-      </div>
-
-      <div className="space-y-2">
-        {items.map((item, i) => (
-          <div
-            key={i}
-            className={`flex gap-2 p-2 rounded-lg border transition-colors cursor-pointer ${
-              selectedIndex === i
-                ? 'bg-nordea-blue/10 border-nordea-blue/30'
-                : 'bg-gray-50 border-transparent hover:border-gray-200'
-            }`}
-            onClick={() => onSelect(i)}
-          >
-            <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
-              {i + 1}
-            </div>
-            {multiline ? (
-              <textarea
-                value={item}
-                onChange={(e) => onUpdate(i, e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                placeholder={placeholder}
-                rows={2}
-                className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 resize-none focus:outline-none"
-              />
-            ) : (
-              <input
-                type="text"
-                value={item}
-                onChange={(e) => onUpdate(i, e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                placeholder={placeholder}
-                className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
-              />
-            )}
-            {items.length > 1 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onRemove(i); }}
-                className="p-1 text-gray-400 hover:text-red-500"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <button
-        onClick={onAdd}
-        className="w-full mt-3 px-3 py-2 border border-dashed border-gray-200 rounded-lg text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors flex items-center justify-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        Lägg till
-      </button>
-    </div>
-  );
-}
-
 export default function ProducePage() {
   return (
-    <Suspense fallback={
-      <div className="main-content flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-nordea-bg flex items-center justify-center">
+          <Loader2 className="w-6 h-6 text-nordea-text-tertiary animate-spin" />
+        </div>
+      }
+    >
       <ProduceContent />
     </Suspense>
   );

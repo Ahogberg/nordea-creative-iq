@@ -721,7 +721,7 @@ function MaterialStep({
         })
       );
     }
-    window.open('/motion-studio', '_blank');
+    window.open('/create/video', '_blank');
   };
 
   const handleOpenAdStudio = () => {
@@ -736,7 +736,7 @@ function MaterialStep({
         })
       );
     }
-    window.open('/ad-studio', '_blank');
+    window.open('/create/analyze', '_blank');
   };
 
   return (
