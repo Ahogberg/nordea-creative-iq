@@ -190,6 +190,32 @@
   --color-nordea-accent-red: #FC6161;
   --color-nordea-accent-yellow: #FFE183;
   --color-nordea-accent-green: #40BFA3;
+
+  /* Sprint 7: Light-theme palette exposed to Tailwind as bg-nordea-* etc */
+  --color-nordea-bg: #F7F8FA;
+  --color-nordea-card: #FFFFFF;
+  --color-nordea-text: #00005E;
+  --color-nordea-text-secondary: #4B5563;
+  --color-nordea-text-tertiary: #6B7280;
+  --color-nordea-text-faint: #9CA3AF;
+  --color-nordea-teal: #40BFA3;
+  --color-nordea-teal-hover: #4DCFB3;
+  --color-nordea-teal-soft: rgba(64, 191, 163, 0.12);
+  --color-nordea-blue-soft: rgba(0, 0, 160, 0.08);
+  --color-nordea-blue-line: rgba(0, 0, 160, 0.16);
+  --color-nordea-deep-soft: rgba(0, 0, 94, 0.06);
+  --color-nordea-border: rgba(0, 0, 94, 0.08);
+  --color-nordea-border-emphasis: rgba(0, 0, 94, 0.16);
+  --color-nordea-hairline: rgba(0, 0, 94, 0.06);
+  --color-nordea-green: #1FA084;
+  --color-nordea-green-soft: rgba(31, 160, 132, 0.12);
+  --color-nordea-amber: #C49327;
+  --color-nordea-amber-soft: rgba(196, 147, 39, 0.12);
+  --color-nordea-rose: #C8575C;
+  --color-nordea-rose-soft: rgba(200, 87, 92, 0.10);
+
+  /* Font families exposed for Tailwind `font-display` */
+  --font-display: 'Nordea Sans Large', 'Nordea Sans', 'Inter', sans-serif;
 }
 
 /* ============================================================================
@@ -1563,25 +1589,252 @@ label, [data-slot="label"] { color: var(--text-primary); }
 }
 
 /* ============================================================================
-   SPRINT 6.5: NORDEA DARK SURFACE TOKENS + UTILITY CLASSES
+   SPRINT 7: LIGHT-THEME NORDEA UTILITY CLASSES
    ============================================================================
-   The base app is LIGHT theme by design (white sidebar, #F7F8FA background,
-   Nordea-blue accents). These tokens are OPT-IN for dark Nordea surfaces —
-   modals, overlays, the Motion Studio QA/Save/Render modals, login splash.
-   They do NOT override :root or change the global theme. Apply via the
-   .nordea-dark utility class on a wrapper element to scope them.
+   App-wide light theme with Nordea-blue/teal accents. Sprint 6.5's
+   `.nordea-dark` scope is retained at the bottom for opt-in dark modals
+   (QA-modal, save-template-modal, render-modal) but base utility classes
+   are now LIGHT — used directly by new Sprint 7 surfaces.
 
-   Non-goals (deliberately excluded — see commit notes for Sprint 6.5):
-   - Changing the global background to Nordea Deep (would break hundreds of
-     existing styles)
-   - Replacing the existing .glass-card, .btn-primary, .sidebar-* classes
-   - Forcing components into dark mode
-
-   Goals:
-   - Centralised dark-Nordea palette callers can opt into
-   - Utility classes (.nordea-card, .nordea-btn-*) for new dark surfaces
+   Token reference: see :root + @theme inline at the top of this file.
 */
 
+/* Light Nordea tokens (also exposed via @theme for Tailwind utility classes) */
+:root {
+  --nordea-bg: #F7F8FA;
+  --nordea-bg-card: #FFFFFF;
+  --nordea-bg-hover: rgba(0, 0, 160, 0.03);
+  --nordea-bg-active: rgba(0, 0, 160, 0.06);
+  --nordea-bg-sidebar: #FFFFFF;
+  --nordea-border-subtle: rgba(0, 0, 94, 0.04);
+  --nordea-border: rgba(0, 0, 94, 0.08);
+  --nordea-border-emphasis: rgba(0, 0, 94, 0.16);
+  --nordea-hairline: rgba(0, 0, 94, 0.06);
+  --nordea-divider: rgba(0, 0, 94, 0.08);
+  --nordea-blue: #0000A0;
+  --nordea-deep: #00005E;
+  --nordea-teal: #40BFA3;
+  --nordea-teal-hover: #4DCFB3;
+  --nordea-teal-pressed: #36A88E;
+  --nordea-teal-soft: rgba(64, 191, 163, 0.12);
+  --nordea-blue-soft: rgba(0, 0, 160, 0.08);
+  --nordea-blue-line: rgba(0, 0, 160, 0.16);
+  --nordea-deep-soft: rgba(0, 0, 94, 0.06);
+  --nordea-green: #1FA084;
+  --nordea-green-soft: rgba(31, 160, 132, 0.12);
+  --nordea-amber: #C49327;
+  --nordea-amber-soft: rgba(196, 147, 39, 0.12);
+  --nordea-rose: #C8575C;
+  --nordea-rose-soft: rgba(200, 87, 92, 0.10);
+  --nordea-text: #00005E;
+  --nordea-text-secondary: #4B5563;
+  --nordea-text-tertiary: #6B7280;
+  --nordea-text-faint: #9CA3AF;
+  --nordea-text-on-teal: #00005E;
+  --nordea-text-on-blue: #FFFFFF;
+  --nordea-shadow-card: 0 1px 3px rgba(0, 0, 94, 0.05);
+  --nordea-shadow-card-hover: 0 4px 12px rgba(0, 0, 94, 0.08);
+  --nordea-radius-xs: 4px;
+  --nordea-radius-sm: 6px;
+  --nordea-radius-md: 8px;
+  --nordea-radius-lg: 12px;
+  --nordea-radius-xl: 16px;
+  --nordea-radius-2xl: 20px;
+}
+
+/* Typography utilities */
+.nordea-display {
+  font-family: 'Nordea Sans Large', 'Nordea Sans', 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.nordea-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nordea-text-tertiary);
+}
+
+/* Cards */
+.nordea-card {
+  background: var(--nordea-bg-card);
+  border: 1px solid var(--nordea-border);
+  border-radius: var(--nordea-radius-xl);
+  box-shadow: var(--nordea-shadow-card);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.nordea-card:hover {
+  box-shadow: var(--nordea-shadow-card-hover);
+}
+.nordea-card-flat {
+  background: var(--nordea-bg-card);
+  border: 1px solid var(--nordea-border);
+  border-radius: var(--nordea-radius-lg);
+}
+
+/* Buttons */
+.nordea-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  font-family: 'Nordea Sans', 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--nordea-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.nordea-btn-primary {
+  background: var(--nordea-teal);
+  color: var(--nordea-deep);
+  font-weight: 600;
+}
+.nordea-btn-primary:hover { background: var(--nordea-teal-hover); }
+.nordea-btn-cobalt {
+  background: var(--nordea-blue);
+  color: white;
+}
+.nordea-btn-cobalt:hover { background: #1818B8; }
+.nordea-btn-secondary {
+  background: var(--nordea-bg-card);
+  border-color: var(--nordea-border);
+  color: var(--nordea-text);
+}
+.nordea-btn-secondary:hover {
+  background: var(--nordea-bg-hover);
+  border-color: var(--nordea-border-emphasis);
+}
+.nordea-btn-ghost {
+  background: transparent;
+  color: var(--nordea-text-secondary);
+}
+.nordea-btn-ghost:hover {
+  background: var(--nordea-bg-hover);
+  color: var(--nordea-text);
+}
+.nordea-btn-destructive {
+  background: var(--nordea-rose-soft);
+  color: var(--nordea-rose);
+}
+.nordea-btn-destructive:hover {
+  background: var(--nordea-rose);
+  color: white;
+}
+.nordea-btn-sm { height: 28px; padding: 0 10px; font-size: 11px; }
+.nordea-btn-lg { height: 44px; padding: 0 20px; font-size: 14px; }
+.nordea-btn-full { width: 100%; }
+
+/* Badges */
+.nordea-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--nordea-radius-sm);
+}
+.nordea-badge-neutral { background: var(--nordea-bg-hover); color: var(--nordea-text-secondary); }
+.nordea-badge-teal    { background: var(--nordea-teal-soft); color: var(--nordea-green); }
+.nordea-badge-cobalt  { background: var(--nordea-blue-soft); color: var(--nordea-blue); }
+.nordea-badge-amber   { background: var(--nordea-amber-soft); color: var(--nordea-amber); }
+.nordea-badge-green   { background: var(--nordea-green-soft); color: var(--nordea-green); }
+.nordea-badge-rose    { background: var(--nordea-rose-soft); color: var(--nordea-rose); }
+.nordea-badge-solid   { background: var(--nordea-deep); color: white; }
+.nordea-badge-dot::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Inputs */
+.nordea-input {
+  height: 36px;
+  padding: 0 12px;
+  background: var(--nordea-bg-card);
+  border: 1px solid var(--nordea-border);
+  border-radius: var(--nordea-radius-md);
+  font-family: 'Nordea Sans', 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--nordea-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.nordea-input:focus {
+  outline: none;
+  border-color: var(--nordea-blue);
+  box-shadow: 0 0 0 3px var(--nordea-blue-soft);
+}
+.nordea-input::placeholder { color: var(--nordea-text-tertiary); }
+
+/* Format chip (9:16, 1:1 etc) */
+.nordea-format-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  font-family: 'JetBrains Mono', 'Geist Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--nordea-bg-hover);
+  color: var(--nordea-text-secondary);
+  border: 1px solid var(--nordea-border);
+  border-radius: var(--nordea-radius-xs);
+}
+.nordea-format-chip-active {
+  background: var(--nordea-blue-soft);
+  color: var(--nordea-blue);
+  border-color: var(--nordea-blue-line);
+}
+
+/* Placeholder stripe for un-rendered thumbnails */
+.nordea-placeholder-stripe {
+  background: var(--nordea-bg-hover);
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(0, 0, 94, 0.04) 0 8px,
+    rgba(0, 0, 94, 0.02) 8px 16px
+  );
+  border: 1px solid var(--nordea-border);
+  border-radius: var(--nordea-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', 'Geist Mono', monospace;
+  font-size: 10px;
+  color: var(--nordea-text-tertiary);
+}
+
+/* Status pills (retained from Sprint 6.5) */
+.nordea-pill-pass { background: rgba(64, 191, 163, 0.15); color: #40BFA3; }
+.nordea-pill-warn { background: rgba(226, 189, 44, 0.15); color: #E2BD2C; }
+.nordea-pill-fail { background: rgba(200, 87, 92, 0.15); color: #C8575C; }
+.nordea-pill-pass,
+.nordea-pill-warn,
+.nordea-pill-fail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   .nordea-dark scope — opt-in dark surface for modals (Sprint 6.5 carryover)
+   ============================================================================ */
 .nordea-dark {
   /* Backgrounds — solid blue hierarchy on dark surfaces */
   --nordea-bg-primary: #00005E;
@@ -1621,69 +1874,8 @@ label, [data-slot="label"] { color: var(--text-primary); }
   color: var(--nordea-text-primary);
 }
 
-/* Cards on dark surfaces */
-.nordea-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-.nordea-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.16);
-}
-
-/* Primary button — teal CTA (passes contrast on Nordea Deep + light) */
-.nordea-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background: #40BFA3;
-  color: #00005E;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  padding: 0.625rem 1.25rem;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.nordea-btn-primary:hover { background: #4DCFB3; }
-.nordea-btn-primary:active { background: #36A88E; }
-.nordea-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* Secondary button — for dark surfaces */
-.nordea-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  color: #ffffff;
-  font-weight: 500;
-  border-radius: 8px;
-  padding: 0.625rem 1.25rem;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-.nordea-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-}
-
-/* Status pills */
-.nordea-pill-pass { background: rgba(64, 191, 163, 0.15); color: #40BFA3; }
-.nordea-pill-warn { background: rgba(226, 189, 44, 0.15); color: #E2BD2C; }
-.nordea-pill-fail { background: rgba(200, 87, 92, 0.15); color: #C8575C; }
-.nordea-pill-pass,
-.nordea-pill-warn,
-.nordea-pill-fail {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.625rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
+/* Sprint 6.5's top-level .nordea-card / .nordea-btn-* / .nordea-pill-*
+   duplicates were removed in Sprint 7. The light-theme versions defined
+   earlier in this file (above the .nordea-dark block) are now canonical
+   and resolve correctly inside .nordea-dark scope via CSS-variable
+   redefinition. */
