@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { validateNordeaEmail } from '@/lib/auth';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
+const DEMO_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,6 +31,12 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setMessage('');
+
+    if (!validateNordeaEmail(email)) {
+      setError('Endast @nordea.com-adresser tillåts.');
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
@@ -78,23 +87,26 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500 mt-1">Logga in för att fortsätta</p>
         </div>
 
-        {/* Demo login */}
-        <Button
-          type="button"
-          onClick={handleDemoLogin}
-          className="w-full mb-6 bg-[#0000A0] hover:bg-[#000080]"
-        >
-          Logga in som demo-användare
-        </Button>
+        {DEMO_ENABLED && (
+          <>
+            <Button
+              type="button"
+              onClick={handleDemoLogin}
+              className="w-full mb-6 bg-[#0000A0] hover:bg-[#000080]"
+            >
+              Logga in som demo-användare
+            </Button>
 
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-gray-400">eller med Supabase</span>
-          </div>
-        </div>
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-400">eller med Supabase</span>
+              </div>
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

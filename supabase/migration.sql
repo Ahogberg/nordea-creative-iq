@@ -295,6 +295,170 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- ============================================
+-- TEMPLATES (Sprint 3 — Mallbibliotek)
+-- ============================================
+-- user_id is intentionally TEXT (not UUID + auth.users FK) per
+-- CREATIVEIQ-ROADMAP.md Sprint 3 spec. RBAC + RLS hardening
+-- is scoped to Sprint 11 (Enterprise Prep).
+--
+-- `config` stores the full Motion Studio VideoConfig JSON (lib/remotion/types).
+-- Storing it verbatim means the render pipeline can re-render templates
+-- without any field-name translation.
+CREATE TABLE IF NOT EXISTS public.templates (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  thumbnail_url TEXT,
+  config JSONB NOT NULL,
+  is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
+  use_count INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Auto-update updated_at on row update
+CREATE OR REPLACE FUNCTION public.touch_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS templates_touch_updated_at ON public.templates;
+CREATE TRIGGER templates_touch_updated_at
+  BEFORE UPDATE ON public.templates
+  FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+-- ============================================
+-- PRODUCTION JOBS (Sprint 3 — Bulk Production)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.production_jobs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  template_id UUID REFERENCES public.templates(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  variants JSONB NOT NULL DEFAULT '{"headlines":[],"bodies":[],"ctas":[]}',
+  formats TEXT[] NOT NULL DEFAULT ARRAY['story'],
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  total_videos INTEGER NOT NULL DEFAULT 0,
+  completed_videos INTEGER NOT NULL DEFAULT 0,
+  output_urls TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  zip_url TEXT,
+  error_message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+-- ============================================
+-- QA RUNS (Sprint 5 — Persona-driven QA Gate)
+-- ============================================
+-- One row per QA invocation. The four checks run in parallel and their
+-- results land in the *_results JSONB columns. status drives the export
+-- block in the UI: 'fail' = export disabled, 'warn' = reviewer approval,
+-- 'pass' = open. Like Sprint 3 user_id is TEXT (RLS comes in Sprint 11).
+CREATE TABLE IF NOT EXISTS public.qa_runs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  creative_kind TEXT NOT NULL CHECK (creative_kind IN ('video', 'banner', 'copy', 'template')),
+  creative_ref TEXT NOT NULL,
+  creative_metadata JSONB,
+  persona_score NUMERIC,
+  tov_score NUMERIC,
+  compliance_score NUMERIC,
+  heatmap_score NUMERIC,
+  total_score NUMERIC,
+  status TEXT NOT NULL CHECK (status IN ('pass', 'warn', 'fail', 'running', 'error')),
+  persona_results JSONB DEFAULT '{}'::jsonb,
+  tov_results JSONB DEFAULT '{}'::jsonb,
+  compliance_results JSONB DEFAULT '{}'::jsonb,
+  heatmap_results JSONB DEFAULT '{}'::jsonb,
+  blocking_issues JSONB DEFAULT '[]'::jsonb,
+  warnings JSONB DEFAULT '[]'::jsonb,
+  suggestions JSONB DEFAULT '[]'::jsonb,
+  approved_by TEXT,
+  approved_at TIMESTAMPTZ,
+  approval_note TEXT,
+  duration_ms INTEGER,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+-- ============================================
+-- QA THRESHOLDS (per product category)
+-- ============================================
+-- The code-level constants in lib/qa/thresholds.ts are the source of truth
+-- for now; this table is the future hook for per-product overrides without
+-- redeploys. Seeded with the same defaults used in code.
+CREATE TABLE IF NOT EXISTS public.qa_thresholds (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  product_type TEXT NOT NULL UNIQUE,
+  pass_threshold NUMERIC DEFAULT 80,
+  warn_threshold NUMERIC DEFAULT 70,
+  persona_weight NUMERIC DEFAULT 0.35,
+  tov_weight NUMERIC DEFAULT 0.20,
+  compliance_weight NUMERIC DEFAULT 0.30,
+  heatmap_weight NUMERIC DEFAULT 0.15,
+  required_disclaimers JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.qa_thresholds (product_type, required_disclaimers) VALUES
+  ('general', '[]'::jsonb),
+  ('mortgage', '["effective_interest_rate", "amortization_info"]'::jsonb),
+  ('savings', '["risk_warning", "past_performance_disclaimer"]'::jsonb),
+  ('loans', '["effective_interest_rate", "total_cost"]'::jsonb),
+  ('pension', '["risk_warning"]'::jsonb),
+  ('insurance', '["coverage_terms"]'::jsonb),
+  ('cards', '["interest_rate", "annual_fee"]'::jsonb),
+  ('business', '[]'::jsonb)
+ON CONFLICT (product_type) DO NOTHING;
+
+-- ============================================
+-- AI GENERATIONS (Sprint 6 — Provider layer)
+-- ============================================
+-- One row per provider call (video/image gen, stock search). Used for:
+--   1. Cost tracking — sum cost_usd per user_id over the period
+--   2. Cache — query by cache_key for dedup hits
+--   3. Audit — what was generated when, with what prompt
+-- Stubbed external-provider attempts also land here with status='stubbed'
+-- so we can show "N stubbed calls — pending approval" in the UI.
+CREATE TABLE IF NOT EXISTS public.ai_generations (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('video', 'image', 'stock-search')),
+  provider TEXT NOT NULL,
+  model TEXT,
+  prompt TEXT,
+  params JSONB DEFAULT '{}'::jsonb,
+  result_url TEXT,
+  thumbnail_url TEXT,
+  cache_key TEXT,
+  cache_hit BOOLEAN DEFAULT FALSE,
+  cost_usd NUMERIC DEFAULT 0,
+  cost_currency TEXT DEFAULT 'USD',
+  latency_ms INTEGER,
+  status TEXT NOT NULL CHECK (status IN ('success', 'failed', 'cached', 'stubbed')),
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
+-- USER CREDITS (Sprint 6 — monthly budget tracking)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.user_credits (
+  user_id TEXT PRIMARY KEY,
+  monthly_budget_usd NUMERIC DEFAULT 100,
+  current_period_spend_usd NUMERIC DEFAULT 0,
+  period_start DATE DEFAULT CURRENT_DATE,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
 -- INDEXES
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_ad_analyses_user_id ON public.ad_analyses(user_id);
@@ -302,3 +466,18 @@ CREATE INDEX IF NOT EXISTS idx_ad_analyses_created_at ON public.ad_analyses(crea
 CREATE INDEX IF NOT EXISTS idx_generated_copies_user_id ON public.generated_copies(user_id);
 CREATE INDEX IF NOT EXISTS idx_campaign_plans_user_id ON public.campaign_plans(user_id);
 CREATE INDEX IF NOT EXISTS idx_personas_is_default ON public.personas(is_default);
+CREATE INDEX IF NOT EXISTS idx_templates_user_id ON public.templates(user_id);
+CREATE INDEX IF NOT EXISTS idx_templates_updated_at ON public.templates(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_templates_favorite ON public.templates(is_favorite) WHERE is_favorite = TRUE;
+CREATE INDEX IF NOT EXISTS idx_production_jobs_user_id ON public.production_jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_production_jobs_status ON public.production_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_production_jobs_created_at ON public.production_jobs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_production_jobs_template ON public.production_jobs(template_id);
+CREATE INDEX IF NOT EXISTS idx_qa_runs_user_id ON public.qa_runs(user_id);
+CREATE INDEX IF NOT EXISTS idx_qa_runs_status ON public.qa_runs(status);
+CREATE INDEX IF NOT EXISTS idx_qa_runs_creative ON public.qa_runs(creative_kind, creative_ref);
+CREATE INDEX IF NOT EXISTS idx_qa_runs_created_at ON public.qa_runs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_gen_user ON public.ai_generations(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_gen_cache ON public.ai_generations(cache_key) WHERE cache_hit = FALSE AND status = 'success';
+CREATE INDEX IF NOT EXISTS idx_ai_gen_provider ON public.ai_generations(provider);
+CREATE INDEX IF NOT EXISTS idx_ai_gen_created_at ON public.ai_generations(created_at DESC);

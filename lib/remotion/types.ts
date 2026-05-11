@@ -13,10 +13,23 @@ export type SceneType =
   | "lottie"
   | "canvas";
 
+// Transform applied to a draggable/resizable element on the canvas.
+// x/y are fractions of canvas width/height (0-1). scale is a multiplier
+// around the element's natural size. rotation is in degrees.
+export interface ElementTransform {
+  x: number;
+  y: number;
+  scale: number;
+  rotation?: number;
+}
+
 export interface SceneBase {
   type: SceneType;
   durationSeconds: number;
   background?: string;
+  // Per-element transforms keyed by element id ("headline", "value", "cta", etc).
+  // Scenes that support draggable elements read from this to place them.
+  elementTransforms?: Record<string, ElementTransform>;
 }
 
 export interface TitleScene extends SceneBase {
@@ -129,15 +142,77 @@ export type Scene =
   | LottieScene
   | CanvasScene;
 
+export interface LogoConfig {
+  // Public/data URL of the uploaded logo image (PNG/SVG, ideally transparent)
+  url?: string;
+  // Position + size of the logo overlay. Defaults to top-center if omitted.
+  transform?: ElementTransform;
+}
+
+// ── Sprint 4: Motion Polish ──
+//
+// MotionConfig describes the "Nordea Motion Language" applied across a video.
+// Lives on VideoConfig so the render pipeline reads it verbatim from a saved
+// template. All fields are required *inside* the object — backward compat is
+// handled at integration points by `?? DEFAULT_MOTION_CONFIG`.
+//
+// String unions are duplicated in animations/* component prop types — keep
+// them in sync. (We avoid importing component prop types here to prevent
+// circular imports between types.ts and the animation .tsx files.)
+
+export type LogoRevealStyle = "fade" | "spring" | "scale" | "slide-down" | "none";
+export type StaggerMode = "word" | "character" | "line" | "none";
+export type CtaRevealStyle = "fade" | "spring" | "scale" | "slide-up";
+export type TransitionStyle = "cut" | "crossfade" | "blur" | "slide";
+export type SpringName = "gentle" | "standard" | "snappy" | "bouncy" | "wobbly";
+
+export interface MotionConfig {
+  logo: {
+    reveal: LogoRevealStyle;
+    duration: number;
+  };
+  text: {
+    stagger: StaggerMode;
+    delayBetween: number;
+    useSpring: boolean;
+  };
+  cta: {
+    reveal: CtaRevealStyle;
+    spring: SpringName;
+  };
+  transitions: {
+    style: TransitionStyle;
+    duration: number;
+  };
+  numbers: {
+    enabled: boolean;
+    duration: number;
+  };
+}
+
+export const DEFAULT_MOTION_CONFIG: MotionConfig = {
+  logo: { reveal: "spring", duration: 18 },
+  text: { stagger: "word", delayBetween: 3, useSpring: false },
+  cta: { reveal: "spring", spring: "snappy" },
+  transitions: { style: "crossfade", duration: 12 },
+  numbers: { enabled: true, duration: 45 },
+};
+
 export interface VideoConfig {
   id: string;
   title: string;
   format: "story" | "feed" | "landscape" | "vertical";
+  quality?: "hd" | "4k";
   backgroundColor: string;
   accentColor: string;
   scenes: Scene[];
   showLogo: boolean;
+  logo?: LogoConfig;
   totalDurationSeconds: number;
+  // Sprint 4: Motion Polish. Optional for backward compatibility — older
+  // templates without the field fall back to DEFAULT_MOTION_CONFIG at the
+  // integration points (DynamicVideo, scene components, MotionPanel).
+  motion?: MotionConfig;
 }
 
 export const DEFAULT_VIDEO_CONFIG: VideoConfig = {
@@ -173,4 +248,5 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfig = {
   ],
   showLogo: true,
   totalDurationSeconds: 7.5,
+  motion: DEFAULT_MOTION_CONFIG,
 };

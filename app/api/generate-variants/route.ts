@@ -1,15 +1,32 @@
 import { NextResponse } from 'next/server';
 import { getClaudeClient } from '@/lib/claude';
+import { extractVariantSeeds } from '@/lib/video-types';
+import type { Template } from '@/lib/video-types';
+
+interface VariantRequestBody {
+  template: Template;
+  productDescription?: string;
+  channel?: string;
+  tone?: string;
+  count?: number;
+}
 
 export async function POST(request: Request) {
   try {
-    const { template, productDescription, channel, tone, count = 5 } = await request.json();
+    const body = (await request.json()) as VariantRequestBody;
+    const { template, productDescription, channel, tone, count = 5 } = body;
 
-    // Extract context from template
-    const existingTexts = template.default_texts || [];
-    const existingHeadline = existingTexts.find((t: { placeholder: string; text: string }) => t.placeholder === 'headline')?.text || '';
-    const existingBody = existingTexts.find((t: { placeholder: string; text: string }) => t.placeholder === 'body')?.text || '';
-    const existingCta = existingTexts.find((t: { placeholder: string; text: string }) => t.placeholder === 'cta')?.text || '';
+    if (!template?.config) {
+      return NextResponse.json(
+        { error: 'template.config is required' },
+        { status: 400 }
+      );
+    }
+
+    const seeds = extractVariantSeeds(template.config);
+    const existingHeadline = seeds.headline;
+    const existingBody = seeds.body;
+    const existingCta = seeds.cta;
 
     const prompt = `Du är en copywriter för Nordea Bank. Analysera följande annonstext och skapa ${count} varianter.
 

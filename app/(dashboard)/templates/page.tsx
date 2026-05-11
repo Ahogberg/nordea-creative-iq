@@ -82,50 +82,42 @@ export default function TemplatesPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-semibold text-white">Mallbibliotek</h1>
-            <p className="text-sm text-white/50 mt-1">
+            <h1 className="text-2xl font-semibold text-gray-900">Mallbibliotek</h1>
+            <p className="text-sm text-gray-500 mt-1">
               {templates.length} {templates.length === 1 ? 'mall' : 'mallar'}
             </p>
           </div>
-          <button
-            onClick={() => {
-              const name = prompt('Namn på ny mall:');
-              if (!name) return;
-              fetch('/api/templates', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, description: '', formats: ['story'], text_structure: [], background: { type: 'solid', solidColor: '#0000A0' } }),
-              }).then(() => fetchTemplates());
-            }}
+          <Link
+            href="/motion-studio"
             className="px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Skapa ny
-          </button>
+            Skapa ny i Motion Studio
+          </Link>
         </div>
 
         {/* Search and filters */}
         <div className="flex items-center gap-4 mb-6">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Sök mallar..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300"
             />
           </div>
-          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/60'}`}
+              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/60'}`}
+              className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
             >
               <List className="w-4 h-4" />
             </button>
@@ -134,7 +126,7 @@ export default function TemplatesPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 text-white/40 animate-spin" />
+            <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
           </div>
         ) : templates.length === 0 ? (
           <EmptyState />
@@ -143,7 +135,7 @@ export default function TemplatesPage() {
             {/* Favorites */}
             {favoriteTemplates.length > 0 && (
               <section>
-                <h2 className="text-sm font-medium text-white/50 mb-4 flex items-center gap-2">
+                <h2 className="text-sm font-medium text-gray-500 mb-4 flex items-center gap-2">
                   <Star className="w-4 h-4 fill-current" />
                   Favoriter
                 </h2>
@@ -167,7 +159,7 @@ export default function TemplatesPage() {
             {/* All templates */}
             {otherTemplates.length > 0 && (
               <section>
-                <h2 className="text-sm font-medium text-white/50 mb-4">
+                <h2 className="text-sm font-medium text-gray-500 mb-4">
                   {favoriteTemplates.length > 0 ? 'Alla mallar' : 'Dina mallar'}
                 </h2>
                 <div className={viewMode === 'grid'
@@ -196,28 +188,20 @@ export default function TemplatesPage() {
 function EmptyState() {
   return (
     <div className="text-center py-20">
-      <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <Sparkles className="w-8 h-8 text-white/20" />
+      <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <Sparkles className="w-8 h-8 text-gray-400" />
       </div>
-      <h3 className="text-lg font-medium text-white mb-2">Inga mallar ännu</h3>
-      <p className="text-sm text-white/50 mb-6 max-w-sm mx-auto">
+      <h3 className="text-lg font-medium text-gray-900 mb-2">Inga mallar ännu</h3>
+      <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
         Skapa en annons i editorn och spara den som mall för att komma igång med bulk-produktion.
       </p>
-      <button
-        onClick={() => {
-          const name = prompt('Namn på ny mall:');
-          if (!name) return;
-          fetch('/api/templates', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, description: '', formats: ['story'], text_structure: [], background: { type: 'solid', solidColor: '#0000A0' } }),
-          }).then(() => window.location.reload());
-        }}
+      <Link
+        href="/motion-studio"
         className="inline-flex items-center gap-2 px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors"
       >
         <Plus className="w-4 h-4" />
-        Skapa första mallen
-      </button>
+        Skapa i Motion Studio
+      </Link>
     </div>
   );
 }
@@ -235,38 +219,41 @@ function TemplateCard({
 }) {
   const [showMenu, setShowMenu] = useState(false);
 
-  const formatsLabel = template.formats.map(f => {
+  const formatLabel = (() => {
+    const f = template.config.format;
     if (f === 'story') return '9:16';
     if (f === 'feed') return '1:1';
     if (f === 'landscape') return '16:9';
+    if (f === 'vertical') return '4:5';
     return f;
-  }).join(', ');
+  })();
+  const sceneCount = template.config.scenes.length;
 
   if (viewMode === 'list') {
     return (
-      <div className="flex items-center gap-4 p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl hover:bg-white/[0.05] transition-colors group">
+      <div className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors group">
         <div
           className="w-16 h-16 rounded-lg flex-shrink-0"
-          style={{ backgroundColor: template.background.solidColor || '#00005E' }}
+          style={{ backgroundColor: template.config.backgroundColor || '#00005E' }}
         />
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-white truncate">{template.name}</h3>
-          <p className="text-sm text-white/40">
-            {template.text_structure.length} textplattor &bull; {formatsLabel}
+          <h3 className="font-medium text-gray-900 truncate">{template.name}</h3>
+          <p className="text-sm text-gray-500">
+            {sceneCount} scener &bull; {formatLabel}
           </p>
         </div>
 
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <Link
             href={`/produce?template=${template.id}`}
-            className="px-3 py-1.5 bg-nordea-blue/20 text-nordea-medium rounded-lg text-sm font-medium hover:bg-nordea-blue/30"
+            className="px-3 py-1.5 bg-nordea-blue/10 text-nordea-blue rounded-lg text-sm font-medium hover:bg-nordea-blue/20"
           >
             Producera
           </Link>
           <button
             onClick={() => onToggleFavorite(template.id, template.is_favorite)}
-            className={`p-2 rounded-lg ${template.is_favorite ? 'text-yellow-400' : 'text-white/40 hover:text-white/60'}`}
+            className={`p-2 rounded-lg ${template.is_favorite ? 'text-yellow-500' : 'text-gray-400 hover:text-gray-600'}`}
           >
             <Star className={`w-4 h-4 ${template.is_favorite ? 'fill-current' : ''}`} />
           </button>
@@ -276,15 +263,11 @@ function TemplateCard({
   }
 
   return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.12] transition-colors group">
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-colors group">
       {/* Thumbnail */}
       <div
         className="aspect-video relative"
-        style={{
-          background: template.background.type === 'gradient'
-            ? `linear-gradient(${template.background.gradientAngle}deg, ${template.background.gradientStart}, ${template.background.gradientEnd})`
-            : template.background.solidColor || '#00005E'
-        }}
+        style={{ backgroundColor: template.config.backgroundColor || '#00005E' }}
       >
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
           <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -306,16 +289,16 @@ function TemplateCard({
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="font-medium text-white truncate">{template.name}</h3>
-            <p className="text-xs text-white/40 mt-0.5">
-              {template.text_structure.length} textplattor &bull; {formatsLabel}
+            <h3 className="font-medium text-gray-900 truncate">{template.name}</h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {sceneCount} scener &bull; {formatLabel}
             </p>
           </div>
 
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1.5 text-white/40 hover:text-white/60 rounded"
+              className="p-1.5 text-gray-400 hover:text-gray-600 rounded"
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>
@@ -323,17 +306,17 @@ function TemplateCard({
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-8 z-20 bg-[#1A1F2E] border border-white/10 rounded-lg py-1 shadow-xl min-w-[140px]">
+                <div className="absolute right-0 top-8 z-20 bg-white border border-gray-200 rounded-lg py-1 shadow-xl min-w-[140px]">
                   <Link
                     href={`/produce?template=${template.id}`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:bg-white/5"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <Copy className="w-4 h-4" />
                     Duplicera
                   </Link>
                   <button
                     onClick={() => { setShowMenu(false); onDelete(template.id); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-white/5"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-gray-50"
                   >
                     <Trash2 className="w-4 h-4" />
                     Ta bort

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   Play,
@@ -30,10 +31,27 @@ import {
   Pencil,
   Plus,
   Minus,
+  Save,
+  Zap,
+  ShieldCheck,
 } from 'lucide-react';
-import type { VideoConfig, Scene } from '@/lib/remotion/types';
-import { DEFAULT_VIDEO_CONFIG } from '@/lib/remotion/types';
+import type { VideoConfig, Scene, ElementTransform, LogoConfig, MotionConfig } from '@/lib/remotion/types';
+import { DEFAULT_VIDEO_CONFIG, DEFAULT_MOTION_CONFIG } from '@/lib/remotion/types';
 import { FORMAT_PRESETS } from '@/lib/remotion/styles';
+import { LogoUploader } from '@/components/motion-studio/LogoUploader';
+import { SaveTemplateModal } from '@/components/modals/save-template-modal';
+import { MotionPanel } from '@/components/editor/motion-panel';
+import { QAModal } from '@/components/qa/qa-modal';
+import { extractVariantSeeds } from '@/lib/video-types';
+import type { QAReport } from '@/lib/qa/types';
+import { CostTracker } from '@/components/ai/cost-tracker';
+
+// Dynamic import — react-moveable pulls in a non-trivial dep tree and is
+// only needed when the user opens edit mode.
+const LogoEditor = dynamic(
+  () => import('@/components/motion-studio/LogoEditor').then((m) => ({ default: m.LogoEditor })),
+  { ssr: false }
+);
 
 // Dynamically import the Player to avoid SSR issues with Remotion
 const MotionPlayer = dynamic(
@@ -130,9 +148,68 @@ export default function MotionStudioPage() {
   const [showRendersPanel, setShowRendersPanel] = useState(false);
   const [renders, setRenders] = useState<RenderRecord[]>([]);
   const [latestRender, setLatestRender] = useState<RenderRecord | null>(null);
+  const [editingLogo, setEditingLogo] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [motionOpen, setMotionOpen] = useState(false);
+  const [qaModalOpen, setQAModalOpen] = useState(false);
+  const [qaLoading, setQALoading] = useState(false);
+  const [qaReport, setQAReport] = useState<QAReport | null>(null);
 
+  const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const previewFrameRef = useRef<HTMLDivElement | null>(null);
+
+  const handleLogoChange = useCallback((logo: LogoConfig | undefined) => {
+    setConfig((prev) => ({ ...prev, logo, showLogo: logo?.url ? true : prev.showLogo }));
+  }, []);
+
+  const handleMotionChange = useCallback((motion: MotionConfig) => {
+    setConfig((prev) => ({ ...prev, motion }));
+  }, []);
+
+  const handleRunQA = useCallback(async () => {
+    setQAModalOpen(true);
+    setQALoading(true);
+    setQAReport(null);
+
+    try {
+      const seeds = extractVariantSeeds(config);
+      const res = await fetch('/api/qa/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creative_kind: 'video',
+          creative_ref: 'draft',
+          metadata: {
+            headline: seeds.headline,
+            body: seeds.body,
+            cta: seeds.cta,
+            duration_s: config.totalDurationSeconds,
+            has_logo: config.showLogo,
+          },
+        }),
+      });
+
+      if (!res.ok) throw new Error('QA gate failed');
+      const report = (await res.json()) as QAReport;
+      setQAReport(report);
+    } catch (error) {
+      console.error('QA gate error:', error);
+      // Surface error in the modal — keep it open so the user sees what happened.
+      // QAReportView's loading=false + report=null branch handles this gracefully.
+      setQAReport(null);
+    } finally {
+      setQALoading(false);
+    }
+  }, [config]);
+
+  const handleLogoTransform = useCallback((transform: ElementTransform) => {
+    setConfig((prev) => ({
+      ...prev,
+      logo: { ...(prev.logo ?? {}), transform },
+    }));
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -468,11 +545,43 @@ export default function MotionStudioPage() {
 
           <div className="motion-toolbar-actions">
             <button
+              onClick={handleRunQA}
+              disabled={qaLoading}
+              className="motion-toolbar-btn"
+              title="Kör QA-gate (persona-jury, ToV, compliance, heatmap)"
+            >
+              {qaLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="w-4 h-4" />
+              )}
+            </button>
+            <button
+              onClick={() => setShowSaveModal(true)}
+              className="motion-toolbar-btn"
+              title="Spara som mall"
+            >
+              <Save className="w-4 h-4" />
+            </button>
+            <button
               onClick={handleCopyJson}
               className="motion-toolbar-btn"
               title="Kopiera JSON"
             >
               {copiedJson ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => {
+                const next = !editingLogo;
+                setEditingLogo(next);
+                // Pause playback while editing so the logo stays put under the handles
+                if (next) setIsPlaying(false);
+              }}
+              className={`motion-toolbar-btn ${editingLogo ? 'active' : ''}`}
+              title={editingLogo ? 'Avsluta redigeringsläge' : 'Redigera logotyp-position'}
+              disabled={!config.logo?.url}
+            >
+              <Pencil className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowSceneList(!showSceneList)}
@@ -486,14 +595,65 @@ export default function MotionStudioPage() {
 
         {/* Player */}
         <div className="motion-preview-container">
-          <div className={`motion-player-frame motion-player-${activeFormat}`}>
-            <MotionPlayer config={config} playing={isPlaying} loop />
+          <div
+            ref={previewFrameRef}
+            className={`motion-player-frame motion-player-${activeFormat}`}
+            style={{ position: 'relative' }}
+          >
+            <MotionPlayer config={config} playing={isPlaying && !editingLogo} loop />
+            {editingLogo && config.logo?.url && (
+              <LogoEditor
+                previewRef={previewFrameRef}
+                format={config.format}
+                logo={config.logo}
+                onChange={handleLogoTransform}
+              />
+            )}
           </div>
         </div>
 
-        {/* Scene editor */}
+        {/* Scene editor + logo panel */}
         {showSceneList && (
           <div className="motion-scene-list">
+            {/* Logo uploader — always visible at top */}
+            <div className="mb-4">
+              <LogoUploader logo={config.logo} onChange={handleLogoChange} />
+            </div>
+
+            {/* Motion accordion — open to live-tune motion language while preview plays */}
+            <div className="mb-4 bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMotionOpen((v) => !v)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Zap className="w-4 h-4 text-[#0000A0] shrink-0" />
+                  <span className="text-sm font-medium text-gray-900">Motion</span>
+                  <span className="text-xs text-gray-500 truncate">
+                    · {(config.motion ?? DEFAULT_MOTION_CONFIG).logo.reveal} · {(config.motion ?? DEFAULT_MOTION_CONFIG).text.stagger} · {(config.motion ?? DEFAULT_MOTION_CONFIG).transitions.style}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${motionOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {motionOpen && (
+                <div className="px-4 pb-4 pt-3 border-t border-gray-200">
+                  <MotionPanel
+                    motion={config.motion ?? DEFAULT_MOTION_CONFIG}
+                    onChange={handleMotionChange}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* AI usage / cost tracker — visible budget signal so the user
+                sees if external providers are being called (or stubbed). */}
+            <div className="mb-4">
+              <CostTracker variant="light" />
+            </div>
+
             <div className="motion-scene-list-header">
               <span className="motion-scene-list-title">
                 <Layers className="w-4 h-4" />
@@ -591,12 +751,37 @@ export default function MotionStudioPage() {
           </div>
         )}
       </div>
+
+      <SaveTemplateModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        config={config}
+        onSaved={() => {
+          setShowSaveModal(false);
+          router.push('/templates');
+        }}
+      />
+
+      <QAModal
+        isOpen={qaModalOpen}
+        onClose={() => setQAModalOpen(false)}
+        report={qaReport}
+        loading={qaLoading}
+        onRetry={handleRunQA}
+        onExport={() => {
+          setQAModalOpen(false);
+          // Trigger render after a passed QA — same flow as the Render-button
+          // would. Sprint 5 leaves this as a TODO since the existing
+          // handleRender wires straight to /api/motion-render.
+          handleRender();
+        }}
+      />
     </div>
   );
 }
 
 function SceneEditor({ scene, onChange }: { scene: Scene; onChange: (updates: Partial<Scene>) => void }) {
-  const fieldClass = "w-full px-3 py-2 rounded-lg text-sm text-white font-medium";
+  const fieldClass = "w-full px-3 py-2 rounded-lg text-sm text-gray-900 bg-white border border-gray-200 font-medium focus:outline-none focus:border-[#0000A0] focus:ring-3 focus:ring-[#0000A0]/12";
 
   const renderField = (label: string, value: string, key: string) => (
     <div>
@@ -711,7 +896,7 @@ function SceneEditor({ scene, onChange }: { scene: Scene; onChange: (updates: Pa
         {scene.type === 'canvas' && (
           <div>
             <label className="motion-editor-label">Beskrivning</label>
-            <p className="text-xs text-white/40 mt-1">Canvas-scener redigeras via prompt</p>
+            <p className="text-xs text-gray-500 mt-1">Canvas-scener redigeras via prompt</p>
           </div>
         )}
       </div>

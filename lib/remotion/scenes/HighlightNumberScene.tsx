@@ -2,14 +2,19 @@ import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { fadeSlideUp, fadeIn, scalePop, s2f } from "../utils";
 import { colors, fonts } from "../styles";
-import type { HighlightNumberScene as HighlightNumberSceneProps } from "../types";
+import type { HighlightNumberScene as HighlightNumberSceneProps, MotionConfig } from "../types";
+import { DEFAULT_MOTION_CONFIG } from "../types";
+import { CountingNumber } from "../animations/CountingNumber";
 
 export const HighlightNumberSceneComponent: React.FC<{
   scene: HighlightNumberSceneProps;
   width: number;
-}> = ({ scene, width }) => {
+  motion?: MotionConfig;
+  durationFrames?: number;
+}> = ({ scene, width, motion }) => {
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  const m = motion ?? DEFAULT_MOTION_CONFIG;
 
   const labelAnim = fadeSlideUp(frame, 5, 15, 30);
   const numberScale = scalePop(frame, 12, 22, 1.1);
@@ -19,6 +24,11 @@ export const HighlightNumberSceneComponent: React.FC<{
 
   // Glow ring behind the number
   const ringScale = fadeIn(frame, 8, 25);
+
+  // Try to parse scene.number as a numeric value. The field is typed as string
+  // so we may get "5%", "10.5", or "miljon" — only count up if it parses cleanly.
+  const numericValue = parseNumericNumber(scene.number);
+  const useCountUp = m.numbers.enabled && numericValue !== null;
 
   return (
     <AbsoluteFill
@@ -72,21 +82,37 @@ export const HighlightNumberSceneComponent: React.FC<{
           }}
         />
 
-        {/* Number */}
-        <div
-          style={{
-            fontFamily: fonts.headline,
-            fontSize: Math.round(140 * scale),
-            fontWeight: 900,
-            color: accent,
-            opacity: numberOpacity,
-            transform: `scale(${numberScale})`,
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {scene.number}
-        </div>
+        {/* Number — count-up when numeric, otherwise fall back to static scale-pop */}
+        {useCountUp ? (
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <CountingNumber
+              from={0}
+              to={numericValue}
+              startFrame={10}
+              durationFrames={m.numbers.duration}
+              fontSize={Math.round(140 * scale)}
+              fontWeight={900}
+              color={accent}
+              fontFamily={fonts.headline}
+              suffix={extractSuffix(scene.number)}
+            />
+          </div>
+        ) : (
+          <div
+            style={{
+              fontFamily: fonts.headline,
+              fontSize: Math.round(140 * scale),
+              fontWeight: 900,
+              color: accent,
+              opacity: numberOpacity,
+              transform: `scale(${numberScale})`,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            {scene.number}
+          </div>
+        )}
       </div>
 
       {/* Description */}
@@ -110,3 +136,23 @@ export const HighlightNumberSceneComponent: React.FC<{
     </AbsoluteFill>
   );
 };
+
+/**
+ * Parse the leading numeric prefix from a string like "5%", "10.5", or "1 200".
+ * Returns null if the string starts with a non-digit (e.g. "miljon"), in which
+ * case the caller should render statically rather than try to count up.
+ */
+function parseNumericNumber(value: string): number | null {
+  const cleaned = value.replace(/\s/g, "").replace(",", ".");
+  const match = cleaned.match(/^-?\d+(\.\d+)?/);
+  if (!match) return null;
+  const num = parseFloat(match[0]);
+  return Number.isFinite(num) ? num : null;
+}
+
+function extractSuffix(value: string): string {
+  const cleaned = value.replace(/\s/g, "").replace(",", ".");
+  const match = cleaned.match(/^-?\d+(\.\d+)?/);
+  if (!match) return "";
+  return value.replace(match[0], "").trimStart();
+}

@@ -21,25 +21,28 @@ export async function GET() {
   }
 }
 
-// POST - Create new template
+// POST - Create new template. Body shape matches videoConfigToTemplate output:
+// { name, description, config, is_favorite }
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const body = await request.json();
+
+    if (!body?.name || !body?.config) {
+      return NextResponse.json(
+        { error: 'name and config are required' },
+        { status: 400 }
+      );
+    }
 
     const { data, error } = await supabase
       .from('templates')
       .insert({
         user_id: 'default-user',
         name: body.name,
-        description: body.description,
-        duration_frames: body.duration_frames,
-        fps: body.fps,
-        background: body.background,
-        logo: body.logo,
-        text_structure: body.text_structure,
-        default_texts: body.default_texts,
-        formats: body.formats,
+        description: body.description ?? null,
+        config: body.config,
+        is_favorite: body.is_favorite ?? false,
       })
       .select()
       .single();

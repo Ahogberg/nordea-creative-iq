@@ -1,13 +1,23 @@
 # Nordea Sans Fonts
 
-Add the following font files to this directory:
+The Nordea Sans family is the primary typeface for CreativeIQ. Two
+sub-families ship in this directory:
 
-- `NordeaSans-Regular.woff2`
-- `NordeaSans-Medium.woff2`
-- `NordeaSans-Bold.woff2`
+```
+nordea-sans-large/    — display weights for headlines
+nordea-sans-small/    — UI / body / button weights (also serves as default)
+```
 
-The app will fall back to Inter font if these files are missing.
+Each sub-family ships in `.woff2`, `.woff`, and `.ttf` for browser, legacy,
+and tooling needs. All nine weights from Light (300) to Black (900) plus
+italics are present.
 
-## Getting the fonts
+The CSS `@font-face` declarations live in [`app/globals.css`](../../app/globals.css)
+and the Tailwind v4 `@theme` exposes them as:
 
-Contact Nordea Brand Team or download from the internal brand portal.
+- `font-sans` → "Nordea Sans" (alias for Small) → falls back to Inter
+- `font-display` → "Nordea Sans Large" → falls back to Inter
+
+Inter is loaded as a final fallback so any environment without these files
+(misconfigured CDN, missing volume mount) still renders correctly with a
+Latin-default sans.

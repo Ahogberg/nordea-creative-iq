@@ -47,14 +47,14 @@ function TagInput({ label, tags, onChange, placeholder }: { label: string; tags:
   const addTag = () => { if (input.trim() && !tags.includes(input.trim())) { onChange([...tags, input.trim()]); setInput(''); } };
   return (
     <div className="space-y-2">
-      <Label className="text-sm text-white/70">{label}</Label>
+      <Label className="text-sm text-gray-700">{label}</Label>
       <div className="flex gap-2">
         <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())} placeholder={placeholder} className="flex-1" />
-        <Button type="button" variant="outline" onClick={addTag} size="sm" className="border-white/10 text-white/70 hover:bg-white/5">Lägg till</Button>
+        <Button type="button" variant="outline" onClick={addTag} size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">Lägg till</Button>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {tags.map((tag) => (
-          <span key={tag} className="inline-flex items-center gap-1 px-2 py-1 bg-white/10 text-white/70 text-xs rounded">
+          <span key={tag} className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
             {tag}
             <X className="w-3 h-3 cursor-pointer hover:text-nordea-accent-red" onClick={() => onChange(tags.filter((t) => t !== tag))} />
           </span>
@@ -161,8 +161,8 @@ export default function PersonasPage() {
     <div className="max-w-7xl mx-auto">
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Personas</h1>
-          <p className="text-white/60">{PERSONA_LIBRARY.length} fördefinierade + {personas.length} anpassade kundprofiler</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Personas</h1>
+          <p className="text-gray-700">{PERSONA_LIBRARY.length} fördefinierade + {personas.length} anpassade kundprofiler</p>
         </div>
         <button onClick={openCreate} className="btn-primary"><Plus className="w-4 h-4" /> Skapa persona</button>
       </div>
@@ -174,7 +174,7 @@ export default function PersonasPage() {
 
       {showLibrary && (
         <div className="mb-6 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input type="text" placeholder="Sök persona, karaktärsdrag..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="glass-input pl-10" />
         </div>
       )}
@@ -187,9 +187,9 @@ export default function PersonasPage() {
                 <div className="flex items-start gap-4">
                   <PersonaImage name={persona.name} color={persona.color} size="lg" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-white">{persona.name}</h3>
-                    <p className="text-sm text-white/50">{persona.shortName} · {persona.age.min}-{persona.age.max} år</p>
-                    <p className="text-sm text-white/40 mt-2 line-clamp-2">{persona.description}</p>
+                    <h3 className="font-semibold text-gray-900">{persona.name}</h3>
+                    <p className="text-sm text-gray-500">{persona.shortName} · {persona.age.min}-{persona.age.max} år</p>
+                    <p className="text-sm text-gray-500 mt-2 line-clamp-2">{persona.description}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-4">
@@ -207,21 +207,21 @@ export default function PersonasPage() {
                   <>
                     <div className="flex items-center gap-4 mb-6">
                       <PersonaImage name={selectedLibraryPersona.name} color={selectedLibraryPersona.color} size="xl" />
-                      <div><h3 className="text-lg font-semibold text-white">{selectedLibraryPersona.name}</h3><p className="text-white/50">{selectedLibraryPersona.shortName}</p><p className="text-sm text-white/40">{selectedLibraryPersona.age.min}-{selectedLibraryPersona.age.max} år</p></div>
+                      <div><h3 className="text-lg font-semibold text-gray-900">{selectedLibraryPersona.name}</h3><p className="text-gray-500">{selectedLibraryPersona.shortName}</p><p className="text-sm text-gray-500">{selectedLibraryPersona.age.min}-{selectedLibraryPersona.age.max} år</p></div>
                     </div>
-                    <blockquote className="text-white/70 italic border-l-2 border-nordea-medium pl-4 mb-6">&quot;{selectedLibraryPersona.quote}&quot;</blockquote>
+                    <blockquote className="text-gray-700 italic border-l-2 border-nordea-blue pl-4 mb-6">&quot;{selectedLibraryPersona.quote}&quot;</blockquote>
                     <div className="space-y-4 mb-6">
-                      <div><div className="flex items-center gap-2 text-sm font-medium text-white mb-2"><Target className="w-4 h-4 text-nordea-medium" /> Mål</div>{selectedLibraryPersona.goals.map((g, i) => <p key={i} className="text-sm text-white/60 mb-1">• {g}</p>)}</div>
-                      <div><div className="flex items-center gap-2 text-sm font-medium text-white mb-2"><AlertCircle className="w-4 h-4 text-nordea-accent-yellow" /> Smärtpunkter</div>{selectedLibraryPersona.painPoints.map((p, i) => <p key={i} className="text-sm text-white/60 mb-1">• {p}</p>)}</div>
-                      <div><div className="flex items-center gap-2 text-sm font-medium text-white mb-2"><Sparkles className="w-4 h-4 text-nordea-accent-green" /> Produktintresse</div><div className="flex flex-wrap gap-1.5">{selectedLibraryPersona.productsInterested.map((pr, i) => <span key={i} className="persona-trait">{pr}</span>)}</div></div>
+                      <div><div className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2"><Target className="w-4 h-4 text-nordea-blue" /> Mål</div>{selectedLibraryPersona.goals.map((g, i) => <p key={i} className="text-sm text-gray-700 mb-1">• {g}</p>)}</div>
+                      <div><div className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2"><AlertCircle className="w-4 h-4 text-nordea-accent-yellow" /> Smärtpunkter</div>{selectedLibraryPersona.painPoints.map((p, i) => <p key={i} className="text-sm text-gray-700 mb-1">• {p}</p>)}</div>
+                      <div><div className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2"><Sparkles className="w-4 h-4 text-nordea-accent-green" /> Produktintresse</div><div className="flex flex-wrap gap-1.5">{selectedLibraryPersona.productsInterested.map((pr, i) => <span key={i} className="persona-trait">{pr}</span>)}</div></div>
                     </div>
                     <button onClick={() => handleStartChat(selectedLibraryPersona)} className="btn-primary w-full"><MessageCircle className="w-4 h-4" /> Chatta med {selectedLibraryPersona.name.split(' ')[0]}</button>
                   </>
                 ) : (
                   <>
                     <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3"><PersonaImage name={selectedLibraryPersona.name} color={selectedLibraryPersona.color} size="md" /><div><p className="font-medium text-white">{selectedLibraryPersona.name}</p><p className="text-xs text-white/50">Online</p></div></div>
-                      <button onClick={() => setChatOpen(false)} className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10"><X className="w-4 h-4" /></button>
+                      <div className="flex items-center gap-3"><PersonaImage name={selectedLibraryPersona.name} color={selectedLibraryPersona.color} size="md" /><div><p className="font-medium text-gray-900">{selectedLibraryPersona.name}</p><p className="text-xs text-gray-500">Online</p></div></div>
+                      <button onClick={() => setChatOpen(false)} className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100"><X className="w-4 h-4" /></button>
                     </div>
                     <div className="h-80 overflow-y-auto custom-scrollbar space-y-3 mb-4 flex flex-col">{chatMessages.map((msg, i) => <div key={i} className={`chat-message ${msg.role}`}>{msg.content}</div>)}</div>
                     <div className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Skriv ett meddelande..." className="chat-input" /><button onClick={handleSendMessage} className="chat-send-btn"><ChevronRight className="w-5 h-5" /></button></div>
@@ -229,7 +229,7 @@ export default function PersonasPage() {
                 )}
               </div>
             ) : (
-              <div className="glass-card text-center py-12"><Users className="w-12 h-12 mx-auto text-white/20 mb-4" /><p className="text-white/50">Välj en persona för detaljer</p></div>
+              <div className="glass-card text-center py-12"><Users className="w-12 h-12 mx-auto text-gray-400 mb-4" /><p className="text-gray-500">Välj en persona för detaljer</p></div>
             )}
           </div>
         </div>
@@ -238,11 +238,11 @@ export default function PersonasPage() {
           {personas.map((persona) => (
             <div key={persona.id} className="glass-card">
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3"><PersonaImage name={persona.name} size="md" /><div><h3 className="font-medium text-white text-sm">{persona.name}</h3><p className="text-xs text-white/50">{persona.age_min}-{persona.age_max} år</p></div></div>
-                {persona.is_default && <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-white/60">Standard</span>}
+                <div className="flex items-center gap-3"><PersonaImage name={persona.name} size="md" /><div><h3 className="font-medium text-gray-900 text-sm">{persona.name}</h3><p className="text-xs text-gray-500">{persona.age_min}-{persona.age_max} år</p></div></div>
+                {persona.is_default && <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700">Standard</span>}
               </div>
-              {persona.description && <p className="text-sm text-white/60 mb-3 line-clamp-2">{persona.description}</p>}
-              <div className="flex flex-wrap gap-1 mb-4">{persona.traits?.slice(0, 2).map((t) => <span key={t} className="persona-trait">{t}</span>)}{persona.traits?.length > 2 && <span className="text-xs text-white/40">+{persona.traits.length - 2}</span>}</div>
+              {persona.description && <p className="text-sm text-gray-700 mb-3 line-clamp-2">{persona.description}</p>}
+              <div className="flex flex-wrap gap-1 mb-4">{persona.traits?.slice(0, 2).map((t) => <span key={t} className="persona-trait">{t}</span>)}{persona.traits?.length > 2 && <span className="text-xs text-gray-500">+{persona.traits.length - 2}</span>}</div>
               <div className="flex gap-2">
                 <button className="btn-secondary flex-1 text-sm py-2" onClick={() => openEdit(persona)}><Pencil className="w-3 h-3" /> Redigera</button>
                 {!persona.is_default && <button className="btn-secondary text-sm py-2 text-nordea-accent-red" onClick={() => handleDelete(persona.id)}><Trash2 className="w-3 h-3" /></button>}
