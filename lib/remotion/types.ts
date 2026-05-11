@@ -221,29 +221,31 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfig = {
   format: "story",
   backgroundColor: "#0000A0",
   accentColor: "#40BFA3",
+  // Default content showcases a realistic bolån-flow so first-time users
+  // see Nordea-relevant copy + the QA gate's intended product type out of
+  // the box instead of meta "Nordea CreativeIQ" placeholder text.
   scenes: [
     {
       type: "title",
       durationSeconds: 2.5,
-      headline: "Nordea CreativeIQ",
-      subtitle: "Motion Studio",
+      headline: "Drömhuset väntar",
+      subtitle: "Räkna på ditt bolån",
       alignment: "center",
     },
     {
       type: "counter",
       durationSeconds: 3,
-      label: "KONTANTINSATS",
+      label: "SPARA PER MÅNAD",
       fromValue: 0,
-      toValue: 250000,
+      toValue: 2500,
       suffix: " kr",
-      description: "Så mycket kan du spara",
     },
     {
       type: "cta",
       durationSeconds: 2,
-      headline: "Kom igång idag",
-      buttonText: "LÄS MER PÅ NORDEA.SE",
-      subtitle: "Vi hjälper dig hela vägen",
+      headline: "Räkna på ditt bolån",
+      buttonText: "BOKA RÅDGIVNING IDAG",
+      subtitle: "Få ett ja inom 24 timmar",
     },
   ],
   showLogo: true,

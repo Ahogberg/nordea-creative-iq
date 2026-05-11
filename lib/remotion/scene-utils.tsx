@@ -16,7 +16,11 @@ export function positionedElement(
   node: React.ReactNode
 ): React.ReactNode {
   const transform = scene.elementTransforms?.[id];
-  if (!transform) return node;
+  // Caller already renders the inline copy via `isInline()`; if no transform
+  // exists we must return null so we don't render a second copy on top.
+  // Returning `node` here was a duplicate-render bug visible as bold/blurred
+  // text on every scene without a custom layout.
+  if (!transform) return null;
 
   return (
     <div
