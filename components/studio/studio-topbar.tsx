@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Save, Download, Sparkles, ShieldCheck, Loader2 } from "lucide-react";
 import { useStudioStore } from "@/lib/studio/store";
 import { SaveTemplateModal } from "./save-template-modal";
+import { ExportModal } from "./export-modal";
 
 export function StudioTopbar() {
   const config = useStudioStore((s) => s.config);
@@ -11,6 +12,7 @@ export function StudioTopbar() {
   const isGeneratingVariants = useStudioStore((s) => s.isGeneratingVariants);
 
   const [saveOpen, setSaveOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const totalDuration = config.scenes.reduce(
     (sum, s) => sum + (s.durationSeconds || 0),
@@ -59,9 +61,8 @@ export function StudioTopbar() {
         </button>
         <button
           type="button"
-          disabled
-          title="Kommer i Sprint 8b.4"
-          className="nordea-btn nordea-btn-primary nordea-btn-sm opacity-50 cursor-not-allowed"
+          onClick={() => setExportOpen(true)}
+          className="nordea-btn nordea-btn-primary nordea-btn-sm"
         >
           <Download className="w-4 h-4" />
           Exportera
@@ -69,6 +70,7 @@ export function StudioTopbar() {
       </div>
 
       <SaveTemplateModal open={saveOpen} onClose={() => setSaveOpen(false)} />
+      <ExportModal open={exportOpen} onClose={() => setExportOpen(false)} />
     </div>
   );
 }
