@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   FileText,
   ArrowUpRight,
+  Layers,
 } from "lucide-react";
 
 interface Shortcut {
@@ -16,7 +17,7 @@ interface Shortcut {
   icon: typeof Type;
   title: string;
   description: string;
-  mode: "copy" | "video" | "analyze" | "brief";
+  mode: "copy" | "video" | "analyze" | "brief" | "master";
 }
 
 const SHORTCUTS: Shortcut[] = [
@@ -47,6 +48,13 @@ const SHORTCUTS: Shortcut[] = [
     title: "Från brief",
     description: "Importera brief → komplett kampanj",
     mode: "brief",
+  },
+  {
+    id: "master",
+    icon: Layers,
+    title: "Master",
+    description: "En master design → 4 lokaliserade format-varianter",
+    mode: "master",
   },
 ];
 
@@ -122,7 +130,7 @@ export default function CreatePage() {
           <div className="flex-1 h-px bg-nordea-border" />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {SHORTCUTS.map((s) => {
             const Icon = s.icon;
             return (
