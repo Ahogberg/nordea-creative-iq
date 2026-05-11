@@ -1,4 +1,4 @@
-// ── Motion Studio state store (Sprint 8a) ──
+// ── Motion Studio state store (Sprint 8a + 8b) ──
 //
 // Single source of truth for the property-driven Studio UI. Wraps the
 // existing VideoConfig from lib/remotion/types so the existing Remotion
@@ -6,6 +6,8 @@
 //
 // Aspect-ratio toggle writes to `config.format` (no separate field —
 // VideoConfig already carries this).
+//
+// Sprint 8b adds variants state (AI-generated alternative configs).
 
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
@@ -36,11 +38,31 @@ export const ASPECT_RATIOS: Record<AspectRatio, AspectRatioInfo> = {
   vertical: { label: "Vertikal", ratio: "4:5", width: 1080, height: 1350 },
 };
 
+// ── Variants (Sprint 8b) ──
+export interface VariantChange {
+  type: "text" | "motion" | "duration" | "color" | "scene_order";
+  description: string;
+}
+
+export interface Variant {
+  id: string;
+  thumbnail_url?: string;
+  config_diff: {
+    description: string;
+    changes: VariantChange[];
+  };
+  full_config: VideoConfig;
+}
+
 interface StudioState {
   config: VideoConfig;
   selectedSceneIndex: number | null;
   previewKey: number;
   isRendering: boolean;
+
+  // Variants (8b)
+  variants: Variant[];
+  isGeneratingVariants: boolean;
 
   setAspectRatio: (ratio: AspectRatio) => void;
   setSelectedScene: (index: number | null) => void;
@@ -53,14 +75,22 @@ interface StudioState {
   triggerRender: () => void;
   setIsRendering: (rendering: boolean) => void;
   loadConfig: (config: VideoConfig) => void;
+
+  // Variants actions (8b)
+  generateVariants: () => Promise<void>;
+  applyVariant: (variantId: string) => void;
+  clearVariants: () => void;
 }
 
 export const useStudioStore = create<StudioState>()(
-  subscribeWithSelector((set) => ({
+  subscribeWithSelector((set, get) => ({
     config: DEFAULT_VIDEO_CONFIG,
     selectedSceneIndex: 0,
     previewKey: 0,
     isRendering: false,
+
+    variants: [],
+    isGeneratingVariants: false,
 
     setAspectRatio: (ratio) =>
       set((state) => ({ config: { ...state.config, format: ratio } })),
@@ -121,6 +151,44 @@ export const useStudioStore = create<StudioState>()(
         selectedSceneIndex: config.scenes.length > 0 ? 0 : null,
         previewKey: 0,
       }),
+
+    // ── Variants ────────────────────────────────────────────────────────
+    generateVariants: async () => {
+      const state = get();
+      set({ isGeneratingVariants: true, variants: [] });
+
+      try {
+        const res = await fetch("/api/studio/generate-variants", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ config: state.config, count: 3 }),
+        });
+
+        if (!res.ok) throw new Error("Variant generation failed");
+        const data = await res.json();
+        set({ variants: data.variants ?? [], isGeneratingVariants: false });
+      } catch (error) {
+        console.error("[studio] generateVariants failed:", error);
+        set({ isGeneratingVariants: false });
+      }
+    },
+
+    applyVariant: (variantId) =>
+      set((state) => {
+        const variant = state.variants.find((v) => v.id === variantId);
+        if (!variant) return state;
+        return {
+          config: {
+            ...variant.full_config,
+            motion: variant.full_config.motion ?? DEFAULT_MOTION_CONFIG,
+          },
+          selectedSceneIndex:
+            variant.full_config.scenes.length > 0 ? 0 : null,
+          variants: [],
+        };
+      }),
+
+    clearVariants: () => set({ variants: [] }),
   }))
 );
 
