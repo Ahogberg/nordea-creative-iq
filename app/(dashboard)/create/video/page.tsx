@@ -9,7 +9,7 @@ import { PropertyPanel } from "@/components/studio/property-panel";
 import { LivePreview } from "@/components/studio/live-preview";
 import { VariantsPanel } from "@/components/studio/variants-panel";
 import { Timeline } from "@/components/studio/timeline";
-import { ChatInputStub } from "@/components/studio/chat-input-stub";
+import { ChatInput } from "@/components/studio/chat-input";
 
 /**
  * Motion Studio (Sprint 8a redesign)
@@ -45,7 +45,7 @@ function StudioPageInner() {
 
         <div className="flex-1 flex flex-col bg-nordea-bg min-w-0">
           <LivePreview />
-          <ChatInputStub />
+          <ChatInput />
         </div>
 
         <div className="w-[320px] border-l border-nordea-border bg-white overflow-y-auto">
