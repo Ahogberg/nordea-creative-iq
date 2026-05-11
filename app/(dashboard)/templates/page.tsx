@@ -88,7 +88,7 @@ export default function TemplatesPage() {
             </p>
           </div>
           <Link
-            href="/motion-studio"
+            href="/create/video"
             className="px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -196,7 +196,7 @@ function EmptyState() {
         Skapa en annons i editorn och spara den som mall för att komma igång med bulk-produktion.
       </p>
       <Link
-        href="/motion-studio"
+        href="/create/video"
         className="inline-flex items-center gap-2 px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors"
       >
         <Plus className="w-4 h-4" />

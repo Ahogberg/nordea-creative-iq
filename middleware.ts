@@ -16,11 +16,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
-  "/motion-studio",
+  "/create",
   "/templates",
   "/produce",
-  "/ad-studio",
-  "/copy-studio",
+  "/dam",
+  "/qa",
   "/campaigns",
   "/campaign-planner",
   "/localization",

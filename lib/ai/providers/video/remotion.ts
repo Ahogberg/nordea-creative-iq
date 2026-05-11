@@ -59,11 +59,11 @@ export class RemotionProvider implements VideoProvider {
 
     const { width, height } = aspectToDimensions(aspect);
 
-    // Sprint 6 stub URL — pointing at /motion-studio so the user lands in
-    // the editor instead of getting a 404. Real prompt-to-config wiring
-    // is a separate sprint.
+    // Sprint 6 stub URL — points at /create/video (renamed from /motion-studio
+    // in Sprint 7) so the user lands in the editor instead of a 404. Real
+    // prompt-to-config wiring is a separate sprint.
     const result: VideoResult = {
-      url: `/motion-studio?prompt=${encodeURIComponent(opts.prompt)}&aspect=${aspect}&duration=${duration_s}`,
+      url: `/create/video?prompt=${encodeURIComponent(opts.prompt)}&aspect=${aspect}&duration=${duration_s}`,
       thumbnail_url: undefined,
       duration_s,
       width,

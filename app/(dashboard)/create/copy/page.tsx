@@ -398,7 +398,7 @@ export default function CopyStudioPage() {
     if (copy) {
       sessionStorage.setItem('copyForAdStudio', JSON.stringify({ ...copy, channel }));
     }
-    router.push('/ad-studio');
+    router.push('/create/analyze');
   };
 
   // Persona selector with "+ Skapa ny persona"

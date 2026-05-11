@@ -18,21 +18,27 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Sparkles,
-  PenLine,
   Calendar,
-  Globe,
   Users,
+  Rocket,
+  LayoutGrid,
+  Settings2,
+  FolderOpen,
+  ShieldCheck,
 } from 'lucide-react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/ad-studio', label: 'Ad Studio', icon: Sparkles },
-  { href: '/copy-studio', label: 'Copy Studio', icon: PenLine },
-  { href: '/campaign-planner', label: 'Kampanjplanerare', icon: Calendar },
-  { href: '/localization', label: 'Lokalisering', icon: Globe },
+  { href: '/campaigns', label: 'Kampanjer', icon: Rocket },
+  { href: '/create', label: 'Create', icon: Sparkles },
+  { href: '/templates', label: 'Templates', icon: LayoutGrid },
+  { href: '/produce', label: 'Produce', icon: Settings2 },
+  { href: '/dam', label: 'Asset Library', icon: FolderOpen },
+  { href: '/qa', label: 'QA Reports', icon: ShieldCheck },
   { href: '/personas', label: 'Personas', icon: Users },
+  { href: '/campaign-planner', label: 'Mediaplanering', icon: Calendar },
   { href: '/settings', label: 'Inställningar', icon: Settings },
 ];
 
