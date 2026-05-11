@@ -5,23 +5,31 @@ import Link from 'next/link';
 import {
   Plus,
   Star,
-  MoreHorizontal,
-  Play,
-  Copy,
   Trash2,
   Loader2,
-  LayoutGrid,
-  List,
+  LayoutGrid as GridIcon,
+  List as ListIcon,
   Search,
   Sparkles,
+  ArrowRight,
+  Filter,
 } from 'lucide-react';
 import type { Template } from '@/lib/video-types';
+import { Topbar } from '@/components/layout/topbar';
+import { SectionTitle } from '@/components/layout/section-title';
+import { NordeaBadge } from '@/components/ui/nordea-badge';
+import { FormatChip } from '@/components/ui/format-chip';
+
+// Category filter chips — static for now. TODO Sprint 8: derive from a
+// `category` column on templates table.
+const CATEGORIES = ['All', 'Brand', 'Mortgages', 'Invest', 'Cards', 'App', 'HR'];
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [activeCategory, setActiveCategory] = useState('All');
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -38,7 +46,7 @@ export default function TemplatesPage() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => { fetchTemplates(); }, 0);
+    const timer = setTimeout(() => fetchTemplates(), 0);
     return () => clearTimeout(timer);
   }, [fetchTemplates]);
 
@@ -49,9 +57,9 @@ export default function TemplatesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_favorite: !current }),
       });
-      setTemplates(prev => prev.map(t =>
-        t.id === id ? { ...t, is_favorite: !current } : t
-      ));
+      setTemplates((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, is_favorite: !current } : t))
+      );
     } catch (error) {
       console.error('Error updating favorite:', error);
     }
@@ -59,95 +67,120 @@ export default function TemplatesPage() {
 
   const deleteTemplate = async (id: string) => {
     if (!confirm('Är du säker på att du vill ta bort denna mall?')) return;
-
     try {
       await fetch(`/api/templates/${id}`, { method: 'DELETE' });
-      setTemplates(prev => prev.filter(t => t.id !== id));
+      setTemplates((prev) => prev.filter((t) => t.id !== id));
     } catch (error) {
       console.error('Error deleting template:', error);
     }
   };
 
-  const filteredTemplates = templates.filter(t =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filtered = templates.filter(
+    (t) =>
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const favoriteTemplates = filteredTemplates.filter(t => t.is_favorite);
-  const otherTemplates = filteredTemplates.filter(t => !t.is_favorite);
+  const favorites = filtered.filter((t) => t.is_favorite);
+  const others = filtered.filter((t) => !t.is_favorite);
 
   return (
-    <div className="main-content">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Mallbibliotek</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {templates.length} {templates.length === 1 ? 'mall' : 'mallar'}
-            </p>
-          </div>
-          <Link
-            href="/create/video"
-            className="px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors flex items-center gap-2"
-          >
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar
+        breadcrumb={['Templates']}
+        right={
+          <Link href="/create/video" className="nordea-btn nordea-btn-primary">
             <Plus className="w-4 h-4" />
-            Skapa ny i Motion Studio
+            New template
           </Link>
+        }
+      />
+
+      <div className="px-8 py-7 max-w-[1400px] mx-auto">
+        {/* Hero */}
+        <div className="mb-6">
+          <h1 className="nordea-display text-3xl text-nordea-deep">Template Library</h1>
+          <div className="text-sm text-nordea-text-tertiary mt-1">
+            {templates.length} brand-approved layouts
+            {favorites.length > 0 && ` · ${favorites.length} favorites`}
+          </div>
         </div>
 
-        {/* Search and filters */}
-        <div className="flex items-center gap-4 mb-6">
+        {/* Filter row */}
+        <div className="flex gap-2.5 mb-6 items-center flex-wrap">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-nordea-text-tertiary" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Sök mallar..."
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-300"
+              placeholder="Search templates…"
+              className="nordea-input pl-9 w-full"
             />
           </div>
-          <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1">
+
+          <div className="flex gap-1.5">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveCategory(cat)}
+                className={`h-9 px-3.5 inline-flex items-center text-xs font-medium rounded-md transition-colors ${
+                  activeCategory === cat
+                    ? 'bg-nordea-bg-hover border border-nordea-border text-nordea-text'
+                    : 'text-nordea-text-secondary border border-transparent hover:bg-nordea-bg-hover'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1" />
+
+          <div className="flex bg-nordea-bg-hover rounded-md p-0.5">
             <button
+              type="button"
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`px-3 h-7 inline-flex items-center text-xs font-medium rounded ${
+                viewMode === 'grid' ? 'bg-white text-nordea-text shadow-sm' : 'text-nordea-text-tertiary'
+              }`}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <GridIcon className="w-3.5 h-3.5" />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`px-3 h-7 inline-flex items-center text-xs font-medium rounded ${
+                viewMode === 'list' ? 'bg-white text-nordea-text shadow-sm' : 'text-nordea-text-tertiary'
+              }`}
             >
-              <List className="w-4 h-4" />
+              <ListIcon className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          <button className="w-9 h-9 inline-flex items-center justify-center bg-white border border-nordea-border rounded-md text-nordea-text-tertiary hover:text-nordea-text">
+            <Filter className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-nordea-text-tertiary animate-spin" />
           </div>
         ) : templates.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="space-y-8">
-            {/* Favorites */}
-            {favoriteTemplates.length > 0 && (
+            {favorites.length > 0 && (
               <section>
-                <h2 className="text-sm font-medium text-gray-500 mb-4 flex items-center gap-2">
-                  <Star className="w-4 h-4 fill-current" />
-                  Favoriter
-                </h2>
-                <div className={viewMode === 'grid'
-                  ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
-                  : 'space-y-2'
-                }>
-                  {favoriteTemplates.map((template) => (
+                <SectionTitle title="Favorites" hint="Pinned by your team" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+                  {favorites.map((t) => (
                     <TemplateCard
-                      key={template.id}
-                      template={template}
-                      viewMode={viewMode}
+                      key={t.id}
+                      template={t}
+                      isFavorite
                       onToggleFavorite={toggleFavorite}
                       onDelete={deleteTemplate}
                     />
@@ -156,21 +189,14 @@ export default function TemplatesPage() {
               </section>
             )}
 
-            {/* All templates */}
-            {otherTemplates.length > 0 && (
+            {others.length > 0 && (
               <section>
-                <h2 className="text-sm font-medium text-gray-500 mb-4">
-                  {favoriteTemplates.length > 0 ? 'Alla mallar' : 'Dina mallar'}
-                </h2>
-                <div className={viewMode === 'grid'
-                  ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
-                  : 'space-y-2'
-                }>
-                  {otherTemplates.map((template) => (
+                <SectionTitle title="All templates" hint={`${others.length} shown`} />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+                  {others.map((t) => (
                     <TemplateCard
-                      key={template.id}
-                      template={template}
-                      viewMode={viewMode}
+                      key={t.id}
+                      template={t}
                       onToggleFavorite={toggleFavorite}
                       onDelete={deleteTemplate}
                     />
@@ -188,19 +214,16 @@ export default function TemplatesPage() {
 function EmptyState() {
   return (
     <div className="text-center py-20">
-      <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <Sparkles className="w-8 h-8 text-gray-400" />
+      <div className="w-16 h-16 bg-nordea-teal/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <Sparkles className="w-8 h-8 text-nordea-teal" />
       </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">Inga mallar ännu</h3>
-      <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-        Skapa en annons i editorn och spara den som mall för att komma igång med bulk-produktion.
+      <h3 className="text-lg font-semibold text-nordea-text mb-2">Inga mallar ännu</h3>
+      <p className="text-sm text-nordea-text-tertiary mb-6 max-w-sm mx-auto">
+        Skapa en video i Create-läget och spara den som mall för att komma igång med bulk-produktion.
       </p>
-      <Link
-        href="/create/video"
-        className="inline-flex items-center gap-2 px-4 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-white font-medium transition-colors"
-      >
+      <Link href="/create/video" className="nordea-btn nordea-btn-primary nordea-btn-lg inline-flex">
         <Plus className="w-4 h-4" />
-        Skapa i Motion Studio
+        Skapa i Create
       </Link>
     </div>
   );
@@ -208,17 +231,15 @@ function EmptyState() {
 
 function TemplateCard({
   template,
-  viewMode,
+  isFavorite,
   onToggleFavorite,
   onDelete,
 }: {
   template: Template;
-  viewMode: 'grid' | 'list';
+  isFavorite?: boolean;
   onToggleFavorite: (id: string, current: boolean) => void;
   onDelete: (id: string) => void;
 }) {
-  const [showMenu, setShowMenu] = useState(false);
-
   const formatLabel = (() => {
     const f = template.config.format;
     if (f === 'story') return '9:16';
@@ -229,111 +250,64 @@ function TemplateCard({
   })();
   const sceneCount = template.config.scenes.length;
 
-  if (viewMode === 'list') {
-    return (
-      <div className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors group">
+  return (
+    <div className="nordea-card overflow-hidden flex flex-col">
+      <div className="relative">
         <div
-          className="w-16 h-16 rounded-lg flex-shrink-0"
+          className="aspect-[16/10]"
           style={{ backgroundColor: template.config.backgroundColor || '#00005E' }}
         />
-
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900 truncate">{template.name}</h3>
-          <p className="text-sm text-gray-500">
-            {sceneCount} scener &bull; {formatLabel}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Link
-            href={`/produce?template=${template.id}`}
-            className="px-3 py-1.5 bg-nordea-blue/10 text-nordea-blue rounded-lg text-sm font-medium hover:bg-nordea-blue/20"
-          >
-            Producera
-          </Link>
-          <button
-            onClick={() => onToggleFavorite(template.id, template.is_favorite)}
-            className={`p-2 rounded-lg ${template.is_favorite ? 'text-yellow-500' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            <Star className={`w-4 h-4 ${template.is_favorite ? 'fill-current' : ''}`} />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-colors group">
-      {/* Thumbnail */}
-      <div
-        className="aspect-video relative"
-        style={{ backgroundColor: template.config.backgroundColor || '#00005E' }}
-      >
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-            <Play className="w-5 h-5 text-white fill-current ml-0.5" />
+        {isFavorite && (
+          <div className="absolute top-2 left-2">
+            <NordeaBadge tone="solid">
+              <Star className="w-2.5 h-2.5 fill-current" />
+              Favorite
+            </NordeaBadge>
           </div>
-        </div>
-
+        )}
         <button
+          type="button"
           onClick={() => onToggleFavorite(template.id, template.is_favorite)}
-          className={`absolute top-3 right-3 p-1.5 rounded-lg bg-black/30 backdrop-blur-sm ${
-            template.is_favorite ? 'text-yellow-400' : 'text-white/60 hover:text-white'
-          }`}
+          className={`absolute top-2 right-2 p-1.5 rounded-md ${
+            template.is_favorite
+              ? 'bg-white/90 text-nordea-amber'
+              : 'bg-white/70 text-nordea-text-tertiary hover:text-nordea-text'
+          } backdrop-blur-sm transition-colors`}
         >
-          <Star className={`w-4 h-4 ${template.is_favorite ? 'fill-current' : ''}`} />
+          <Star className={`w-3.5 h-3.5 ${template.is_favorite ? 'fill-current' : ''}`} />
         </button>
       </div>
-
-      {/* Info */}
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="font-medium text-gray-900 truncate">{template.name}</h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {sceneCount} scener &bull; {formatLabel}
-            </p>
-          </div>
-
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-1.5 text-gray-400 hover:text-gray-600 rounded"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-8 z-20 bg-white border border-gray-200 rounded-lg py-1 shadow-xl min-w-[140px]">
-                  <Link
-                    href={`/produce?template=${template.id}`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <Copy className="w-4 h-4" />
-                    Duplicera
-                  </Link>
-                  <button
-                    onClick={() => { setShowMenu(false); onDelete(template.id); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-gray-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Ta bort
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+      <div className="p-3.5 flex flex-col flex-1">
+        <div className="text-sm font-medium text-nordea-text mb-2 line-clamp-1">
+          {template.name}
         </div>
-
-        <div className="flex gap-2 mt-4">
-          <Link
-            href={`/produce?template=${template.id}`}
-            className="flex-1 px-3 py-2 bg-nordea-blue hover:bg-nordea-blue/80 rounded-lg text-sm font-medium text-white text-center transition-colors"
-          >
-            Producera
-          </Link>
+        <div className="flex gap-1 mb-2.5">
+          <FormatChip ratio={formatLabel} />
+          <span className="text-[10px] text-nordea-text-tertiary self-center">
+            {sceneCount} scenes
+          </span>
+        </div>
+        <div className="flex items-center justify-between mt-auto">
+          <span className="text-[11px] text-nordea-text-tertiary">
+            {template.use_count} uses
+          </span>
+          <div className="flex items-center gap-1">
+            <Link
+              href={`/produce?template=${template.id}`}
+              className="text-xs font-medium text-nordea-blue inline-flex items-center gap-1 hover:underline"
+            >
+              Producera
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => onDelete(template.id)}
+              className="p-1 text-nordea-text-tertiary hover:text-nordea-rose"
+              title="Ta bort"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
