@@ -24,7 +24,7 @@ export default function CreateBriefPage() {
           className="inline-flex items-center gap-2 text-sm text-nordea-text-tertiary hover:text-nordea-text mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          Tillbaka till Create
+          Tillbaka till Skapa
         </Link>
 
         <div className="w-16 h-16 bg-nordea-teal/10 text-nordea-teal rounded-2xl flex items-center justify-center mx-auto mb-6">

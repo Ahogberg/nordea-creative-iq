@@ -23,8 +23,8 @@ const SHORTCUTS: Shortcut[] = [
   {
     id: "copy",
     icon: Type,
-    title: "Copy",
-    description: "Skriv rubriker, brödtext och CTAs",
+    title: "Annontext",
+    description: "Skriv rubriker, brödtext och CTA:er",
     mode: "copy",
   },
   {
@@ -38,7 +38,7 @@ const SHORTCUTS: Shortcut[] = [
     id: "analyze",
     icon: ImageIcon,
     title: "Analysera annons",
-    description: "Persona-feedback på copy + visuella",
+    description: "Persona-feedback på text och bild",
     mode: "analyze",
   },
   {

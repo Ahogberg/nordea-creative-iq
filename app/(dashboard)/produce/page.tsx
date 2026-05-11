@@ -166,12 +166,12 @@ function ProduceContent() {
   if (!template) {
     return (
       <div className="min-h-screen bg-nordea-bg">
-        <Topbar breadcrumb={['Produce']} />
+        <Topbar breadcrumb={['Massproduktion']} />
         <div className="max-w-md mx-auto text-center py-20 px-4">
           <Package className="w-12 h-12 text-nordea-text-tertiary mx-auto mb-4" />
           <h2 className="nordea-display text-xl text-nordea-deep mb-2">Ingen mall vald</h2>
           <p className="text-nordea-text-tertiary mb-6">
-            Välj en mall från biblioteket för att starta produktion.
+            Välj en mall från biblioteket för att starta massproduktion.
           </p>
           <Link href="/templates" className="nordea-btn nordea-btn-primary">
             Gå till mallbiblioteket
@@ -184,11 +184,11 @@ function ProduceContent() {
   return (
     <div className="min-h-screen bg-nordea-bg">
       <Topbar
-        breadcrumb={['Produce', `${template.name}`]}
+        breadcrumb={['Massproduktion', `${template.name}`]}
         right={
           <Link href="/templates" className="nordea-btn nordea-btn-ghost">
             <X className="w-4 h-4" />
-            Cancel
+            Avbryt
           </Link>
         }
       />
@@ -197,34 +197,34 @@ function ProduceContent() {
         {/* LEFT — inputs */}
         <div className="px-10 py-8 overflow-hidden">
           <div className="mb-6">
-            <h1 className="nordea-display text-2xl text-nordea-deep">Production Mode</h1>
+            <h1 className="nordea-display text-2xl text-nordea-deep">Massproduktion</h1>
             <p className="text-sm text-nordea-text-tertiary mt-1">
-              Combine variant inputs across formats. Every combination becomes one rendered video.
+              Kombinera varianter över olika format. Varje kombination blir en renderad video.
             </p>
           </div>
 
-          {/* Selected template */}
+          {/* Vald mall */}
           <div className="nordea-card p-3.5 mb-6 flex items-center gap-3.5">
-            <div className="nordea-placeholder-stripe w-20 h-12">tpl</div>
+            <div className="nordea-placeholder-stripe w-20 h-12">mall</div>
             <div className="flex-1">
-              <div className="nordea-eyebrow text-[10px] mb-1">Template</div>
+              <div className="nordea-eyebrow text-[10px] mb-1">Mall</div>
               <div className="text-sm font-medium text-nordea-text">{template.name}</div>
               <div className="text-[11px] text-nordea-text-tertiary mt-0.5">
-                {template.config.scenes.length} scenes · brand-approved
+                {template.config.scenes.length} scener · varumärkesgodkänd
               </div>
             </div>
             <Link href="/templates" className="nordea-btn nordea-btn-ghost nordea-btn-sm">
               <CopyIcon className="w-3.5 h-3.5" />
-              Change
+              Byt
             </Link>
           </div>
 
-          {/* AI Generate */}
+          {/* AI-generering */}
           <div className="nordea-card p-4 mb-6">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-3.5 h-3.5 text-nordea-teal" />
               <span className="text-xs font-semibold text-nordea-teal uppercase tracking-wider">
-                AI Generate
+                AI-generering
               </span>
             </div>
             <textarea
@@ -241,7 +241,7 @@ function ProduceContent() {
               className="nordea-btn nordea-btn-secondary nordea-btn-sm nordea-btn-full mt-3"
             >
               {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-              {isGenerating ? 'Genererar...' : 'Suggest variants'}
+              {isGenerating ? 'Genererar...' : 'Föreslå varianter'}
             </button>
           </div>
 
@@ -282,12 +282,12 @@ function ProduceContent() {
             />
           </div>
 
-          {/* Format selector */}
+          {/* Format-väljare */}
           <div className="mt-6">
             <div className="flex items-center justify-between mb-2.5">
               <span className="text-sm font-medium text-nordea-text">Format</span>
               <span className="text-[11px] text-nordea-text-tertiary">
-                Select aspect ratios to render
+                Välj bildförhållanden att rendera
               </span>
             </div>
             <div className="grid grid-cols-4 gap-2.5">
@@ -328,9 +328,9 @@ function ProduceContent() {
           {/* Preview */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <span className="nordea-eyebrow text-[10px]">Live preview</span>
+              <span className="nordea-eyebrow text-[10px]">Live-förhandsvisning</span>
               <span className="text-[11px] text-nordea-teal">
-                cycling {previewVariant.headline + 1}/{validHeadlines}
+                växlar {previewVariant.headline + 1}/{validHeadlines}
               </span>
             </div>
             <div
@@ -369,24 +369,24 @@ function ProduceContent() {
             </div>
           </div>
 
-          {/* Summary */}
+          {/* Sammanfattning */}
           <div className="nordea-card p-4">
-            <SectionTitle title="Summary" />
+            <SectionTitle title="Sammanfattning" />
             <div className="font-mono text-[11px] text-nordea-text-secondary space-y-1">
               <div className="flex justify-between">
-                <span>Headlines</span>
+                <span>Rubriker</span>
                 <span className="text-nordea-text">{validHeadlines}</span>
               </div>
               <div className="flex justify-between">
-                <span>Body texts</span>
+                <span>Brödtexter</span>
                 <span className="text-nordea-text">{validBodies}</span>
               </div>
               <div className="flex justify-between">
-                <span>CTAs</span>
+                <span>CTA:er</span>
                 <span className="text-nordea-text">{validCtas}</span>
               </div>
               <div className="flex justify-between">
-                <span>Formats</span>
+                <span>Format</span>
                 <span className="text-nordea-text">{selectedFormats.length}</span>
               </div>
             </div>
@@ -399,9 +399,9 @@ function ProduceContent() {
                 {totalVideos}
               </span>
             </div>
-            <div className="text-[11px] text-nordea-text-tertiary mt-1">videos to render</div>
+            <div className="text-[11px] text-nordea-text-tertiary mt-1">videor att rendera</div>
             <div className="flex justify-between text-[11px] mt-3 px-3 py-2 bg-nordea-bg-hover rounded">
-              <span className="text-nordea-text-tertiary">Estimated render time</span>
+              <span className="text-nordea-text-tertiary">Beräknad renderingstid</span>
               <span className="font-mono text-nordea-text">~{Math.ceil(totalVideos * 0.5)} min</span>
             </div>
           </div>
@@ -424,7 +424,7 @@ function ProduceContent() {
             className="nordea-btn nordea-btn-ghost nordea-btn-sm nordea-btn-full"
           >
             <Eye className="w-3.5 h-3.5" />
-            Preview all {totalVideos} thumbnails
+            Förhandsgranska alla {totalVideos} miniatyrer
           </button>
         </div>
       </div>
@@ -523,7 +523,7 @@ function VariantSection({
         className="w-full mt-2 px-3 py-2 border border-dashed border-nordea-border rounded-md text-xs text-nordea-text-tertiary hover:text-nordea-text hover:border-nordea-border-emphasis flex items-center justify-center gap-2 transition-colors"
       >
         <Plus className="w-3 h-3" />
-        Add {title.toLowerCase()}
+        Lägg till ny rad
       </button>
     </div>
   );

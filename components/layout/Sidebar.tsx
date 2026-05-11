@@ -31,6 +31,7 @@ interface NavItem {
   name: string;
   href: string;
   icon: LucideIcon;
+  subtitle?: string;
 }
 
 interface NavSection {
@@ -38,20 +39,30 @@ interface NavSection {
   items: NavItem[];
 }
 
-// Sprint 7 nav: consolidated creation surface (/create), Asset Library + QA
-// surfaced, Verktyg-group for secondary tools. Old /ad-studio /copy-studio
-// /motion-studio routes are removed in favour of /create/{copy,video,analyze}.
+// Sprint 7 nav (sv): /create renamed "Skapa" (single ad), /produce renamed
+// "Massproduktion" (templates → many variants). The two creation surfaces
+// carry inline subtitles so the distinction is visible without hover.
 const NAV_SECTIONS: NavSection[] = [
   {
     label: null,
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Kampanjer', href: '/campaigns', icon: Rocket },
-      { name: 'Create', href: '/create', icon: Sparkles },
-      { name: 'Templates', href: '/templates', icon: LayoutGrid },
-      { name: 'Produce', href: '/produce', icon: Settings2 },
-      { name: 'Asset Library', href: '/dam', icon: FolderOpen },
-      { name: 'QA Reports', href: '/qa', icon: ShieldCheck },
+      {
+        name: 'Skapa',
+        href: '/create',
+        icon: Sparkles,
+        subtitle: 'Skapa enstaka annonser',
+      },
+      { name: 'Mallar', href: '/templates', icon: LayoutGrid },
+      {
+        name: 'Massproduktion',
+        href: '/produce',
+        icon: Settings2,
+        subtitle: 'Skala mallar till många varianter',
+      },
+      { name: 'Mediabibliotek', href: '/dam', icon: FolderOpen },
+      { name: 'QA-rapporter', href: '/qa', icon: ShieldCheck },
       { name: 'Personas', href: '/personas', icon: Users },
     ],
   },
@@ -101,10 +112,18 @@ export function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`sidebar-item ${active ? 'active' : ''}`}
+                  title={item.subtitle ?? item.name}
+                  className={`sidebar-item ${active ? 'active' : ''} ${item.subtitle ? 'items-start py-2.5' : ''}`}
                 >
-                  <Icon />
-                  <span>{item.name}</span>
+                  <Icon className={item.subtitle ? 'mt-0.5' : ''} />
+                  <div className="flex-1 min-w-0">
+                    <div>{item.name}</div>
+                    {item.subtitle && (
+                      <div className="text-[10px] text-nordea-text-tertiary mt-0.5 font-normal leading-tight">
+                        {item.subtitle}
+                      </div>
+                    )}
+                  </div>
                 </Link>
               );
             })}

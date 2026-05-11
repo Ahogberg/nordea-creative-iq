@@ -60,12 +60,12 @@ export default function QAReportsPage() {
   return (
     <div className="min-h-screen bg-nordea-bg">
       <Topbar
-        breadcrumb={["QA Reports", "Bolån Hero — variant 03"]}
+        breadcrumb={["QA-rapporter", "Bolån Hero — variant 03"]}
         right={
           <div className="flex gap-2">
             <button type="button" className="nordea-btn nordea-btn-secondary">
               <Download className="w-4 h-4" />
-              Export report
+              Exportera rapport
             </button>
             <button type="button" className="nordea-btn nordea-btn-primary">
               <CheckCircle2 className="w-4 h-4" />
@@ -75,11 +75,11 @@ export default function QAReportsPage() {
         }
       />
 
-      {/* Mock-data banner */}
+      {/* Exempel-rapport banner */}
       <div className="px-8 pt-4">
         <div className="bg-nordea-amber-soft border border-nordea-amber/30 rounded-md px-4 py-2.5 flex items-center gap-2 text-xs text-nordea-amber">
           <AlertCircle className="w-3.5 h-3.5" />
-          Sample report — full QA history view ships in Sprint 8. Run QA from Create → Video to score real assets.
+          Exempelrapport — full QA-historik kommer i Sprint 8. Kör QA från Skapa → Video för att bedöma riktiga assets.
         </div>
       </div>
 
@@ -87,7 +87,7 @@ export default function QAReportsPage() {
         {/* LEFT — total score */}
         <div className="flex flex-col gap-4">
           <div className="nordea-card p-6">
-            <div className="nordea-eyebrow mb-4">Total QA score</div>
+            <div className="nordea-eyebrow mb-4">Total QA-poäng</div>
             <div className="flex items-baseline gap-2">
               <span className={`nordea-display text-7xl tracking-tighter ${scoreColor}`}>
                 {r.total_score}
@@ -96,10 +96,10 @@ export default function QAReportsPage() {
             </div>
             <div className="mt-3 flex items-center gap-2">
               <NordeaBadge tone="green" dot>
-                Above threshold
+                Över tröskel
               </NordeaBadge>
               <span className="text-[11px] text-nordea-text-tertiary">
-                Threshold {r.threshold}
+                Tröskel {r.threshold}
               </span>
             </div>
             <div className="mt-5 flex flex-col gap-3.5">
@@ -123,7 +123,7 @@ export default function QAReportsPage() {
           </div>
 
           <div className="nordea-card p-4">
-            <SectionTitle title="Suggestions" hint={`${r.suggestions.length}`} />
+            <SectionTitle title="Förslag" hint={`${r.suggestions.length}`} />
             <div className="flex flex-col gap-2.5">
               {r.suggestions.map((s, i) => (
                 <div
@@ -157,7 +157,7 @@ export default function QAReportsPage() {
           <div className="nordea-card p-4 col-span-2">
             <SectionTitle
               title="Persona-jury"
-              hint="4 personas · weighted average 84"
+              hint="4 personas · viktat snitt 84"
             />
             <div className="grid grid-cols-4 gap-2.5">
               {r.personas.map((p, i) => (
@@ -199,7 +199,7 @@ export default function QAReportsPage() {
 
           {/* ToV */}
           <div className="nordea-card p-4">
-            <SectionTitle title="Tone of voice" hint="3 axes" />
+            <SectionTitle title="Tone of voice" hint="3 axlar" />
             <div className="flex flex-col gap-3.5">
               {r.tov.map((a) => (
                 <div key={a.axis}>
@@ -208,7 +208,7 @@ export default function QAReportsPage() {
                     <span className="font-mono text-[11px] text-nordea-text-tertiary">
                       <span className="text-nordea-teal">{a.value}</span>
                       <span className="mx-1.5">/</span>
-                      target {a.target}
+                      mål {a.target}
                     </span>
                   </div>
                   <div className="h-1.5 bg-nordea-bg-hover rounded-full relative overflow-hidden">
@@ -228,7 +228,7 @@ export default function QAReportsPage() {
 
           {/* Compliance */}
           <div className="nordea-card p-4">
-            <SectionTitle title="Compliance" hint={`${r.compliance.length} checks`} />
+            <SectionTitle title="Compliance" hint={`${r.compliance.length} kontroller`} />
             <div className="flex flex-col gap-2">
               {r.compliance.map((c, i) => (
                 <div key={i} className="flex items-center gap-2.5">
@@ -248,7 +248,7 @@ export default function QAReportsPage() {
 
           {/* Heatmap — full width */}
           <div className="nordea-card p-4 col-span-2">
-            <SectionTitle title="Attention heatmap" hint="Predicted gaze · first 3s" />
+            <SectionTitle title="Uppmärksamhets-heatmap" hint="Predikterat fokus · första 3s" />
             <div className="aspect-[16/6] bg-nordea-deep rounded-md relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-nordea-deep via-nordea-blue to-nordea-deep opacity-90" />
               <div className="absolute left-[12%] top-[40%] w-24 h-24 rounded-full bg-nordea-rose/40 blur-2xl" />
@@ -265,18 +265,18 @@ export default function QAReportsPage() {
               <div className="flex gap-3.5">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-nordea-rose" />
-                  Hot
+                  Hett
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-nordea-amber" />
-                  Warm
+                  Varmt
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-nordea-blue" />
-                  Cool
+                  Kallt
                 </span>
               </div>
-              <span>Logo gets 12% attention — within target</span>
+              <span>Logo får 12% uppmärksamhet — inom mål</span>
             </div>
           </div>
         </div>

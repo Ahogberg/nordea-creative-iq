@@ -25,10 +25,10 @@ import { NordeaBadge } from "@/components/ui/nordea-badge";
 // could be the data source for now).
 
 const MOCK_TYPES = [
-  { icon: Library, label: "All", count: 1284, key: "all" },
-  { icon: ImageIcon, label: "Images", count: 892, key: "image" },
+  { icon: Library, label: "Alla", count: 1284, key: "all" },
+  { icon: ImageIcon, label: "Bilder", count: 892, key: "image" },
   { icon: VideoIcon, label: "Video", count: 311, key: "video" },
-  { icon: Music, label: "Audio", count: 81, key: "audio" },
+  { icon: Music, label: "Ljud", count: 81, key: "audio" },
 ];
 
 const MOCK_ASSETS = [
@@ -55,27 +55,27 @@ export default function AssetLibraryPage() {
   return (
     <div className="min-h-screen bg-nordea-bg">
       <Topbar
-        breadcrumb={["Asset Library"]}
+        breadcrumb={["Mediabibliotek"]}
         right={
           <button type="button" className="nordea-btn nordea-btn-primary">
             <Upload className="w-4 h-4" />
-            Upload assets
+            Ladda upp media
           </button>
         }
       />
 
-      {/* Stub banner */}
+      {/* Stub-banner */}
       <div className="px-8 pt-4">
         <div className="bg-nordea-amber-soft border border-nordea-amber/30 rounded-md px-4 py-2.5 flex items-center gap-2 text-xs text-nordea-amber">
           <AlertCircle className="w-3.5 h-3.5" />
-          Stub layout — full DAM (uploads, semantic search, AI tagging) ships in Sprint 8. Pexels/Unsplash search works via /api/ai/search-stock today.
+          Stub-layout — fullt mediabibliotek (uppladdningar, semantisk sökning, AI-taggning) kommer i Sprint 8. Pexels/Unsplash-sökning fungerar via /api/ai/search-stock idag.
         </div>
       </div>
 
       <div className="grid grid-cols-[220px_1fr_320px] min-h-[calc(100vh-3.5rem-4rem)]">
         {/* LEFT — filters */}
         <div className="border-r border-nordea-hairline px-4.5 py-6 overflow-hidden">
-          <div className="nordea-eyebrow text-[10px] mb-3">Type</div>
+          <div className="nordea-eyebrow text-[10px] mb-3">Typ</div>
           <div className="flex flex-col gap-1 mb-5">
             {MOCK_TYPES.map((t) => {
               const Icon = t.icon;
@@ -99,9 +99,9 @@ export default function AssetLibraryPage() {
             })}
           </div>
 
-          <div className="nordea-eyebrow text-[10px] mb-3">Source</div>
+          <div className="nordea-eyebrow text-[10px] mb-3">Källa</div>
           <div className="flex flex-col gap-2 mb-5">
-            {["Brand library", "Stock — Pexels", "AI generated", "User uploads"].map((s, i) => (
+            {["Varumärkesbibliotek", "Stock — Pexels", "AI-genererat", "Användaruppladdningar"].map((s, i) => (
               <label key={s} className="flex items-center gap-2 text-sm text-nordea-text-secondary cursor-pointer">
                 <input
                   type="checkbox"
@@ -113,7 +113,7 @@ export default function AssetLibraryPage() {
             ))}
           </div>
 
-          <div className="nordea-eyebrow text-[10px] mb-3">Tags</div>
+          <div className="nordea-eyebrow text-[10px] mb-3">Taggar</div>
           <div className="flex flex-wrap gap-1.5 mb-5">
             {TAGS.map((t) => (
               <NordeaBadge key={t} tone={t === "lifestyle" ? "cobalt" : "neutral"} dot={t === "lifestyle"}>
@@ -124,8 +124,8 @@ export default function AssetLibraryPage() {
 
           <div className="p-4 border-dashed border border-nordea-border rounded-md text-center">
             <Upload className="w-4 h-4 text-nordea-text-tertiary mx-auto mb-2" />
-            <div className="text-xs text-nordea-text-secondary mb-0.5">Drop files</div>
-            <div className="text-[10px] text-nordea-text-tertiary">or click to browse</div>
+            <div className="text-xs text-nordea-text-secondary mb-0.5">Släpp filer här</div>
+            <div className="text-[10px] text-nordea-text-tertiary">eller klicka för att bläddra</div>
           </div>
         </div>
 
@@ -137,7 +137,7 @@ export default function AssetLibraryPage() {
               <span className="text-sm text-nordea-text flex-1">
                 aerial views of swedish nature, warm lighting
               </span>
-              <NordeaBadge tone="teal">Semantic</NordeaBadge>
+              <NordeaBadge tone="teal">Semantisk</NordeaBadge>
             </div>
             <button className="w-9 h-9 inline-flex items-center justify-center bg-white border border-nordea-border rounded-md text-nordea-text-tertiary hover:text-nordea-text">
               <Filter className="w-3.5 h-3.5" />
@@ -146,10 +146,10 @@ export default function AssetLibraryPage() {
 
           <div className="flex justify-between items-center mb-3.5">
             <div className="text-xs text-nordea-text-tertiary">
-              <span className="text-nordea-text font-medium">1,284</span> assets · sorted by relevance
+              <span className="text-nordea-text font-medium">1 284</span> media · sorterat efter relevans
             </div>
             <div className="flex items-center gap-2 text-xs text-nordea-text-secondary">
-              <Check className="w-3 h-3 text-nordea-teal" /> 1 selected · Add to project
+              <Check className="w-3 h-3 text-nordea-teal" /> 1 markerad · Lägg till i projekt
             </div>
           </div>
 
@@ -223,7 +223,7 @@ export default function AssetLibraryPage() {
             {MOCK_ASSETS[selected]?.label || "—"}
           </div>
           <div className="text-xs text-nordea-text-tertiary mb-4">
-            Photographer · Linnea Holmberg · 2025
+            Fotograf · Linnea Holmberg · 2025
           </div>
           <div className="flex gap-1.5 mb-5 flex-wrap">
             <NordeaBadge tone="cobalt" dot>people</NordeaBadge>
@@ -235,11 +235,11 @@ export default function AssetLibraryPage() {
           <div className="grid grid-cols-2 gap-0 font-mono text-xs mb-4">
             {[
               ["Format", "JPEG"],
-              ["Resolution", "4096 × 2731"],
-              ["File size", "5.4 MB"],
-              ["License", "Internal · all"],
-              ["Usage", "12 projects"],
-              ["Added", "14 Mar 2026"],
+              ["Upplösning", "4096 × 2731"],
+              ["Filstorlek", "5,4 MB"],
+              ["Licens", "Intern · alla"],
+              ["Användning", "12 projekt"],
+              ["Tillagd", "14 mar 2026"],
             ].map(([k, v], i) => (
               <div key={i} className="contents">
                 <div className="text-nordea-text-tertiary py-2 border-b border-nordea-hairline">
@@ -254,11 +254,11 @@ export default function AssetLibraryPage() {
           <div className="flex flex-col gap-2">
             <button type="button" className="nordea-btn nordea-btn-primary nordea-btn-full">
               <Plus className="w-4 h-4" />
-              Add to current project
+              Lägg till i nuvarande projekt
             </button>
             <button type="button" className="nordea-btn nordea-btn-secondary nordea-btn-full">
               <Download className="w-4 h-4" />
-              Download original
+              Ladda ner original
             </button>
           </div>
         </div>

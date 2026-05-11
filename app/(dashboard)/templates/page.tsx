@@ -22,14 +22,14 @@ import { FormatChip } from '@/components/ui/format-chip';
 
 // Category filter chips — static for now. TODO Sprint 8: derive from a
 // `category` column on templates table.
-const CATEGORIES = ['All', 'Brand', 'Mortgages', 'Invest', 'Cards', 'App', 'HR'];
+const CATEGORIES = ['Alla', 'Varumärke', 'Bolån', 'Sparande', 'Kort', 'App', 'HR'];
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState('Alla');
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -87,11 +87,11 @@ export default function TemplatesPage() {
   return (
     <div className="min-h-screen bg-nordea-bg">
       <Topbar
-        breadcrumb={['Templates']}
+        breadcrumb={['Mallar']}
         right={
           <Link href="/create/video" className="nordea-btn nordea-btn-primary">
             <Plus className="w-4 h-4" />
-            New template
+            Ny mall
           </Link>
         }
       />
@@ -99,10 +99,10 @@ export default function TemplatesPage() {
       <div className="px-8 py-7 max-w-[1400px] mx-auto">
         {/* Hero */}
         <div className="mb-6">
-          <h1 className="nordea-display text-3xl text-nordea-deep">Template Library</h1>
+          <h1 className="nordea-display text-3xl text-nordea-deep">Mallbibliotek</h1>
           <div className="text-sm text-nordea-text-tertiary mt-1">
-            {templates.length} brand-approved layouts
-            {favorites.length > 0 && ` · ${favorites.length} favorites`}
+            {templates.length} varumärkesgodkända layouter
+            {favorites.length > 0 && ` · ${favorites.length} favoriter`}
           </div>
         </div>
 
@@ -114,7 +114,7 @@ export default function TemplatesPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search templates…"
+              placeholder="Sök mallar…"
               className="nordea-input pl-9 w-full"
             />
           </div>
@@ -174,7 +174,7 @@ export default function TemplatesPage() {
           <div className="space-y-8">
             {favorites.length > 0 && (
               <section>
-                <SectionTitle title="Favorites" hint="Pinned by your team" />
+                <SectionTitle title="Favoriter" hint="Fästade av ditt team" />
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
                   {favorites.map((t) => (
                     <TemplateCard
@@ -191,7 +191,7 @@ export default function TemplatesPage() {
 
             {others.length > 0 && (
               <section>
-                <SectionTitle title="All templates" hint={`${others.length} shown`} />
+                <SectionTitle title="Alla mallar" hint={`${others.length} visas`} />
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
                   {others.map((t) => (
                     <TemplateCard
@@ -219,11 +219,11 @@ function EmptyState() {
       </div>
       <h3 className="text-lg font-semibold text-nordea-text mb-2">Inga mallar ännu</h3>
       <p className="text-sm text-nordea-text-tertiary mb-6 max-w-sm mx-auto">
-        Skapa en video i Create-läget och spara den som mall för att komma igång med bulk-produktion.
+        Skapa en video i Skapa-läget och spara den som mall för att komma igång med massproduktion.
       </p>
       <Link href="/create/video" className="nordea-btn nordea-btn-primary nordea-btn-lg inline-flex">
         <Plus className="w-4 h-4" />
-        Skapa i Create
+        Skapa video
       </Link>
     </div>
   );
@@ -261,7 +261,7 @@ function TemplateCard({
           <div className="absolute top-2 left-2">
             <NordeaBadge tone="solid">
               <Star className="w-2.5 h-2.5 fill-current" />
-              Favorite
+              Favorit
             </NordeaBadge>
           </div>
         )}
@@ -284,12 +284,12 @@ function TemplateCard({
         <div className="flex gap-1 mb-2.5">
           <FormatChip ratio={formatLabel} />
           <span className="text-[10px] text-nordea-text-tertiary self-center">
-            {sceneCount} scenes
+            {sceneCount} scener
           </span>
         </div>
         <div className="flex items-center justify-between mt-auto">
           <span className="text-[11px] text-nordea-text-tertiary">
-            {template.use_count} uses
+            {template.use_count} användningar
           </span>
           <div className="flex items-center gap-1">
             <Link
