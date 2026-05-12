@@ -502,3 +502,70 @@ CREATE TABLE IF NOT EXISTS public.master_creatives (
 
 CREATE INDEX IF NOT EXISTS idx_master_creatives_user ON public.master_creatives(created_by);
 CREATE INDEX IF NOT EXISTS idx_master_creatives_updated ON public.master_creatives(updated_at DESC);
+
+-- ============================================================================
+-- SPRINT 10: BRIEFS + CAMPAIGNS
+-- ============================================================================
+-- Creative briefs are the output of the strategy wizard or an upload. They
+-- carry strategy inputs (user-supplied) + AI-generated outputs (insight,
+-- tension, big_idea, key_messages, value_props). Campaigns link a brief to
+-- the generated assets (master_creatives + templates + production_jobs).
+
+CREATE TABLE IF NOT EXISTS public.creative_briefs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+
+  source TEXT NOT NULL,  -- 'wizard' | 'upload' | 'manual'
+
+  title TEXT NOT NULL,
+
+  -- Strategy inputs (from wizard)
+  problem TEXT,
+  audience_description TEXT,
+  audience_personas TEXT[],
+  current_perception TEXT,
+  desired_action TEXT,
+  key_message TEXT,
+  unique_value TEXT,
+
+  -- AI-generated outputs
+  insight TEXT,
+  tension TEXT,
+  big_idea TEXT,
+  key_messages JSONB DEFAULT '[]'::jsonb,
+  value_props JSONB DEFAULT '[]'::jsonb,
+  tone_of_voice TEXT,
+  recommended_formats TEXT[],
+  recommended_channels TEXT[],
+  recommended_kpis JSONB DEFAULT '[]'::jsonb,
+
+  wizard_state JSONB DEFAULT '{}'::jsonb,
+
+  status TEXT DEFAULT 'draft',  -- 'draft' | 'approved' | 'used'
+  created_by TEXT NOT NULL DEFAULT 'default-user',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_briefs_status ON public.creative_briefs(status);
+CREATE INDEX IF NOT EXISTS idx_briefs_user ON public.creative_briefs(created_by);
+CREATE INDEX IF NOT EXISTS idx_briefs_updated ON public.creative_briefs(updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.campaigns (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  brief_id UUID REFERENCES public.creative_briefs(id) ON DELETE SET NULL,
+
+  master_creative_ids UUID[],
+  template_ids UUID[],
+  production_job_ids UUID[],
+
+  status TEXT DEFAULT 'draft',  -- 'draft' | 'in_review' | 'approved' | 'live'
+  approval_notes TEXT,
+
+  created_by TEXT NOT NULL DEFAULT 'default-user',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_campaigns_status ON public.campaigns(status);
+CREATE INDEX IF NOT EXISTS idx_campaigns_brief ON public.campaigns(brief_id);
