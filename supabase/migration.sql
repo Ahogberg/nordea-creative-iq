@@ -481,3 +481,24 @@ CREATE INDEX IF NOT EXISTS idx_ai_gen_user ON public.ai_generations(user_id);
 CREATE INDEX IF NOT EXISTS idx_ai_gen_cache ON public.ai_generations(cache_key) WHERE cache_hit = FALSE AND status = 'success';
 CREATE INDEX IF NOT EXISTS idx_ai_gen_provider ON public.ai_generations(provider);
 CREATE INDEX IF NOT EXISTS idx_ai_gen_created_at ON public.ai_generations(created_at DESC);
+
+-- ============================================================================
+-- SPRINT 9: MASTER CREATIVES
+-- ============================================================================
+-- A "Master Creative" is one designed VideoConfig that gets auto-projected
+-- to all four formats (Story/Feed/Landscape/Vertical) via brand safe zones,
+-- with optional per-format manual overrides stored in format_overrides.
+
+CREATE TABLE IF NOT EXISTS public.master_creatives (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  source_format TEXT NOT NULL,
+  master_config JSONB NOT NULL,
+  format_overrides JSONB DEFAULT '{}'::jsonb,
+  created_by TEXT NOT NULL DEFAULT 'default-user',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_master_creatives_user ON public.master_creatives(created_by);
+CREATE INDEX IF NOT EXISTS idx_master_creatives_updated ON public.master_creatives(updated_at DESC);

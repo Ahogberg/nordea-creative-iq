@@ -13,6 +13,7 @@ import {
   Sparkles,
   ArrowRight,
   Filter,
+  Layers,
 } from 'lucide-react';
 import type { Template } from '@/lib/video-types';
 import { Topbar } from '@/components/layout/topbar';
@@ -20,12 +21,20 @@ import { SectionTitle } from '@/components/layout/section-title';
 import { NordeaBadge } from '@/components/ui/nordea-badge';
 import { FormatChip } from '@/components/ui/format-chip';
 
+interface MasterSummary {
+  id: string;
+  name: string;
+  source_format: string;
+  updated_at: string;
+}
+
 // Category filter chips — static for now. TODO Sprint 8: derive from a
 // `category` column on templates table.
 const CATEGORIES = ['Alla', 'Varumärke', 'Bolån', 'Sparande', 'Kort', 'App', 'HR'];
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [masters, setMasters] = useState<MasterSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -45,10 +54,25 @@ export default function TemplatesPage() {
     }
   }, []);
 
+  const fetchMasters = useCallback(async () => {
+    try {
+      const res = await fetch('/api/master');
+      if (res.ok) {
+        const { masters } = await res.json();
+        setMasters(masters || []);
+      }
+    } catch (error) {
+      console.error('Error fetching masters:', error);
+    }
+  }, []);
+
   useEffect(() => {
-    const timer = setTimeout(() => fetchTemplates(), 0);
+    const timer = setTimeout(() => {
+      fetchTemplates();
+      fetchMasters();
+    }, 0);
     return () => clearTimeout(timer);
-  }, [fetchTemplates]);
+  }, [fetchTemplates, fetchMasters]);
 
   const toggleFavorite = async (id: string, current: boolean) => {
     try {
@@ -168,10 +192,46 @@ export default function TemplatesPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 text-nordea-text-tertiary animate-spin" />
           </div>
-        ) : templates.length === 0 ? (
+        ) : templates.length === 0 && masters.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="space-y-8">
+            {masters.length > 0 && (
+              <section>
+                <SectionTitle
+                  title="Master creatives"
+                  hint={`${masters.length} sparade · genererar alla format`}
+                />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+                  {masters.map((master) => (
+                    <Link
+                      key={master.id}
+                      href={`/create/master?id=${master.id}`}
+                      className="nordea-card overflow-hidden flex flex-col text-left"
+                    >
+                      <div className="relative aspect-[16/10] bg-nordea-deep flex items-center justify-center">
+                        <Layers className="w-6 h-6 text-white/50" />
+                        <div className="absolute top-2 left-2">
+                          <NordeaBadge tone="cobalt">Master</NordeaBadge>
+                        </div>
+                      </div>
+                      <div className="p-3.5 flex flex-col flex-1">
+                        <div className="text-sm font-medium text-nordea-text mb-2 line-clamp-1">
+                          {master.name}
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-nordea-text-tertiary mt-auto">
+                          <span>4 format</span>
+                          <span>
+                            {new Date(master.updated_at).toLocaleDateString('sv-SE')}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {favorites.length > 0 && (
               <section>
                 <SectionTitle title="Favoriter" hint="Fästade av ditt team" />
