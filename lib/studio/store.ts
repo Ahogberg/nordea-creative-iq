@@ -293,6 +293,8 @@ export const useStudioStore = create<StudioState>()(
 // ── Debounced preview re-render ──
 // 1.5s after the last config mutation, bump previewKey so the Remotion
 // Player re-mounts with the new props. Avoids per-keystroke render thrash.
+// Sprint 11A: skip the bump while a canvas drag is in progress — the
+// Player would re-mount on every drag step. We schedule a retry instead.
 let renderTimeout: NodeJS.Timeout | null = null;
 
 useStudioStore.subscribe(
@@ -300,8 +302,29 @@ useStudioStore.subscribe(
   () => {
     if (renderTimeout) clearTimeout(renderTimeout);
     renderTimeout = setTimeout(() => {
+      if (useStudioStore.getState().isDragging) {
+        // Try again after the gesture finishes.
+        renderTimeout = setTimeout(() => {
+          if (!useStudioStore.getState().isDragging) {
+            useStudioStore.getState().triggerRender();
+          }
+        }, 400);
+        return;
+      }
       useStudioStore.getState().triggerRender();
     }, 1500);
   },
   { equalityFn: (a, b) => JSON.stringify(a) === JSON.stringify(b) }
+);
+
+// Trigger a final re-render when a drag ends so the Player picks up the
+// committed transforms (CanvasOverlay reflects them live via CSS but the
+// Remotion composition needs the bump to re-position text inside).
+useStudioStore.subscribe(
+  (state) => state.isDragging,
+  (isDragging) => {
+    if (!isDragging) {
+      setTimeout(() => useStudioStore.getState().triggerRender(), 100);
+    }
+  }
 );

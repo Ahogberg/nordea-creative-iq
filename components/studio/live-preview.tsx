@@ -1,8 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
 import { useStudioStore, ASPECT_RATIOS } from "@/lib/studio/store";
 import { Loader2 } from "lucide-react";
+import { CanvasOverlay } from "./canvas-overlay";
 
 // Remotion Player pulls a sizeable client-side dep tree. Dynamic-import
 // keeps it out of the server bundle and gives us a clean loading state.
@@ -29,6 +31,20 @@ export function LivePreview() {
     (sum, s) => sum + (s.durationSeconds || 0),
     0
   );
+
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [frameSize, setFrameSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect;
+      setFrameSize({ width: rect.width, height: rect.height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   if (config.scenes.length === 0) {
     return (
@@ -62,7 +78,8 @@ export function LivePreview() {
 
       <div className="flex-1 flex items-center justify-center p-8 overflow-hidden bg-nordea-bg min-h-0">
         <div
-          className="bg-white rounded-lg shadow-nordea-lg overflow-hidden"
+          ref={frameRef}
+          className="relative bg-white rounded-lg shadow-nordea-lg overflow-hidden"
           style={{
             aspectRatio: `${aspectInfo.width} / ${aspectInfo.height}`,
             maxHeight: "100%",
@@ -72,6 +89,12 @@ export function LivePreview() {
           }}
         >
           <MotionPlayer key={previewKey} config={config} loop />
+          {frameSize.width > 0 && (
+            <CanvasOverlay
+              frameWidth={frameSize.width}
+              frameHeight={frameSize.height}
+            />
+          )}
         </div>
       </div>
     </div>
