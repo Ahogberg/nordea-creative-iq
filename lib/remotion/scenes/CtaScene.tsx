@@ -7,6 +7,7 @@ import type { CtaScene as CtaSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
 import { CtaReveal } from "../animations/CtaReveal";
+import { AnimatedText } from "../animations/AnimatedText";
 
 const FPS = 30;
 
@@ -26,7 +27,22 @@ export const CtaSceneComponent: React.FC<{
 
   const subtitleAnim = fadeSlideUp(frame, 20, 15, 25);
 
-  const headlineNode = (
+  const headlineNode = scene.textAnimation?.style ? (
+    <AnimatedText
+      text={scene.headline}
+      style={scene.textAnimation.style}
+      startFrame={8}
+      durationFrames={scene.textAnimation.durationFrames ?? 30}
+      fontStyle={{
+        fontSize: Math.round(60 * scale),
+        fontWeight: 900,
+        color: colors.white,
+        fontFamily: fonts.headline,
+        textAlign: "center",
+        lineHeight: 1.2,
+      }}
+    />
+  ) : (
     <StaggeredText
       text={scene.headline}
       startFrame={8}

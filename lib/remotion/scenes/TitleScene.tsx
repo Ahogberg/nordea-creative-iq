@@ -6,6 +6,7 @@ import { positionedElement, isInline } from "../scene-utils";
 import type { TitleScene as TitleSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
+import { AnimatedText } from "../animations/AnimatedText";
 
 const FPS = 30;
 
@@ -44,7 +45,22 @@ export const TitleSceneComponent: React.FC<{
     />
   );
 
-  const headlineNode = (
+  const headlineNode = scene.textAnimation?.style ? (
+    <AnimatedText
+      text={scene.headline}
+      style={scene.textAnimation.style}
+      startFrame={8}
+      durationFrames={scene.textAnimation.durationFrames ?? 30}
+      fontStyle={{
+        fontSize: Math.round(68 * scale),
+        fontWeight: 900,
+        color: colors.white,
+        fontFamily: fonts.headline,
+        textAlign: isCenter ? "center" : "left",
+        lineHeight: 1.15,
+      }}
+    />
+  ) : (
     <StaggeredText
       text={scene.headline}
       startFrame={8}
