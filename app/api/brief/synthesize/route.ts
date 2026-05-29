@@ -3,6 +3,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
+import {
+  NORDEA_BRAND_CONTEXT,
+  NORDEA_COPY_EXAMPLES,
+  NORDIC_INSPIRATION,
+} from "@/lib/brand/nordea-context";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -16,7 +21,16 @@ const client = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
-const SYNTHESIS_PROMPT = `Du är seniör creative strateg på Nordeas marknadsteam. Du har genomfört en strategi-konversation och behöver nu sammanställa den till en komplett kampanj-strategi.
+const SYNTHESIS_PROMPT = `${NORDEA_BRAND_CONTEXT}
+
+${NORDIC_INSPIRATION}
+
+REFERENS — Bra Nordea-copy:
+${NORDEA_COPY_EXAMPLES.map(
+  (ex) => `[${ex.context}] "${ex.headline}" — ${ex.why_good}`
+).join("\n")}
+
+Du är seniör creative strateg på Nordeas marknadsteam. Du har genomfört en strategi-konversation och behöver nu sammanställa den till en komplett kampanj-strategi.
 
 Din uppgift: Skapa en sammanhängande strategi som binder ihop alla inputs och tillför genuint creative-värde.
 
