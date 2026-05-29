@@ -17,6 +17,7 @@ import { CanvasSceneComponent } from "./scenes/CanvasScene";
 
 import { SceneTransition } from "./animations/SceneTransition";
 import { LogoReveal } from "./animations/LogoReveal";
+import { renderSceneAssets } from "./scene-utils";
 
 const FPS = 30;
 
@@ -124,6 +125,7 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
               transitionDuration={motion.transitions.duration}
             >
               {renderScene(scene, width, motion, durationFrames)}
+              {renderSceneAssets(scene, width / 1080)}
             </SceneTransition>
           </Sequence>
         );

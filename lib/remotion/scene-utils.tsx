@@ -1,5 +1,5 @@
 import React from "react";
-import type { ElementTransform, SceneBase } from "./types";
+import type { ElementTransform, SceneBase, SceneAsset } from "./types";
 
 /**
  * Wraps a scene element so it can be repositioned / resized / rotated via
@@ -22,6 +22,8 @@ export function positionedElement(
   // text on every scene without a custom layout.
   if (!transform) return null;
 
+  const ax = (transform.anchorX ?? 0.5) * 100;
+  const ay = (transform.anchorY ?? 0.5) * 100;
   return (
     <div
       key={`pos-${id}`}
@@ -29,9 +31,9 @@ export function positionedElement(
         position: "absolute",
         left: `${transform.x * 100}%`,
         top: `${transform.y * 100}%`,
-        transform: `translate(-50%, -50%) rotate(${transform.rotation ?? 0}deg) scale(${transform.scale})`,
+        transform: `translate(${-ax}%, ${-ay}%) rotate(${transform.rotation ?? 0}deg) scale(${transform.scale})`,
         transformOrigin: "center center",
-        zIndex: 2,
+        zIndex: 2 + (transform.z ?? 0),
       }}
     >
       {node}
@@ -57,5 +59,57 @@ export function resolveTransform(
     y: transform?.y ?? defaults.y ?? 0.5,
     scale: transform?.scale ?? defaults.scale ?? 1,
     rotation: transform?.rotation ?? defaults.rotation ?? 0,
+    anchorX: transform?.anchorX ?? defaults.anchorX ?? 0.5,
+    anchorY: transform?.anchorY ?? defaults.anchorY ?? 0.5,
+    z: transform?.z ?? defaults.z ?? 0,
   };
+}
+
+// Sprint 11A: Render asset overlays (icons / illustrations) on top of a
+// scene's main content. Renderer-side only — drag/resize lives in the
+// Studio CanvasOverlay. Defensive: missing scene.assets renders nothing.
+export function renderSceneAssets(
+  scene: Pick<SceneBase, "assets">,
+  scale: number = 1
+): React.ReactNode {
+  const assets = scene.assets;
+  if (!assets || assets.length === 0) return null;
+  return assets.map((asset: SceneAsset) => {
+    const t = asset.layout;
+    const ax = (t.anchorX ?? 0.5) * 100;
+    const ay = (t.anchorY ?? 0.5) * 100;
+    // 200px base size (at scale 1) feels right for icons. Illustrations
+    // typically have larger natural size — the layout.scale handles that.
+    const baseSize = (asset.type === "illustration" ? 320 : 160) * scale;
+    return (
+      <div
+        key={asset.id}
+        style={{
+          position: "absolute",
+          left: `${t.x * 100}%`,
+          top: `${t.y * 100}%`,
+          transform: `translate(${-ax}%, ${-ay}%) rotate(${
+            t.rotation ?? 0
+          }deg) scale(${t.scale})`,
+          transformOrigin: "center center",
+          width: baseSize,
+          height: baseSize,
+          zIndex: 5 + (t.z ?? 0),
+          pointerEvents: "none",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={asset.url}
+          alt=""
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            display: "block",
+          }}
+        />
+      </div>
+    );
+  });
 }

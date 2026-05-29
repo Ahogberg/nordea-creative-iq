@@ -16,11 +16,76 @@ export type SceneType =
 // Transform applied to a draggable/resizable element on the canvas.
 // x/y are fractions of canvas width/height (0-1). scale is a multiplier
 // around the element's natural size. rotation is in degrees.
+// Sprint 11A: added anchorX/anchorY/z. Defaults preserve existing behavior
+// (anchor 0.5,0.5 = center == previous translate(-50%,-50%); z=0).
 export interface ElementTransform {
   x: number;
   y: number;
   scale: number;
   rotation?: number;
+  anchorX?: number; // 0 = left edge of element, 0.5 = center, 1 = right edge
+  anchorY?: number; // 0 = top, 0.5 = middle, 1 = bottom
+  z?: number; // layering for assets / multi-element scenes
+}
+
+export const DEFAULT_ELEMENT_TRANSFORM: ElementTransform = {
+  x: 0.5,
+  y: 0.5,
+  scale: 1,
+  rotation: 0,
+  anchorX: 0.5,
+  anchorY: 0.5,
+  z: 0,
+};
+
+// ── Sprint 11A: Asset overlays ──────────────────────────────────────────
+// An asset is a Brand-Library / Stock / Upload image that LIES on top of
+// the scene's main content. Not a new scene type — assets are an array on
+// any scene via SceneBase.assets[]. Renderer maps them to absolutely
+// positioned <img>s inside the scene composition.
+
+export type SceneAssetType = "image" | "illustration" | "icon" | "lottie";
+export type SceneAssetSource =
+  | "stock"
+  | "brand_library"
+  | "upload"
+  | "ai_generated";
+
+export interface SceneAssetAttribution {
+  photographer?: string;
+  source: string;
+  license: string;
+  source_url?: string;
+}
+
+export interface SceneAsset {
+  id: string;
+  type: SceneAssetType;
+  source: SceneAssetSource;
+  url: string;
+  thumbnail_url?: string;
+  attribution?: SceneAssetAttribution;
+  layout: ElementTransform;
+  brand_category?: string;
+}
+
+// ── Sprint 11A: Text animations ─────────────────────────────────────────
+// Per-scene text animation override. When set, scene components use this
+// style instead of motion.text.stagger. Backwards compatible — undefined
+// means fall back to motion config.
+
+export type TextAnimationStyle =
+  | "fade-up"
+  | "slide-in-left"
+  | "slide-in-right"
+  | "mask-reveal"
+  | "stagger-word"
+  | "stagger-letter"
+  | "typewriter";
+
+export interface SceneTextAnimation {
+  style?: TextAnimationStyle;
+  durationFrames?: number;
 }
 
 export interface SceneBase {
@@ -30,6 +95,10 @@ export interface SceneBase {
   // Per-element transforms keyed by element id ("headline", "value", "cta", etc).
   // Scenes that support draggable elements read from this to place them.
   elementTransforms?: Record<string, ElementTransform>;
+  // Sprint 11A: overlay assets (icons/illustrations dropped on canvas).
+  assets?: SceneAsset[];
+  // Sprint 11A: per-scene text animation override (falls back to motion config).
+  textAnimation?: SceneTextAnimation;
 }
 
 export interface TitleScene extends SceneBase {
