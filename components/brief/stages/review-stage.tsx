@@ -33,6 +33,10 @@ interface Props {
   answers: Record<string, unknown>;
   onApprove: () => void;
   onBack: () => void;
+  // Om briefen redan har en sparad strategi — hoppa över synthesis-kallet
+  // och visa direkt. Används från /create/brief/[id] för att inte
+  // re-generera (och kosta pengar) vid varje load.
+  initialStrategy?: Strategy;
 }
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -67,11 +71,19 @@ function personaSlug(name: string) {
     .replace(/ö/g, "o");
 }
 
-export function ReviewStage({ briefId, answers, onApprove, onBack }: Props) {
-  const [strategy, setStrategy] = useState<Strategy | null>(null);
-  const [isGenerating, setIsGenerating] = useState(true);
+export function ReviewStage({
+  briefId,
+  answers,
+  onApprove,
+  onBack,
+  initialStrategy,
+}: Props) {
+  const [strategy, setStrategy] = useState<Strategy | null>(
+    initialStrategy ?? null
+  );
+  const [isGenerating, setIsGenerating] = useState(!initialStrategy);
   const [error, setError] = useState<string | null>(null);
-  const generatedRef = useRef(false);
+  const generatedRef = useRef(!!initialStrategy);
 
   const generateStrategy = async () => {
     setIsGenerating(true);
