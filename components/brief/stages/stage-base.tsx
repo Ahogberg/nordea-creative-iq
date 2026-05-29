@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ArrowRight, ArrowLeft, Sparkles, Loader2 } from "lucide-react";
+import { AIThinkingOverlay } from "../ai-thinking-overlay";
 
 // Reusable co-creation pattern for every wizard stage.
 // The pattern: user writes their answer → after ~1.5s of stable text the
@@ -124,6 +125,12 @@ export function StageBase({
               {aiAssistance.renderSuggestions(suggestions, (selected) => {
                 setAnswer((prev) => (prev ? `${prev}\n\n${selected}` : selected));
               })}
+              <AIThinkingOverlay
+                thinking={
+                  (suggestions as { thinking?: string } | null)?.thinking
+                }
+                show={true}
+              />
               <button
                 type="button"
                 onClick={fetchAISuggestions}
