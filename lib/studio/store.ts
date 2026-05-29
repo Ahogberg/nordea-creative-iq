@@ -127,7 +127,8 @@ export const useStudioStore = create<StudioState>()(
     setAspectRatio: (ratio) =>
       set((state) => ({ config: { ...state.config, format: ratio } })),
 
-    setSelectedScene: (index) => set({ selectedSceneIndex: index }),
+    setSelectedScene: (index) =>
+      set({ selectedSceneIndex: index, selectedElementId: null }),
 
     updateScene: (index, updates) =>
       set((state) => {
