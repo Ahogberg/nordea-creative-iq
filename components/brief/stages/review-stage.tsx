@@ -11,9 +11,11 @@ import {
   Save,
   X,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import type { KeyMessage, ValueProp, Kpi } from "@/lib/brief/types";
 import { defaultPersonas } from "@/lib/constants/personas";
+import { RefinementModal } from "../refinement-modal";
 
 interface Strategy {
   big_idea?: string;
@@ -84,6 +86,7 @@ export function ReviewStage({
   const [isGenerating, setIsGenerating] = useState(!initialStrategy);
   const [error, setError] = useState<string | null>(null);
   const generatedRef = useRef(!!initialStrategy);
+  const [refineField, setRefineField] = useState<keyof Strategy | null>(null);
 
   const generateStrategy = async () => {
     setIsGenerating(true);
@@ -159,8 +162,19 @@ export function ReviewStage({
       <div className="bg-gradient-to-br from-nordea-deep via-nordea-blue to-nordea-blue text-white rounded-3xl p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-nordea-teal/20 rounded-full blur-3xl -translate-y-32 translate-x-32" />
         <div className="relative">
-          <div className="text-xs uppercase tracking-wider text-white/60 mb-3 font-medium">
-            The Big Idea
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs uppercase tracking-wider text-white/60 font-medium">
+              The Big Idea
+            </div>
+            <button
+              type="button"
+              onClick={() => setRefineField("big_idea")}
+              className="text-xs text-white/70 hover:text-white flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/10 transition-colors"
+              title="Be AI om alternativ"
+            >
+              <Sparkles className="w-3 h-3" />
+              Justera
+            </button>
           </div>
           <EditableHeroText
             value={strategy.big_idea ?? ""}
@@ -171,13 +185,27 @@ export function ReviewStage({
 
       {/* Insight + Tension */}
       <div className="grid md:grid-cols-2 gap-4">
-        <Card label="Insight" emoji="💡" color="teal">
+        <Card
+          label="Insight"
+          emoji="💡"
+          color="teal"
+          action={
+            <RefineButton onClick={() => setRefineField("insight")} />
+          }
+        >
           <EditableText
             value={strategy.insight ?? ""}
             onSave={(v) => saveField("insight", v)}
           />
         </Card>
-        <Card label="Tension" emoji="⚡" color="amber">
+        <Card
+          label="Tension"
+          emoji="⚡"
+          color="amber"
+          action={
+            <RefineButton onClick={() => setRefineField("tension")} />
+          }
+        >
           <EditableText
             value={strategy.tension ?? ""}
             onSave={(v) => saveField("tension", v)}
@@ -230,6 +258,16 @@ export function ReviewStage({
         <Section
           title="Budskap-vinklar"
           hint={`${strategy.key_messages.length} koncept`}
+          action={
+            <button
+              type="button"
+              onClick={() => setRefineField("key_messages")}
+              className="text-xs text-nordea-text-tertiary hover:text-nordea-blue flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3" />
+              Be AI om alternativ
+            </button>
+          }
         >
           <div className="space-y-3">
             {strategy.key_messages.map((msg, i) => (
@@ -265,7 +303,13 @@ export function ReviewStage({
       {/* Tone + Formats */}
       <div className="grid md:grid-cols-2 gap-4">
         {strategy.tone_of_voice && (
-          <Card label="Tone of Voice" emoji="🎙">
+          <Card
+            label="Tone of Voice"
+            emoji="🎙"
+            action={
+              <RefineButton onClick={() => setRefineField("tone_of_voice")} />
+            }
+          >
             <EditableText
               value={strategy.tone_of_voice}
               onSave={(v) => saveField("tone_of_voice", v)}
@@ -361,7 +405,32 @@ export function ReviewStage({
         </div>
       </div>
 
+      {refineField && (
+        <RefinementModal
+          field={refineField}
+          currentValue={
+            (strategy as Record<string, unknown>)[refineField as string]
+          }
+          briefContext={strategy}
+          onAccept={(v) => saveField(refineField, v)}
+          onClose={() => setRefineField(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function RefineButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-xs text-nordea-text-tertiary hover:text-nordea-blue flex items-center gap-1"
+      title="Be AI om alternativ"
+    >
+      <Sparkles className="w-3 h-3" />
+      Justera
+    </button>
   );
 }
 
@@ -413,11 +482,13 @@ function Card({
   label,
   emoji,
   color = "default",
+  action,
   children,
 }: {
   label: string;
   emoji?: string;
   color?: "default" | "teal" | "amber";
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const colorClasses = {
@@ -428,11 +499,14 @@ function Card({
 
   return (
     <div className={`border rounded-2xl p-5 ${colorClasses[color]}`}>
-      <div className="flex items-center gap-2 mb-3">
-        {emoji && <span className="text-base">{emoji}</span>}
-        <span className="text-xs font-medium text-nordea-text-tertiary uppercase tracking-wider">
-          {label}
-        </span>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          {emoji && <span className="text-base">{emoji}</span>}
+          <span className="text-xs font-medium text-nordea-text-tertiary uppercase tracking-wider">
+            {label}
+          </span>
+        </div>
+        {action}
       </div>
       {children}
     </div>
