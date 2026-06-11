@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <rect width="400" height="300" fill="#F5F5F8"/>
+  <!-- House -->
+  <path d="M120 140 L200 80 L280 140 V230 H120 Z" fill="#0000A0"/>
+  <rect x="180" y="170" width="40" height="60" fill="#F5F5F8"/>
+  <rect x="140" y="155" width="22" height="22" fill="#40BFA3"/>
+  <rect x="238" y="155" width="22" height="22" fill="#40BFA3"/>
+  <!-- Ground -->
+  <rect y="230" width="400" height="70" fill="#E0E0EA"/>
+  <!-- Family silhouettes -->
+  <circle cx="100" cy="200" r="10" fill="#40BFA3"/>
+  <rect x="92" y="210" width="16" height="24" fill="#40BFA3"/>
+  <circle cx="320" cy="200" r="10" fill="#40BFA3"/>
+  <rect x="312" y="210" width="16" height="24" fill="#40BFA3"/>
+  <circle cx="80" cy="215" r="6" fill="#0000A0"/>
+  <rect x="74" y="221" width="12" height="14" fill="#0000A0"/>
+  <!-- Sun -->
+  <circle cx="350" cy="50" r="20" fill="#C49327"/>
+</svg>

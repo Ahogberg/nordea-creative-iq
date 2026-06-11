@@ -7,6 +7,8 @@ import { StudioLogoUploader } from "./studio-logo-uploader";
 import { MotionEditor } from "./motion-editor";
 import { BrandColorsEditor } from "./brand-colors-editor";
 import { AssetPicker, type PickedAsset } from "./asset-picker";
+import { TextAnimationEditor } from "./text-animation-editor";
+import { SelectedElementPanel } from "./selected-element-panel";
 
 export function PropertyPanel() {
   const config = useStudioStore((s) => s.config);
@@ -34,8 +36,12 @@ export function PropertyPanel() {
     }
   };
 
+  const selectedElementId = useStudioStore((s) => s.selectedElementId);
+
   return (
     <div className="p-4 space-y-3">
+      {selectedElementId && <SelectedElementPanel />}
+
       <Accordion title="Aktuell scen" defaultOpen>
         {selectedScene && selectedSceneIndex !== null ? (
           <ScenePropertyEditor
@@ -45,6 +51,19 @@ export function PropertyPanel() {
         ) : (
           <p className="text-sm text-nordea-text-tertiary py-4 text-center">
             Välj en scen i tidslinjen
+          </p>
+        )}
+      </Accordion>
+
+      <Accordion title="Text-animation">
+        {selectedScene && selectedSceneIndex !== null ? (
+          <TextAnimationEditor
+            scene={selectedScene}
+            sceneIndex={selectedSceneIndex}
+          />
+        ) : (
+          <p className="text-sm text-nordea-text-tertiary py-4 text-center">
+            Välj en scen
           </p>
         )}
       </Accordion>

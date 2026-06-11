@@ -16,10 +16,13 @@ import type {
   Scene,
   MotionConfig,
   LogoConfig,
+  ElementTransform,
+  SceneAsset,
 } from "@/lib/remotion/types";
 import {
   DEFAULT_VIDEO_CONFIG,
   DEFAULT_MOTION_CONFIG,
+  DEFAULT_ELEMENT_TRANSFORM,
 } from "@/lib/remotion/types";
 
 export type AspectRatio = VideoConfig["format"]; // 'story' | 'feed' | 'landscape' | 'vertical'
@@ -64,6 +67,14 @@ interface StudioState {
   variants: Variant[];
   isGeneratingVariants: boolean;
 
+  // Sprint 11A: canvas selection state
+  // elementId conventions:
+  //   "headline", "subtitle", "cta", "line", "value", "label"  → text elements
+  //   "asset-<assetId>"                                         → asset overlays
+  selectedElementId: string | null;
+  hoveredElementId: string | null;
+  isDragging: boolean;
+
   setAspectRatio: (ratio: AspectRatio) => void;
   setSelectedScene: (index: number | null) => void;
   updateScene: (index: number, updates: Partial<Scene>) => void;
@@ -80,6 +91,23 @@ interface StudioState {
   generateVariants: () => Promise<void>;
   applyVariant: (variantId: string) => void;
   clearVariants: () => void;
+
+  // Sprint 11A: canvas actions
+  selectElement: (id: string | null) => void;
+  hoverElement: (id: string | null) => void;
+  setDragging: (isDragging: boolean) => void;
+  updateElementTransform: (
+    sceneIndex: number,
+    elementId: string,
+    patch: Partial<ElementTransform>
+  ) => void;
+  addAssetToScene: (sceneIndex: number, asset: SceneAsset) => void;
+  removeAssetFromScene: (sceneIndex: number, assetId: string) => void;
+  updateAssetTransform: (
+    sceneIndex: number,
+    assetId: string,
+    patch: Partial<ElementTransform>
+  ) => void;
 }
 
 export const useStudioStore = create<StudioState>()(
@@ -92,10 +120,15 @@ export const useStudioStore = create<StudioState>()(
     variants: [],
     isGeneratingVariants: false,
 
+    selectedElementId: null,
+    hoveredElementId: null,
+    isDragging: false,
+
     setAspectRatio: (ratio) =>
       set((state) => ({ config: { ...state.config, format: ratio } })),
 
-    setSelectedScene: (index) => set({ selectedSceneIndex: index }),
+    setSelectedScene: (index) =>
+      set({ selectedSceneIndex: index, selectedElementId: null }),
 
     updateScene: (index, updates) =>
       set((state) => {
@@ -189,12 +222,80 @@ export const useStudioStore = create<StudioState>()(
       }),
 
     clearVariants: () => set({ variants: [] }),
+
+    // ── Sprint 11A: canvas actions ──────────────────────────────────────
+    selectElement: (id) => set({ selectedElementId: id }),
+    hoverElement: (id) => set({ hoveredElementId: id }),
+    setDragging: (isDragging) => set({ isDragging }),
+
+    updateElementTransform: (sceneIndex, elementId, patch) =>
+      set((state) => {
+        const scenes = [...state.config.scenes];
+        const scene = scenes[sceneIndex];
+        if (!scene) return state;
+        const existing = scene.elementTransforms?.[elementId];
+        const next: ElementTransform = {
+          ...DEFAULT_ELEMENT_TRANSFORM,
+          ...(existing ?? {}),
+          ...patch,
+        };
+        scenes[sceneIndex] = {
+          ...scene,
+          elementTransforms: {
+            ...(scene.elementTransforms ?? {}),
+            [elementId]: next,
+          },
+        } as Scene;
+        return { config: { ...state.config, scenes } };
+      }),
+
+    addAssetToScene: (sceneIndex, asset) =>
+      set((state) => {
+        const scenes = [...state.config.scenes];
+        const scene = scenes[sceneIndex];
+        if (!scene) return state;
+        scenes[sceneIndex] = {
+          ...scene,
+          assets: [...(scene.assets ?? []), asset],
+        } as Scene;
+        return { config: { ...state.config, scenes } };
+      }),
+
+    removeAssetFromScene: (sceneIndex, assetId) =>
+      set((state) => {
+        const scenes = [...state.config.scenes];
+        const scene = scenes[sceneIndex];
+        if (!scene) return state;
+        scenes[sceneIndex] = {
+          ...scene,
+          assets: (scene.assets ?? []).filter((a) => a.id !== assetId),
+        } as Scene;
+        return { config: { ...state.config, scenes } };
+      }),
+
+    updateAssetTransform: (sceneIndex, assetId, patch) =>
+      set((state) => {
+        const scenes = [...state.config.scenes];
+        const scene = scenes[sceneIndex];
+        if (!scene?.assets) return state;
+        scenes[sceneIndex] = {
+          ...scene,
+          assets: scene.assets.map((a) =>
+            a.id === assetId
+              ? { ...a, layout: { ...a.layout, ...patch } }
+              : a
+          ),
+        } as Scene;
+        return { config: { ...state.config, scenes } };
+      }),
   }))
 );
 
 // ── Debounced preview re-render ──
 // 1.5s after the last config mutation, bump previewKey so the Remotion
 // Player re-mounts with the new props. Avoids per-keystroke render thrash.
+// Sprint 11A: skip the bump while a canvas drag is in progress — the
+// Player would re-mount on every drag step. We schedule a retry instead.
 let renderTimeout: NodeJS.Timeout | null = null;
 
 useStudioStore.subscribe(
@@ -202,8 +303,29 @@ useStudioStore.subscribe(
   () => {
     if (renderTimeout) clearTimeout(renderTimeout);
     renderTimeout = setTimeout(() => {
+      if (useStudioStore.getState().isDragging) {
+        // Try again after the gesture finishes.
+        renderTimeout = setTimeout(() => {
+          if (!useStudioStore.getState().isDragging) {
+            useStudioStore.getState().triggerRender();
+          }
+        }, 400);
+        return;
+      }
       useStudioStore.getState().triggerRender();
     }, 1500);
   },
   { equalityFn: (a, b) => JSON.stringify(a) === JSON.stringify(b) }
+);
+
+// Trigger a final re-render when a drag ends so the Player picks up the
+// committed transforms (CanvasOverlay reflects them live via CSS but the
+// Remotion composition needs the bump to re-position text inside).
+useStudioStore.subscribe(
+  (state) => state.isDragging,
+  (isDragging) => {
+    if (!isDragging) {
+      setTimeout(() => useStudioStore.getState().triggerRender(), 100);
+    }
+  }
 );
