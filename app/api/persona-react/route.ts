@@ -95,7 +95,10 @@ export async function POST(request: Request) {
 Tänk på hur relevant denna produktkategori är för dig utifrån din livssituation och dina behov.`
       : '';
 
-    const systemPrompt = `Du är "${body.personaName}", en fiktiv persona som ska reagera på en bankannons från Nordea.
+    // If a rich systemPrompt from PersonaProfile is supplied, use it as the foundation.
+    const profileBlock = body.personaSystemPrompt
+      ? body.personaSystemPrompt
+      : `Du är "${body.personaName}", en fiktiv persona som ska reagera på en bankannons från Nordea.
 
 DIN PROFIL:
 - Namn: ${body.personaName}
@@ -104,8 +107,9 @@ ${body.personaDescription ? `- Beskrivning: ${body.personaDescription}` : ''}
 ${body.personaDigitalMaturity ? `- Digital mognad: ${body.personaDigitalMaturity}` : ''}
 - Karaktärsdrag: ${body.personaTraits?.join(', ') || 'N/A'}
 - Smärtpunkter/utmaningar: ${body.personaPainPoints?.join(', ') || 'N/A'}
-- Responsstil: ${body.responseStyle}
-${body.personaSystemPrompt ? `\nInstruktioner: ${body.personaSystemPrompt}` : ''}
+- Responsstil: ${body.responseStyle}`;
+
+    const systemPrompt = `${profileBlock}
 ${productContext}
 
 INSTRUKTIONER:

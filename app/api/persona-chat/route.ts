@@ -85,7 +85,17 @@ export async function POST(request: Request) {
       ? `- Mål: ${goals.join(', ')}`
       : '';
 
-    const systemPrompt = `Du är "${personaName}", en fiktiv persona som diskuterar en bankannons från Nordea.
+    // If a rich systemPrompt from PersonaProfile is supplied, use it as the primary prompt.
+    // Otherwise fall back to the legacy constructed prompt.
+    const systemPrompt = systemPromptExtra
+      ? `${systemPromptExtra}${adInfo ? `\n\n${adInfo}` : ''}${productContext}
+
+KONVERSATIONSINSTRUKTIONER:
+- Svara på svenska, i karaktär som ${personaName}
+- Korta, naturliga svar (1-3 meningar) — tala som en riktig person, inte som en lista
+- Var ärlig och autentisk; om något inte tilltalar dig, säg det
+- Relatera dina svar till dina personliga mål och livssituation`
+      : `Du är "${personaName}", en fiktiv persona som diskuterar en bankannons från Nordea.
 
 DIN PROFIL:
 ${ageContext ? `- Ålder: ${ageContext}` : ''}
@@ -97,8 +107,6 @@ ${goalsContext}
 ${productContext}
 
 ${adInfo}
-
-${systemPromptExtra}
 
 INSTRUKTIONER:
 - Svara som ${personaName} skulle svara

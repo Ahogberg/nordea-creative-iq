@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,6 +77,8 @@ export default function PersonasPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'persona'; content: string }[]>([]);
   const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
 
@@ -132,23 +134,49 @@ export default function PersonasPage() {
 
   const openCreate = () => { setEditingPersona({ ...emptyForm }); setEditingId(null); setDialogOpen(true); };
 
-  const handleStartChat = (persona: PersonaProfile) => {
-    setSelectedLibraryPersona(persona); setChatOpen(true);
+  const handleStartChat = (persona: PersonaProfile, prefill?: string) => {
+    setSelectedLibraryPersona(persona);
+    setChatOpen(true);
     setChatMessages([{ role: 'persona', content: `Hej! Jag är ${persona.name}. ${persona.quote} Vad vill du veta?` }]);
+    if (prefill) setChatInput(prefill);
   };
 
-  const handleSendMessage = () => {
-    if (!chatInput.trim() || !selectedLibraryPersona) return;
-    setChatMessages(prev => [...prev, { role: 'user', content: chatInput }]); setChatInput('');
-    const p = selectedLibraryPersona;
-    setTimeout(() => {
-      const responses = [
-        `Som ${p.shortName.toLowerCase()} tycker jag det beror på presentationen. ${p.painPoints[0]} är något jag tänker på.`,
-        `Bra fråga! Det handlar om ${p.goals[0].toLowerCase()} för mig. Om annonsen adresserar det fångar ni min uppmärksamhet.`,
-        `Jag är lite ${p.responseStyle === 'skeptical' ? 'skeptisk' : p.responseStyle === 'curious' ? 'nyfiken' : 'neutral'}. Men visa att ni förstår att ${p.painPoints[1]?.toLowerCase() || p.painPoints[0].toLowerCase()}, då lyssnar jag.`,
-      ];
-      setChatMessages(prev => [...prev, { role: 'persona', content: responses[Math.floor(Math.random() * responses.length)] }]);
-    }, 1000);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, chatLoading]);
+
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || !selectedLibraryPersona || chatLoading) return;
+    const userMessage = chatInput.trim();
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setChatInput('');
+    setChatLoading(true);
+    try {
+      const history = chatMessages.map(m => ({
+        role: m.role === 'persona' ? 'assistant' : 'user',
+        content: m.content,
+      }));
+      const res = await fetch('/api/persona-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          personaName: selectedLibraryPersona.name,
+          personaSystemPrompt: selectedLibraryPersona.systemPrompt,
+          personaTraits: selectedLibraryPersona.traits,
+          personaPainPoints: selectedLibraryPersona.painPoints,
+          personaAge: selectedLibraryPersona.age,
+          responseStyle: selectedLibraryPersona.responseStyle,
+          messages: history,
+          newMessage: userMessage,
+        }),
+      });
+      const data = await res.json();
+      setChatMessages(prev => [...prev, { role: 'persona', content: data.reply || 'Hmm, inget svar just nu.' }]);
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'persona', content: 'Ursäkta, något gick fel. Försök igen.' }]);
+    } finally {
+      setChatLoading(false);
+    }
   };
 
   const filteredLibraryPersonas = PERSONA_LIBRARY.filter(p =>
@@ -210,10 +238,32 @@ export default function PersonasPage() {
                       <div><h3 className="text-lg font-semibold text-gray-900">{selectedLibraryPersona.name}</h3><p className="text-gray-500">{selectedLibraryPersona.shortName}</p><p className="text-sm text-gray-500">{selectedLibraryPersona.age.min}-{selectedLibraryPersona.age.max} år</p></div>
                     </div>
                     <blockquote className="text-gray-700 italic border-l-2 border-nordea-blue pl-4 mb-6">&quot;{selectedLibraryPersona.quote}&quot;</blockquote>
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-4 mb-4">
                       <div><div className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2"><Target className="w-4 h-4 text-nordea-blue" /> Mål</div>{selectedLibraryPersona.goals.map((g, i) => <p key={i} className="text-sm text-gray-700 mb-1">• {g}</p>)}</div>
                       <div><div className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2"><AlertCircle className="w-4 h-4 text-nordea-accent-yellow" /> Smärtpunkter</div>{selectedLibraryPersona.painPoints.map((p, i) => <p key={i} className="text-sm text-gray-700 mb-1">• {p}</p>)}</div>
                       <div><div className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2"><Sparkles className="w-4 h-4 text-nordea-accent-green" /> Produktintresse</div><div className="flex flex-wrap gap-1.5">{selectedLibraryPersona.productsInterested.map((pr, i) => <span key={i} className="persona-trait">{pr}</span>)}</div></div>
+                    </div>
+                    {/* SCB stats */}
+                    <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Statistisk kontext (SCB 2023)</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                        <div><p className="text-xs text-gray-500">Bostadsägande</p><p className="text-sm font-semibold text-gray-900">{selectedLibraryPersona.scbContext.homeOwnershipRate}% av åldersgruppen</p></div>
+                        <div><p className="text-xs text-gray-500">Mobilbank</p><p className="text-sm font-semibold text-gray-900">{selectedLibraryPersona.scbContext.mobileBankingRate}% dagligen</p></div>
+                        <div><p className="text-xs text-gray-500">Sparkvot</p><p className="text-sm font-semibold text-gray-900">{selectedLibraryPersona.scbContext.avgSavingsRate}% av inkomsten</p></div>
+                        <div><p className="text-xs text-gray-500">Medianinkomst</p><p className="text-sm font-semibold text-gray-900">{Math.round(selectedLibraryPersona.scbContext.avgIncomeSEK / 1000)} tkr/år</p></div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2 leading-tight">{selectedLibraryPersona.scbContext.relevantStat}</p>
+                    </div>
+                    {/* Example questions */}
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Prova att fråga</p>
+                      <div className="space-y-1.5">
+                        {selectedLibraryPersona.exampleReactions.slice(0, 2).map((ex, i) => (
+                          <button key={i} onClick={() => handleStartChat(selectedLibraryPersona, ex.stimulus)} className="w-full text-left text-xs p-2 rounded-lg bg-white border border-gray-200 hover:border-nordea-blue hover:bg-blue-50 text-gray-600 hover:text-nordea-blue transition-colors line-clamp-2">
+                            &quot;{ex.stimulus}&quot;
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <button onClick={() => handleStartChat(selectedLibraryPersona)} className="btn-primary w-full"><MessageCircle className="w-4 h-4" /> Chatta med {selectedLibraryPersona.name.split(' ')[0]}</button>
                   </>
@@ -223,8 +273,25 @@ export default function PersonasPage() {
                       <div className="flex items-center gap-3"><PersonaImage name={selectedLibraryPersona.name} color={selectedLibraryPersona.color} size="md" /><div><p className="font-medium text-gray-900">{selectedLibraryPersona.name}</p><p className="text-xs text-gray-500">Online</p></div></div>
                       <button onClick={() => setChatOpen(false)} className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100"><X className="w-4 h-4" /></button>
                     </div>
-                    <div className="h-80 overflow-y-auto custom-scrollbar space-y-3 mb-4 flex flex-col">{chatMessages.map((msg, i) => <div key={i} className={`chat-message ${msg.role}`}>{msg.content}</div>)}</div>
-                    <div className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Skriv ett meddelande..." className="chat-input" /><button onClick={handleSendMessage} className="chat-send-btn"><ChevronRight className="w-5 h-5" /></button></div>
+                    <div className="h-80 overflow-y-auto custom-scrollbar space-y-3 mb-4 flex flex-col">
+                      {chatMessages.map((msg, i) => <div key={i} className={`chat-message ${msg.role}`}>{msg.content}</div>)}
+                      {chatLoading && (
+                        <div className="chat-message persona">
+                          <div className="flex gap-1.5 items-center h-4">
+                            <span className="w-1.5 h-1.5 rounded-full bg-nordea-blue animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-nordea-blue animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-nordea-blue animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                        </div>
+                      )}
+                      <div ref={chatEndRef} />
+                    </div>
+                    <div className="flex gap-2">
+                      <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !chatLoading && handleSendMessage()} placeholder="Skriv ett meddelande..." className="chat-input" disabled={chatLoading} />
+                      <button onClick={handleSendMessage} className="chat-send-btn" disabled={chatLoading}>
+                        {chatLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ChevronRight className="w-5 h-5" />}
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
