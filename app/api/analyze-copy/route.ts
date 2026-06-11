@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClaudeClient, getChannelContext, getComplianceContext } from '@/lib/claude';
+import { getClaudeClient, CLAUDE_MODEL, getChannelContext, getComplianceContext } from '@/lib/claude';
 import { NORDEA_SYSTEM_PROMPT } from '@/lib/nordea-brand-guidelines';
 import { detectProductFromText } from '@/lib/product-detection';
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const anthropic = getClaudeClient();
     if (anthropic) {
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: CLAUDE_MODEL,
         max_tokens: 1500,
         system: NORDEA_SYSTEM_PROMPT,
         messages: [

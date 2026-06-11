@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
 import { z } from "zod";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
     }
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
+      model: CLAUDE_MODEL,
       max_tokens: 1500,
       system: SYSTEM_PROMPT,
       messages: [
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
       user_id: "default-user",
       kind: "video",
       provider: "claude",
-      model: "claude-sonnet-4-5-20250929",
+      model: CLAUDE_MODEL,
       prompt: "studio_chat",
       params: { message_length: message.length },
       cost_usd: 0.003,

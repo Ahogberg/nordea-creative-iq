@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
 import { z } from "zod";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 import { defaultPersonas } from "@/lib/constants/personas";
@@ -218,7 +219,7 @@ export async function POST(request: Request) {
     const systemPrompt = STAGE_PROMPTS[stage];
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
+      model: CLAUDE_MODEL,
       max_tokens: 2500,
       system: systemPrompt,
       messages: [
@@ -244,7 +245,7 @@ export async function POST(request: Request) {
       user_id: "default-user",
       kind: "video",
       provider: "claude",
-      model: "claude-sonnet-4-5-20250929",
+      model: CLAUDE_MODEL,
       prompt: `brief_${stage}_v2`,
       params: { stage, answer_length: currentAnswer.length },
       cost_usd: 0.01,

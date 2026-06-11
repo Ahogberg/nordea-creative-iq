@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClaudeClient } from '@/lib/claude';
+import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude';
 import { PRODUCT_LABELS, type ProductCategory } from '@/lib/product-detection';
 
 interface PersonaReactRequest {
@@ -156,7 +156,7 @@ Ge din ärliga reaktion som ${body.personaName}.`;
     const anthropic = getClaudeClient();
     if (anthropic) {
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: CLAUDE_MODEL,
         max_tokens: 1500,
         temperature: 0.8,
         system: systemPrompt,

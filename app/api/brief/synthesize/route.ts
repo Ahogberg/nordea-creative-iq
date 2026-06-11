@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
     }
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
+      model: CLAUDE_MODEL,
       max_tokens: 4000,
       system: SYNTHESIS_PROMPT,
       messages: [
@@ -100,9 +101,9 @@ export async function POST(request: Request) {
 
     await logGeneration({
       user_id: "default-user",
-      kind: "video",
+      kind: "text",
       provider: "claude",
-      model: "claude-sonnet-4-5-20250929",
+      model: CLAUDE_MODEL,
       prompt: "brief_synthesize",
       params: { brief_id: briefId },
       cost_usd: 0.02,
@@ -123,19 +124,40 @@ export async function POST(request: Request) {
   }
 }
 
+// Only these columns are written from the LLM output; unknown fields are dropped
+// to avoid PostgREST errors and prevent prompt-injection column overwrites.
+const STRATEGY_COLUMNS = [
+  "big_idea",
+  "insight",
+  "tension",
+  "key_messages",
+  "value_props",
+  "tone_of_voice",
+  "recommended_formats",
+  "recommended_channels",
+  "recommended_kpis",
+] as const;
+
 async function persistStrategy(
   briefId: string,
   strategy: Record<string, unknown>
 ) {
   const supabase = await createClient();
-  await supabase
+  const safeFields: Record<string, unknown> = {};
+  for (const col of STRATEGY_COLUMNS) {
+    if (col in strategy) safeFields[col] = strategy[col];
+  }
+  const { error } = await supabase
     .from("creative_briefs")
     .update({
-      ...strategy,
-      status: "approved",
+      ...safeFields,
+      // "in_review" = strategy synthesised, awaiting explicit user approval.
+      // status is promoted to "approved" only when the user clicks Approve.
+      status: "in_review",
       updated_at: new Date().toISOString(),
     })
     .eq("id", briefId);
+  if (error) throw new Error(`DB update failed: ${error.message}`);
 }
 
 function getMockStrategy() {

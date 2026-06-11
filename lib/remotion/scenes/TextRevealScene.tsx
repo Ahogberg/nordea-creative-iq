@@ -4,6 +4,7 @@ import { colors, fonts } from "../styles";
 import type { TextRevealScene as TextRevealSceneProps, MotionConfig, StaggerMode } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
+import { resolveBackground } from "../scene-utils";
 
 const FPS = 30;
 
@@ -28,7 +29,7 @@ export const TextRevealSceneComponent: React.FC<{
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: scene.background || "transparent",
+        ...resolveBackground(scene.background),
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",

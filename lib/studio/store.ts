@@ -150,6 +150,7 @@ export const useStudioStore = create<StudioState>()(
           config: { ...state.config, scenes },
           selectedSceneIndex:
             scenes.length > 0 ? Math.min(index, scenes.length - 1) : null,
+          selectedElementId: null,
         };
       }),
 
@@ -182,6 +183,7 @@ export const useStudioStore = create<StudioState>()(
       set({
         config: { ...config, motion: config.motion ?? DEFAULT_MOTION_CONFIG },
         selectedSceneIndex: config.scenes.length > 0 ? 0 : null,
+        selectedElementId: null,
         previewKey: 0,
       }),
 
@@ -217,6 +219,7 @@ export const useStudioStore = create<StudioState>()(
           },
           selectedSceneIndex:
             variant.full_config.scenes.length > 0 ? 0 : null,
+          selectedElementId: null,
           variants: [],
         };
       }),
@@ -295,27 +298,28 @@ export const useStudioStore = create<StudioState>()(
 // 1.5s after the last config mutation, bump previewKey so the Remotion
 // Player re-mounts with the new props. Avoids per-keystroke render thrash.
 // Sprint 11A: skip the bump while a canvas drag is in progress — the
-// Player would re-mount on every drag step. We schedule a retry instead.
+// Player would re-mount on every drag step. Re-arms itself every 400 ms
+// until the drag finishes rather than giving up after one retry.
 let renderTimeout: NodeJS.Timeout | null = null;
+
+function scheduleRender(delayMs = 1500) {
+  if (renderTimeout) clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(() => {
+    if (useStudioStore.getState().isDragging) {
+      // Re-arm until drag is done — never give up.
+      scheduleRender(400);
+      return;
+    }
+    useStudioStore.getState().triggerRender();
+  }, delayMs);
+}
 
 useStudioStore.subscribe(
   (state) => state.config,
-  () => {
-    if (renderTimeout) clearTimeout(renderTimeout);
-    renderTimeout = setTimeout(() => {
-      if (useStudioStore.getState().isDragging) {
-        // Try again after the gesture finishes.
-        renderTimeout = setTimeout(() => {
-          if (!useStudioStore.getState().isDragging) {
-            useStudioStore.getState().triggerRender();
-          }
-        }, 400);
-        return;
-      }
-      useStudioStore.getState().triggerRender();
-    }, 1500);
-  },
-  { equalityFn: (a, b) => JSON.stringify(a) === JSON.stringify(b) }
+  () => scheduleRender(1500),
+  // Use referential equality — config is immutably updated so Object.is
+  // correctly detects changes without the cost of JSON.stringify on every set.
+  { equalityFn: Object.is }
 );
 
 // Trigger a final re-render when a drag ends so the Player picks up the

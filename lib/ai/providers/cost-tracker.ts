@@ -11,7 +11,7 @@ import { BudgetExceededError } from "./types";
 
 export interface LogParams {
   user_id: string;
-  kind: "video" | "image" | "stock-search";
+  kind: "video" | "image" | "stock-search" | "text";
   provider: string;
   model?: string;
   prompt?: string;

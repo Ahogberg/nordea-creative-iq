@@ -12,6 +12,7 @@ interface PlayerWrapperProps {
   config: VideoConfig;
   playing?: boolean;
   loop?: boolean;
+  controls?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -20,6 +21,7 @@ export const MotionPlayer: React.FC<PlayerWrapperProps> = ({
   config,
   playing = true,
   loop = true,
+  controls = false,
   className,
   style,
 }) => {
@@ -42,7 +44,7 @@ export const MotionPlayer: React.FC<PlayerWrapperProps> = ({
       fps={FPS}
       autoPlay={playing}
       loop={loop}
-      controls
+      controls={controls}
       className={className}
       style={{
         width: "100%",
