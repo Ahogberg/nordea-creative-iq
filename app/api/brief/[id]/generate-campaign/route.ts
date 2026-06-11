@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 import {
@@ -79,7 +80,7 @@ export async function POST(
       config = buildMockConfig(brief);
     } else {
       const response = await client.messages.create({
-        model: "claude-sonnet-4-5-20250929",
+        model: CLAUDE_MODEL,
         max_tokens: 4000,
         system: CONFIG_PROMPT,
         messages: [
@@ -119,7 +120,7 @@ export async function POST(
         user_id: "default-user",
         kind: "video",
         provider: "claude",
-        model: "claude-sonnet-4-5-20250929",
+        model: CLAUDE_MODEL,
         prompt: "brief_to_campaign",
         params: { brief_id: briefId },
         cost_usd: 0.015,
@@ -171,20 +172,55 @@ export async function POST(
       // Sprint 9 not deployed — fine.
     }
 
-    // Create the campaign row tying brief → template (+ master if available).
-    const { data: campaign, error: campaignError } = await supabase
+    // Upsert the campaign row — if a campaign for this brief already exists,
+    // add the new template/master to the existing arrays rather than creating a
+    // duplicate. On conflict we target brief_id (unique per brief).
+    const existingCampaign = await supabase
       .from("campaigns")
-      .insert({
-        name: templateName,
-        brief_id: briefId,
-        master_creative_ids: masterId ? [masterId] : [],
-        template_ids: [template.id],
-        production_job_ids: [],
-        status: "draft",
-        created_by: "default-user",
-      })
-      .select()
-      .single();
+      .select("id, template_ids, master_creative_ids")
+      .eq("brief_id", briefId)
+      .maybeSingle();
+
+    let campaign: Record<string, unknown>;
+    let campaignError: { message: string } | null = null;
+
+    if (existingCampaign.data) {
+      const prev = existingCampaign.data;
+      const templateIds = [
+        ...new Set([...(prev.template_ids ?? []), template.id]),
+      ];
+      const masterIds = masterId
+        ? [...new Set([...(prev.master_creative_ids ?? []), masterId])]
+        : prev.master_creative_ids ?? [];
+      const { data: updated, error: updateErr } = await supabase
+        .from("campaigns")
+        .update({
+          template_ids: templateIds,
+          master_creative_ids: masterIds,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", prev.id)
+        .select()
+        .single();
+      campaign = updated as Record<string, unknown>;
+      campaignError = updateErr;
+    } else {
+      const { data: inserted, error: insertErr } = await supabase
+        .from("campaigns")
+        .insert({
+          name: templateName,
+          brief_id: briefId,
+          master_creative_ids: masterId ? [masterId] : [],
+          template_ids: [template.id],
+          production_job_ids: [],
+          status: "draft",
+          created_by: "default-user",
+        })
+        .select()
+        .single();
+      campaign = inserted as Record<string, unknown>;
+      campaignError = insertErr;
+    }
 
     if (campaignError) throw campaignError;
 

@@ -5,6 +5,7 @@ import { colors, fonts } from "../styles";
 import type { HighlightNumberScene as HighlightNumberSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { CountingNumber } from "../animations/CountingNumber";
+import { resolveBackground } from "../scene-utils";
 
 export const HighlightNumberSceneComponent: React.FC<{
   scene: HighlightNumberSceneProps;
@@ -33,7 +34,7 @@ export const HighlightNumberSceneComponent: React.FC<{
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: scene.background || "transparent",
+        ...resolveBackground(scene.background),
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",

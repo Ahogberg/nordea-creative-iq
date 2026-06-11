@@ -58,18 +58,9 @@ function collectElementIds(scene: Scene): string[] {
       if (scene.description) ids.push("description");
       break;
     case "cta":
-      ids.push("headline", "cta");
+      // "button" matches CtaScene's positionedElement(scene, "button", ...) call.
+      ids.push("headline", "button");
       if (scene.subtitle) ids.push("subtitle");
-      break;
-    case "highlight-number":
-      ids.push("number", "label");
-      if (scene.description) ids.push("description");
-      break;
-    case "text-reveal":
-      ids.push("headline");
-      break;
-    case "split":
-      ids.push("left", "right");
       break;
     case "bars":
     case "icon-grid":
@@ -79,6 +70,8 @@ function collectElementIds(scene: Scene): string[] {
       if (scene.headline) ids.push("headline");
       if (scene.caption) ids.push("caption");
       break;
+    // "highlight-number", "text-reveal", "split" have compound/circular layouts
+    // that don't yet implement positionedElement — omit until supported.
     case "canvas":
       // canvas-scenes are user-coded; no standard ids to expose.
       break;
@@ -153,12 +146,16 @@ export function CanvasOverlay({ frameWidth, frameHeight }: CanvasOverlayProps) {
     return out;
   })();
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent, elementId: string, mode: "move" | "resize") => {
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent, elementId: string, mode: "move" | "resize") => {
       e.stopPropagation();
       if (selectedSceneIndex === null || !scene) return;
       const overlayRect = overlayRef.current?.getBoundingClientRect();
       if (!overlayRect) return;
+
+      // Capture pointer so we receive pointermove/up even if the cursor leaves
+      // the browser window — fixes the isDragging-stuck-true fryz-bugg.
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
       let startTransform: ElementTransform;
       if (elementId.startsWith("asset-")) {
@@ -189,7 +186,7 @@ export function CanvasOverlay({ frameWidth, frameHeight }: CanvasOverlayProps) {
   useEffect(() => {
     if (!dragState) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       const { startMouseX, startMouseY, startTransform, overlayRect, mode } =
         dragState;
       const deltaX = (e.clientX - startMouseX) / overlayRect.width;
@@ -223,7 +220,7 @@ export function CanvasOverlay({ frameWidth, frameHeight }: CanvasOverlayProps) {
       }
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       setDragState(null);
       setActiveGuides([]);
       setDragging(false);
@@ -242,11 +239,13 @@ export function CanvasOverlay({ frameWidth, frameHeight }: CanvasOverlayProps) {
       }
     }
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("pointermove", handlePointerMove);
+    document.addEventListener("pointerup", handlePointerUp);
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerup", handlePointerUp);
+      // Ensure isDragging is cleared if the component unmounts mid-drag.
+      setDragging(false);
     };
   }, [
     dragState,
@@ -288,14 +287,26 @@ export function CanvasOverlay({ frameWidth, frameHeight }: CanvasOverlayProps) {
   };
 
   return (
+    // pointer-events-none on root lets Remotion's player UI (play/pause etc.)
+    // receive clicks. Child boundaries and the drop-zone restore pointer events
+    // where needed.
     <div
       ref={overlayRef}
-      onMouseDown={() => selectElement(null)}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleDrop}
-      className="absolute inset-0"
+      className="absolute inset-0 pointer-events-none"
       style={{ zIndex: 10 }}
     >
+      {/* Drop zone + deselect layer — pointer-events-auto so drops land here
+          and clicking empty canvas deselects. Sits below the boundaries. */}
+      {scene && (
+        <div
+          className="absolute inset-0 pointer-events-auto"
+          style={{ zIndex: 0 }}
+          onPointerDown={() => selectElement(null)}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+        />
+      )}
+
       {scene &&
         elements.map((el) => (
           <ElementBoundary
@@ -305,7 +316,7 @@ export function CanvasOverlay({ frameWidth, frameHeight }: CanvasOverlayProps) {
             frameHeight={frameHeight}
             isSelected={selectedElementId === el.id}
             isHovered={hoveredElementId === el.id}
-            onMouseDown={(e, mode) => handleMouseDown(e, el.id, mode)}
+            onPointerDown={(e, mode) => handlePointerDown(e, el.id, mode)}
             onMouseEnter={() => hoverElement(el.id)}
             onMouseLeave={() => hoverElement(null)}
           />
@@ -336,7 +347,7 @@ function ElementBoundary({
   frameHeight,
   isSelected,
   isHovered,
-  onMouseDown,
+  onPointerDown,
   onMouseEnter,
   onMouseLeave,
 }: {
@@ -350,7 +361,7 @@ function ElementBoundary({
   frameHeight: number;
   isSelected: boolean;
   isHovered: boolean;
-  onMouseDown: (e: React.MouseEvent, mode: "move" | "resize") => void;
+  onPointerDown: (e: React.PointerEvent, mode: "move" | "resize") => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }) {
@@ -374,7 +385,7 @@ function ElementBoundary({
 
   return (
     <div
-      onMouseDown={(e) => onMouseDown(e, "move")}
+      onPointerDown={(e) => onPointerDown(e, "move")}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className="absolute pointer-events-auto"
@@ -394,7 +405,7 @@ function ElementBoundary({
       {isSelected && (
         <>
           <ResizeHandles
-            onResizeStart={(e) => onMouseDown(e, "resize")}
+            onResizeStart={(e) => onPointerDown(e, "resize")}
           />
           <div
             className="absolute -top-6 left-0 px-1.5 py-0.5 text-[10px] font-medium rounded pointer-events-none"

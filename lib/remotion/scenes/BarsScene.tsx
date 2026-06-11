@@ -2,7 +2,12 @@ import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { barGrow, fadeSlideUp, fadeIn, s2f } from "../utils";
 import { colors, fonts } from "../styles";
+import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import type { BarsScene as BarsSceneProps } from "../types";
+
+/**
+ * Element IDs for per-element transforms: "title"
+ */
 
 export const BarsSceneComponent: React.FC<{
   scene: BarsSceneProps;
@@ -14,32 +19,36 @@ export const BarsSceneComponent: React.FC<{
 
   const titleAnim = fadeSlideUp(frame, 5, 15, 30);
 
+  const titleNode = scene.title ? (
+    <div
+      style={{
+        fontFamily: fonts.headline,
+        fontSize: Math.round(48 * scale),
+        fontWeight: 900,
+        color: colors.white,
+        marginBottom: 60 * scale,
+        textAlign: "center",
+        ...titleAnim,
+      }}
+    >
+      {scene.title}
+    </div>
+  ) : null;
+
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: scene.background || "transparent",
+        ...resolveBackground(scene.background),
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
         padding: `0 ${110 * scale}px`,
+        position: "relative",
       }}
     >
-      {scene.title && (
-        <div
-          style={{
-            fontFamily: fonts.headline,
-            fontSize: Math.round(48 * scale),
-            fontWeight: 900,
-            color: colors.white,
-            marginBottom: 60 * scale,
-            textAlign: "center",
-            ...titleAnim,
-          }}
-        >
-          {scene.title}
-        </div>
-      )}
+      {titleNode && isInline(scene, "title") && titleNode}
+      {titleNode && positionedElement(scene, "title", titleNode)}
 
       {/* Bars container */}
       <div

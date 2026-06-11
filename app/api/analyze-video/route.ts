@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClaudeClient, COMPLIANCE_RULES } from '@/lib/claude';
+import { getClaudeClient, CLAUDE_MODEL, COMPLIANCE_RULES } from '@/lib/claude';
 import { NORDEA_SYSTEM_PROMPT } from '@/lib/nordea-brand-guidelines';
 
 interface AnalyzeVideoRequest {
@@ -126,7 +126,7 @@ Ge detaljerad analys av:
       });
 
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: CLAUDE_MODEL,
         max_tokens: 3000,
         system: `${NORDEA_SYSTEM_PROMPT}
 

@@ -1,7 +1,7 @@
 "use client";
 
 interface Props {
-  onResizeStart: (e: React.MouseEvent) => void;
+  onResizeStart: (e: React.PointerEvent) => void;
 }
 
 // 4 corner handles. Each starts a "resize" drag — actual scale math lives
@@ -34,7 +34,7 @@ export function ResizeHandles({ onResizeStart }: Props) {
       {handles.map((h) => (
         <div
           key={h.key}
-          onMouseDown={(e) => {
+          onPointerDown={(e) => {
             e.stopPropagation();
             onResizeStart(e);
           }}

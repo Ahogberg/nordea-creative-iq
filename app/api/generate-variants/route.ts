@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getClaudeClient } from '@/lib/claude';
+import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude';
 import { extractVariantSeeds } from '@/lib/video-types';
 import type { Template } from '@/lib/video-types';
 
@@ -58,7 +58,7 @@ Svara ENDAST med JSON i detta format:
     const anthropic = getClaudeClient();
     if (anthropic) {
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: CLAUDE_MODEL,
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       });

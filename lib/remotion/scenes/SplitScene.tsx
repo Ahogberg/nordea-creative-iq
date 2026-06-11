@@ -2,6 +2,7 @@ import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { fadeSlideUp, fadeIn, s2f } from "../utils";
 import { colors, fonts } from "../styles";
+import { resolveBackground } from "../scene-utils";
 import type { SplitScene as SplitSceneProps } from "../types";
 
 export const SplitSceneComponent: React.FC<{
@@ -19,7 +20,7 @@ export const SplitSceneComponent: React.FC<{
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: scene.background || "transparent",
+        ...resolveBackground(scene.background),
         display: "flex",
         flexDirection: "row",
         justifyContent: "center",

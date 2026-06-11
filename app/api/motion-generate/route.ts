@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getClaudeClient } from "@/lib/claude";
+import { getClaudeClient, CLAUDE_MODEL } from "@/lib/claude";
 import type { VideoConfig, Scene } from "@/lib/remotion/types";
 import { formatLibraryForPrompt } from "@/lib/remotion/lottie-library";
 import { compileCanvasTsx } from "@/lib/remotion/compile";
@@ -204,7 +204,7 @@ export async function POST(req: NextRequest) {
     messages.push({ role: "user", content: userMessage });
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-5-20250514",
+      model: CLAUDE_MODEL,
       max_tokens: 8192,
       system: SYSTEM_PROMPT,
       messages,

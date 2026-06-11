@@ -3,8 +3,13 @@ import { AbsoluteFill, useCurrentFrame, delayRender, continueRender } from "remo
 import { Lottie, LottieAnimationData } from "@remotion/lottie";
 import { fadeSlideUp, fadeIn } from "../utils";
 import { colors, fonts } from "../styles";
+import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import { getLottieUrl } from "../lottie-library";
 import type { LottieScene as LottieSceneProps } from "../types";
+
+/**
+ * Element IDs for per-element transforms: "headline", "caption"
+ */
 
 export const LottieSceneComponent: React.FC<{
   scene: LottieSceneProps;
@@ -62,16 +67,52 @@ export const LottieSceneComponent: React.FC<{
   const justifyContent =
     position === "top" ? "flex-start" : position === "bottom" ? "flex-end" : "center";
 
+  const headlineNode = scene.headline ? (
+    <h2
+      style={{
+        fontFamily: fonts.headline,
+        fontSize: Math.round(56 * scale),
+        fontWeight: 900,
+        color: colors.white,
+        lineHeight: 1.15,
+        textAlign: "center",
+        margin: 0,
+        maxWidth: width * 0.82,
+        ...headlineAnim,
+      }}
+    >
+      {scene.headline}
+    </h2>
+  ) : null;
+
+  const captionNode = scene.caption ? (
+    <p
+      style={{
+        fontFamily: fonts.body,
+        fontSize: Math.round(26 * scale),
+        fontWeight: 400,
+        color: colors.dimText,
+        textAlign: "center",
+        margin: 0,
+        maxWidth: width * 0.8,
+        opacity: captionOpacity,
+      }}
+    >
+      {scene.caption}
+    </p>
+  ) : null;
+
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: scene.background || "transparent",
+        ...resolveBackground(scene.background),
         display: "flex",
         flexDirection: "column",
         justifyContent,
         alignItems: "center",
         padding: `${140 * scale}px ${90 * scale}px`,
         gap: 40 * scale,
+        position: "relative",
       }}
     >
       {/* Animation */}
@@ -99,42 +140,11 @@ export const LottieSceneComponent: React.FC<{
         )}
       </div>
 
-      {/* Headline */}
-      {scene.headline && (
-        <h2
-          style={{
-            fontFamily: fonts.headline,
-            fontSize: Math.round(56 * scale),
-            fontWeight: 900,
-            color: colors.white,
-            lineHeight: 1.15,
-            textAlign: "center",
-            margin: 0,
-            maxWidth: width * 0.82,
-            ...headlineAnim,
-          }}
-        >
-          {scene.headline}
-        </h2>
-      )}
+      {headlineNode && isInline(scene, "headline") && headlineNode}
+      {headlineNode && positionedElement(scene, "headline", headlineNode)}
 
-      {/* Caption */}
-      {scene.caption && (
-        <p
-          style={{
-            fontFamily: fonts.body,
-            fontSize: Math.round(26 * scale),
-            fontWeight: 400,
-            color: colors.dimText,
-            textAlign: "center",
-            margin: 0,
-            maxWidth: width * 0.8,
-            opacity: captionOpacity,
-          }}
-        >
-          {scene.caption}
-        </p>
-      )}
+      {captionNode && isInline(scene, "caption") && captionNode}
+      {captionNode && positionedElement(scene, "caption", captionNode)}
     </AbsoluteFill>
   );
 };

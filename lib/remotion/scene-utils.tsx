@@ -1,4 +1,5 @@
 import React from "react";
+import { Img } from "remotion";
 import type { ElementTransform, SceneBase, SceneAsset } from "./types";
 
 /**
@@ -65,6 +66,21 @@ export function resolveTransform(
   };
 }
 
+/**
+ * Resolves a scene's `background` field to correct CSS properties.
+ * Supports both solid colours (`#000080`) and image URLs (`url("...")`).
+ */
+export function resolveBackground(bg?: string): React.CSSProperties {
+  if (!bg) return { backgroundColor: "transparent" };
+  if (bg.startsWith("url("))
+    return {
+      backgroundImage: bg,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    };
+  return { backgroundColor: bg };
+}
+
 // Sprint 11A: Render asset overlays (icons / illustrations) on top of a
 // scene's main content. Renderer-side only — drag/resize lives in the
 // Studio CanvasOverlay. Defensive: missing scene.assets renders nothing.
@@ -98,8 +114,7 @@ export function renderSceneAssets(
           pointerEvents: "none",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Img
           src={asset.url}
           alt=""
           style={{

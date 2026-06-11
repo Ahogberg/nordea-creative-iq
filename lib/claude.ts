@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NORDEA_SYSTEM_PROMPT, NORDEA_COMPLIANCE, CHANNEL_SPECS, CAMPAIGN_OBJECTIVES } from './nordea-brand-guidelines';
+export { CLAUDE_MODEL } from '@/lib/ai/anthropic';
 
 // Server-side only — singleton client
 let client: Anthropic | null = null;

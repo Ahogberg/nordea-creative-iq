@@ -30,23 +30,39 @@ function BriefWizardInner() {
 
   const [currentStage, setCurrentStage] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [briefId, setBriefId] = useState<string | null>(briefIdParam);
+  // briefId starts null; set after a successful load or first-save so we
+  // never silently write to an id that doesn't exist in the database.
+  const [briefId, setBriefId] = useState<string | null>(null);
   const [isLoadingBrief, setIsLoadingBrief] = useState(!!briefIdParam);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [resumeError, setResumeError] = useState<string | null>(null);
 
   // Resume existing brief if id is present.
   useEffect(() => {
     if (!briefIdParam) return;
     let cancelled = false;
     fetch(`/api/brief/${briefIdParam}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Brief hittades inte");
+        return r.json();
+      })
       .then((data) => {
         if (cancelled) return;
         const brief = data.brief;
-        if (brief?.wizard_state) {
-          setCurrentStage(brief.wizard_state.current_stage ?? 0);
-          setAnswers(brief.wizard_state.answers ?? {});
+        if (brief?.id) {
+          setBriefId(brief.id);
+          if (brief.wizard_state) {
+            setCurrentStage(brief.wizard_state.current_stage ?? 0);
+            setAnswers(brief.wizard_state.answers ?? {});
+          }
         }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled)
+          setResumeError(
+            err instanceof Error ? err.message : "Kunde inte ladda brief"
+          );
       })
       .finally(() => {
         if (!cancelled) setIsLoadingBrief(false);
@@ -62,7 +78,8 @@ function BriefWizardInner() {
       answer: string,
       nextStageIndex: number,
       mergedAnswers: Record<string, string>
-    ) => {
+    ): Promise<boolean> => {
+      setSaveError(null);
       setIsSaving(true);
       try {
         const url = briefId ? `/api/brief/${briefId}` : "/api/brief";
@@ -88,7 +105,7 @@ function BriefWizardInner() {
           body: JSON.stringify(payload),
         });
 
-        if (!res.ok) throw new Error("Save failed");
+        if (!res.ok) throw new Error("Servern svarade med fel – försök igen");
         const data = await res.json();
 
         if (!briefId && data.brief?.id) {
@@ -99,8 +116,13 @@ function BriefWizardInner() {
             `/create/brief/wizard?id=${data.brief.id}`
           );
         }
+        return true;
       } catch (err) {
         console.error("[wizard] save failed:", err);
+        setSaveError(
+          err instanceof Error ? err.message : "Kunde inte spara – försök igen"
+        );
+        return false;
       } finally {
         setIsSaving(false);
       }
@@ -116,14 +138,31 @@ function BriefWizardInner() {
     const field = STAGE_TO_FIELD[stageId] ?? stageId;
     const merged = { ...answers, [field]: answer };
     setAnswers(merged);
-    await saveProgress(field, answer, currentStage + 1, merged);
-    nextStage();
+    const saved = await saveProgress(field, answer, currentStage + 1, merged);
+    if (saved) nextStage();
   };
 
   if (isLoadingBrief) {
     return (
       <div className="min-h-screen bg-nordea-bg flex items-center justify-center">
         <Loader2 className="w-6 h-6 text-nordea-text-tertiary animate-spin" />
+      </div>
+    );
+  }
+
+  if (resumeError) {
+    return (
+      <div className="min-h-screen bg-nordea-bg flex items-center justify-center">
+        <div className="bg-white rounded-xl border border-red-200 p-8 max-w-md text-center">
+          <p className="text-red-700 font-medium mb-4">{resumeError}</p>
+          <button
+            type="button"
+            onClick={() => router.push("/create/brief")}
+            className="text-sm text-nordea-blue underline"
+          >
+            Tillbaka till briefs
+          </button>
+        </div>
       </div>
     );
   }
@@ -150,10 +189,16 @@ function BriefWizardInner() {
         </div>
       </div>
 
+      {saveError && (
+        <div className="bg-red-50 border-b border-red-200 px-6 py-2 text-sm text-red-700 text-center">
+          {saveError}
+        </div>
+      )}
+
       <WizardProgress currentStage={currentStage} />
 
       <div className="flex-1 overflow-y-auto py-8 px-6">
-        <div className="max-w-2xl mx-auto">
+        <div className={`max-w-2xl mx-auto${isSaving ? " pointer-events-none opacity-70" : ""}`}>
           {stage.id === "problem" && (
             <ProblemStage
               answer={answers.problem ?? ""}

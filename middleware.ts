@@ -14,7 +14,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // /dashboard against the layout's /dashboard → /login. This file
 // supersedes that cached edge function on the next deploy.
 
-const PROTECTED_PREFIXES = [
+const PROTECTED_PAGE_PREFIXES = [
   "/dashboard",
   "/create",
   "/templates",
@@ -28,11 +28,20 @@ const PROTECTED_PREFIXES = [
   "/settings",
 ];
 
+// API paths that must remain public (auth flow, health checks).
+const PUBLIC_API_PREFIXES = ["/api/auth/", "/api/health"];
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
-  if (!isProtected) return NextResponse.next();
+  const isProtectedPage = PROTECTED_PAGE_PREFIXES.some((p) =>
+    pathname.startsWith(p)
+  );
+  const isApiRoute =
+    pathname.startsWith("/api/") &&
+    !PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p));
+
+  if (!isProtectedPage && !isApiRoute) return NextResponse.next();
 
   const hasSupabase = request.cookies
     .getAll()
@@ -41,7 +50,12 @@ export function middleware(request: NextRequest) {
   const hasDemo =
     demoEnabled && request.cookies.get("demo-session")?.value === "true";
 
-  if (!hasSupabase && !hasDemo) {
+  const authenticated = hasSupabase || hasDemo;
+
+  if (!authenticated) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

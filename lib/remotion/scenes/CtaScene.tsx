@@ -2,7 +2,7 @@ import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { fadeSlideUp } from "../utils";
 import { colors, fonts } from "../styles";
-import { positionedElement, isInline } from "../scene-utils";
+import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import type { CtaScene as CtaSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
@@ -103,7 +103,7 @@ export const CtaSceneComponent: React.FC<{
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: scene.background || "transparent",
+        ...resolveBackground(scene.background),
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",

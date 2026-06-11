@@ -2,7 +2,12 @@ import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { fadeSlideUp, s2f } from "../utils";
 import { colors, fonts } from "../styles";
+import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import type { IconGridScene as IconGridSceneProps } from "../types";
+
+/**
+ * Element IDs for per-element transforms: "title"
+ */
 
 export const IconGridSceneComponent: React.FC<{
   scene: IconGridSceneProps;
@@ -14,30 +19,36 @@ export const IconGridSceneComponent: React.FC<{
   const titleAnim = fadeSlideUp(frame, 5, 15, 30);
   const cols = scene.items.length <= 4 ? 2 : 3;
 
+  const titleNode = (
+    <div
+      style={{
+        fontFamily: fonts.headline,
+        fontSize: Math.round(48 * scale),
+        fontWeight: 900,
+        color: colors.white,
+        marginBottom: 50 * scale,
+        textAlign: "center",
+        ...titleAnim,
+      }}
+    >
+      {scene.title}
+    </div>
+  );
+
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: scene.background || "transparent",
+        ...resolveBackground(scene.background),
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
         padding: `0 ${80 * scale}px`,
+        position: "relative",
       }}
     >
-      <div
-        style={{
-          fontFamily: fonts.headline,
-          fontSize: Math.round(48 * scale),
-          fontWeight: 900,
-          color: colors.white,
-          marginBottom: 50 * scale,
-          textAlign: "center",
-          ...titleAnim,
-        }}
-      >
-        {scene.title}
-      </div>
+      {isInline(scene, "title") && titleNode}
+      {positionedElement(scene, "title", titleNode)}
 
       <div
         style={{
