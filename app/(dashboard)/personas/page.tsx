@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, X, Loader2, Search, MessageCircle, Target, AlertCircle, Sparkles, ChevronRight, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Loader2, Search, MessageCircle, Target, AlertCircle, Sparkles, ChevronRight, Users, FlaskConical } from 'lucide-react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { defaultPersonas } from '@/lib/constants/personas';
 import { PERSONA_LIBRARY, type PersonaProfile } from '@/lib/persona-library';
@@ -192,7 +193,12 @@ export default function PersonasPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Personas</h1>
           <p className="text-gray-700">{PERSONA_LIBRARY.length} fördefinierade + {personas.length} anpassade kundprofiler</p>
         </div>
-        <button onClick={openCreate} className="btn-primary"><Plus className="w-4 h-4" /> Skapa persona</button>
+        <div className="flex gap-2">
+          <Link href="/personas/focus-group" className="btn-secondary gap-2">
+            <FlaskConical className="w-4 h-4" /> Fokusgrupp
+          </Link>
+          <button onClick={openCreate} className="btn-primary"><Plus className="w-4 h-4" /> Skapa persona</button>
+        </div>
       </div>
 
       <div className="tabs-list mb-6">

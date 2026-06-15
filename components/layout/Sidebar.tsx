@@ -23,6 +23,7 @@ import {
   Settings2,
   FolderOpen,
   ShieldCheck,
+  FlaskConical,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
@@ -64,6 +65,12 @@ const NAV_SECTIONS: NavSection[] = [
       { name: 'Mediabibliotek', href: '/dam', icon: FolderOpen },
       { name: 'QA-rapporter', href: '/qa', icon: ShieldCheck },
       { name: 'Personas', href: '/personas', icon: Users },
+      {
+        name: 'Fokusgrupp',
+        href: '/personas/focus-group',
+        icon: FlaskConical,
+        subtitle: 'Testa annonser mot personas',
+      },
     ],
   },
   {
