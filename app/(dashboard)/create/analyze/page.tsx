@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { SectionHeader, FeedbackList, PersonaAvatar } from '@/components/ui/nordea';
+import { SectionHeader, FeedbackList, PersonaAvatar, CountUp } from '@/components/ui/nordea';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Image as ImageIcon, Video, Send, ChevronDown, ChevronUp, Plus, Loader2, Upload, AlertTriangle, X } from 'lucide-react';
 import { detectProductFromText, getRelevantPersonas, PRODUCT_LABELS, type ProductMatch } from '@/lib/product-detection';
+import { HeatmapOverlay } from '@/components/ad-studio/HeatmapOverlay';
+import { VirtualFocusGroup } from '@/components/ad-studio/VirtualFocusGroup';
+import { buildMockEyeTracking, type EyeTrackingResult } from '@/lib/ai/prompts/eye-tracking';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -136,6 +139,9 @@ export default function AdStudioPage() {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [detectedProduct, setDetectedProduct] = useState<ProductMatch | null>(null);
+  const [eyeTracking, setEyeTracking] = useState<EyeTrackingResult | null>(null);
+  const [eyeTrackingImage, setEyeTrackingImage] = useState<string | null>(null);
+  const [isTrackingEyes, setIsTrackingEyes] = useState(false);
 
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
@@ -219,12 +225,34 @@ export default function AdStudioPage() {
     setAnalysis(null);
   };
 
+  // Eye-tracking körs parallellt med huvudanalysen och hanterar egen laddfas
+  const runEyeTracking = async (base64: string, mimeType: string, displaySrc: string) => {
+    setIsTrackingEyes(true);
+    setEyeTracking(null);
+    setEyeTrackingImage(displaySrc);
+    try {
+      const res = await fetch('/api/eye-tracking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mediaType: mimeType, headline, bodyText, cta, channel }),
+      });
+      if (!res.ok) throw new Error('eye-tracking failed');
+      setEyeTracking(await res.json());
+    } catch {
+      setEyeTracking(buildMockEyeTracking({ headline, cta, hasBody: Boolean(bodyText) }));
+    } finally {
+      setIsTrackingEyes(false);
+    }
+  };
+
   // Analyze with real API + fallback
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     setAnalysis(null);
     setPersonaReaction(null);
     setShowDetails(false);
+    setEyeTracking(null);
+    setEyeTrackingImage(null);
 
     const product = detectProductFromText(headline, bodyText, cta);
     setDetectedProduct(product);
@@ -240,6 +268,11 @@ export default function AdStudioPage() {
           base64: frame.dataUrl.split(',')[1],
           mediaType: 'image/jpeg',
         }));
+
+        // Eye-tracking på första framen, parallellt med videoanalysen
+        if (frames.length > 0) {
+          void runEyeTracking(frames[0].dataUrl.split(',')[1], 'image/jpeg', frames[0].dataUrl);
+        }
 
         const response = await fetch('/api/analyze-video', {
           method: 'POST',
@@ -287,6 +320,9 @@ export default function AdStudioPage() {
       } else if (mediaType === 'image' && mediaPreview) {
         const base64 = mediaPreview.split(',')[1];
         const mimeType = mediaPreview.split(';')[0].split(':')[1];
+
+        // Kör eye-tracking parallellt med bildanalysen
+        void runEyeTracking(base64, mimeType, mediaPreview);
 
         const response = await fetch('/api/analyze-image', {
           method: 'POST',
@@ -492,11 +528,22 @@ export default function AdStudioPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Analysis results - 2 columns */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Eye-tracking heatmap */}
+            {isTrackingEyes && (
+              <div className="bg-white border border-gray-200 rounded-lg p-6 flex items-center gap-3 text-sm text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin text-[#0000A0]" />
+                Simulerar eye-tracking…
+              </div>
+            )}
+            {eyeTracking && eyeTrackingImage && !isTrackingEyes && (
+              <HeatmapOverlay imageSrc={eyeTrackingImage} result={eyeTracking} />
+            )}
+
             {/* Score + summary */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <div className="flex items-start gap-6">
                 <div className="text-center shrink-0">
-                  <span className="text-4xl font-semibold text-gray-900">{analysis.score}</span>
+                  <CountUp value={analysis.score} className="text-4xl font-semibold text-gray-900" />
                   <p className="text-xs text-gray-500 mt-1">av 100</p>
                 </div>
                 <div className="flex-1">
@@ -557,8 +604,30 @@ export default function AdStudioPage() {
           </div>
 
           {/* Persona panel - 1 column */}
-          <div className="bg-white border border-gray-200 rounded-lg p-5">
-            <h3 className="font-medium text-gray-900 mb-4">Testa med persona</h3>
+          <div className="space-y-4">
+            <VirtualFocusGroup
+              personas={(sortedPersonas.relevant.length > 0 ? sortedPersonas.relevant : personas)
+                .slice(0, 5)
+                .map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  traits: p.traits,
+                  pain_points: p.pain_points,
+                  system_prompt: p.system_prompt,
+                  response_style: p.response_style,
+                  age_min: p.age_min,
+                  age_max: p.age_max,
+                  description: p.description,
+                  digital_maturity: p.digital_maturity,
+                }))}
+              copy={{ headline, body: bodyText, cta }}
+              channel={channel}
+              isVideo={mediaType === 'video'}
+              productCategory={(detectedProduct || detectProductFromText(headline, bodyText, cta)).category}
+            />
+
+            <div className="bg-white border border-gray-200 rounded-lg p-5">
+            <h3 className="font-medium text-gray-900 mb-4">Fråga en persona</h3>
 
             <Select
               value={selectedPersona?.id || ''}
@@ -662,6 +731,7 @@ export default function AdStudioPage() {
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
       )}

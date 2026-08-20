@@ -77,6 +77,7 @@ export default function PersonasPage() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'persona'; content: string }[]>([]);
   const [chatInput, setChatInput] = useState('');
+  const [chatSending, setChatSending] = useState(false);
 
   const supabase = createClient();
 
@@ -137,18 +138,36 @@ export default function PersonasPage() {
     setChatMessages([{ role: 'persona', content: `Hej! Jag är ${persona.name}. ${persona.quote} Vad vill du veta?` }]);
   };
 
-  const handleSendMessage = () => {
-    if (!chatInput.trim() || !selectedLibraryPersona) return;
-    setChatMessages(prev => [...prev, { role: 'user', content: chatInput }]); setChatInput('');
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || !selectedLibraryPersona || chatSending) return;
     const p = selectedLibraryPersona;
-    setTimeout(() => {
-      const responses = [
-        `Som ${p.shortName.toLowerCase()} tycker jag det beror på presentationen. ${p.painPoints[0]} är något jag tänker på.`,
-        `Bra fråga! Det handlar om ${p.goals[0].toLowerCase()} för mig. Om annonsen adresserar det fångar ni min uppmärksamhet.`,
-        `Jag är lite ${p.responseStyle === 'skeptical' ? 'skeptisk' : p.responseStyle === 'curious' ? 'nyfiken' : 'neutral'}. Men visa att ni förstår att ${p.painPoints[1]?.toLowerCase() || p.painPoints[0].toLowerCase()}, då lyssnar jag.`,
-      ];
-      setChatMessages(prev => [...prev, { role: 'persona', content: responses[Math.floor(Math.random() * responses.length)] }]);
-    }, 1000);
+    const msg = chatInput;
+    const history = [...chatMessages, { role: 'user' as const, content: msg }];
+    setChatMessages(history);
+    setChatInput('');
+    setChatSending(true);
+    try {
+      const res = await fetch('/api/persona-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          personaName: p.name,
+          personaDescription: p.description,
+          personaTraits: p.traits,
+          personaPainPoints: p.painPoints,
+          personaAge: p.age,
+          responseStyle: p.responseStyle,
+          messages: history.map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
+          newMessage: msg,
+        }),
+      });
+      const data = await res.json();
+      setChatMessages((prev) => [...prev, { role: 'persona', content: data.reply || 'Kunde inte svara just nu.' }]);
+    } catch {
+      setChatMessages((prev) => [...prev, { role: 'persona', content: 'Ursäkta, jag tappade tråden. Kan du ställa frågan igen?' }]);
+    } finally {
+      setChatSending(false);
+    }
   };
 
   const filteredLibraryPersonas = PERSONA_LIBRARY.filter(p =>
@@ -223,7 +242,16 @@ export default function PersonasPage() {
                       <div className="flex items-center gap-3"><PersonaImage name={selectedLibraryPersona.name} color={selectedLibraryPersona.color} size="md" /><div><p className="font-medium text-gray-900">{selectedLibraryPersona.name}</p><p className="text-xs text-gray-500">Online</p></div></div>
                       <button onClick={() => setChatOpen(false)} className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100"><X className="w-4 h-4" /></button>
                     </div>
-                    <div className="h-80 overflow-y-auto custom-scrollbar space-y-3 mb-4 flex flex-col">{chatMessages.map((msg, i) => <div key={i} className={`chat-message ${msg.role}`}>{msg.content}</div>)}</div>
+                    <div className="h-80 overflow-y-auto custom-scrollbar space-y-3 mb-4 flex flex-col">
+                      {chatMessages.map((msg, i) => <div key={i} className={`chat-message ${msg.role}`}>{msg.content}</div>)}
+                      {chatSending && (
+                        <div className="chat-message persona inline-flex items-center gap-1">
+                          {[0, 1, 2].map((i) => (
+                            <span key={i} className="w-1.5 h-1.5 rounded-full bg-[#0000A0]/50 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="flex gap-2"><input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Skriv ett meddelande..." className="chat-input" /><button onClick={handleSendMessage} className="chat-send-btn"><ChevronRight className="w-5 h-5" /></button></div>
                   </>
                 )}
