@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import {
   BarChart3,
   Calculator,
@@ -18,6 +20,9 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { MediaCalculator } from '@/components/campaign-planner/MediaCalculator';
+import { BudgetDonut } from '@/components/campaign-planner/BudgetDonut';
+import { ForecastCurve } from '@/components/campaign-planner/ForecastCurve';
+import { exportCampaignPlanPdf } from '@/components/campaign-planner/exportPdf';
 
 // ---------------------------------------------------------------------------
 // Types & Constants
@@ -221,6 +226,133 @@ export default function CampaignPlannerPage() {
       };
     }, [budget, channelStates, audienceSize]);
 
+  // ---- Saved scenarios (Supabase med localStorage-fallback) ----
+  interface SavedPlan {
+    id: string;
+    name: string;
+    budget: number;
+    duration_days: number | null;
+    channel_mix: Record<string, ChannelState>;
+    audience: { size?: number; geos?: string[]; age_min?: number; age_max?: number };
+    created_at: string;
+  }
+
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const readLocalPlans = (): SavedPlan[] => {
+    try {
+      return JSON.parse(localStorage.getItem('ciq-campaign-plans') || '[]');
+    } catch {
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    fetch('/api/campaign-plans')
+      .then((r) => (r.ok ? r.json() : { plans: [] }))
+      .then((data) => {
+        const remote: SavedPlan[] = (data.plans || []).map((p: SavedPlan & { channel_mix: unknown }) => ({
+          ...p,
+          channel_mix: (p.channel_mix || {}) as Record<string, ChannelState>,
+        }));
+        setSavedPlans([...remote, ...readLocalPlans()]);
+      })
+      .catch(() => setSavedPlans(readLocalPlans()));
+  }, []);
+
+  const handleSavePlan = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    const name = `Scenario ${new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })} · ${formatNumber(budget)} SEK`;
+    const payload = {
+      name,
+      budget,
+      duration_days: duration,
+      channel_mix: channelStates,
+      audience: { size: audienceSize, geos: selectedGeos, age_min: ageMin, age_max: ageMax },
+      forecast: {
+        unique_reach: Math.round(uniqueReach),
+        impressions: Math.round(totalImpressions),
+        clicks: Math.round(totalClicks),
+        frequency: Number(avgFrequency.toFixed(1)),
+      },
+    };
+    try {
+      const res = await fetch('/api/campaign-plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const { plan } = await res.json();
+        setSavedPlans((prev) => [plan, ...prev]);
+        toast.success('Scenario sparat', { description: name });
+      } else {
+        throw new Error('save failed');
+      }
+    } catch {
+      // Ingen inloggad Supabase-användare → spara lokalt i webbläsaren
+      const local: SavedPlan = { id: `local-${Date.now()}`, created_at: new Date().toISOString(), ...payload };
+      const locals = [local, ...readLocalPlans()].slice(0, 20);
+      localStorage.setItem('ciq-campaign-plans', JSON.stringify(locals));
+      setSavedPlans((prev) => [local, ...prev]);
+      toast.success('Scenario sparat lokalt', { description: name });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLoadPlan = (id: string) => {
+    const plan = savedPlans.find((p) => p.id === id);
+    if (!plan) return;
+    setBudget(plan.budget);
+    setBudgetInput(formatNumber(plan.budget));
+    if (plan.duration_days) setDuration(plan.duration_days);
+    if (plan.channel_mix && Object.keys(plan.channel_mix).length > 0) {
+      setChannelStates((prev) => ({ ...prev, ...plan.channel_mix }));
+    }
+    if (plan.audience?.size) {
+      setAudienceSize(plan.audience.size);
+      setAudienceInput(formatNumber(plan.audience.size));
+    }
+    if (plan.audience?.geos) setSelectedGeos(plan.audience.geos);
+    if (plan.audience?.age_min) setAgeMin(plan.audience.age_min);
+    if (plan.audience?.age_max) setAgeMax(plan.audience.age_max);
+    toast('Scenario laddat', { description: plan.name });
+  };
+
+  const handleExportPdf = () => {
+    exportCampaignPlanPdf({
+      name: `Kampanj ${formatNumber(budget)} SEK · ${duration} dagar`,
+      budget,
+      durationDays: duration,
+      geos: selectedGeos.map((code) => GEOGRAPHIES.find((g) => g.code === code)?.label || code),
+      ageRange: [ageMin, ageMax],
+      audienceSize,
+      kpis: [
+        { label: 'Unik räckvidd', value: formatNumber(uniqueReach) },
+        { label: 'Visningar', value: formatNumber(totalImpressions) },
+        { label: 'Klick', value: formatNumber(totalClicks) },
+        { label: 'Frekvens', value: avgFrequency.toFixed(1) },
+        { label: 'CPM', value: formatCurrency(avgCPM) },
+      ],
+      channels: channelResults.map((r) => {
+        const ch = CHANNELS.find((c) => c.id === r.channelId)!;
+        return {
+          label: ch.label,
+          budget: r.budget,
+          impressions: r.impressions,
+          reach: r.reach,
+          clicks: r.clicks,
+          frequency: r.frequency,
+        };
+      }),
+      warnings,
+    });
+    toast.success('PDF exporterad');
+  };
+
   // ---- Warnings ----
   const warnings: string[] = [];
   if (avgFrequency > 8) {
@@ -251,13 +383,25 @@ export default function CampaignPlannerPage() {
         </div>
         {activeTab === 'planner' && (
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2">
+            {savedPlans.length > 0 && (
+              <Select onValueChange={handleLoadPlan}>
+                <SelectTrigger className="w-52">
+                  <SelectValue placeholder="Sparade scenarier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {savedPlans.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Button variant="outline" className="gap-2" onClick={handleExportPdf} disabled={channelResults.length === 0}>
               <Download className="w-4 h-4" />
-              Exportera PDF
+              Exportera one-pager (PDF)
             </Button>
-            <Button className="gap-2 bg-[#0000A0] hover:bg-[#000080] text-white">
+            <Button className="gap-2 bg-[#0000A0] hover:bg-[#000080] text-white" onClick={handleSavePlan} disabled={isSaving}>
               <Save className="w-4 h-4" />
-              Spara kampanj
+              {isSaving ? 'Sparar…' : 'Spara scenario'}
             </Button>
           </div>
         )}
@@ -537,6 +681,33 @@ export default function CampaignPlannerPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Charts: budget donut + reach forecast curve */}
+          {channelResults.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-base">Budgetfördelning per kanal</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BudgetDonut
+                    data={channelResults.map((r) => ({
+                      name: CHANNELS.find((c) => c.id === r.channelId)?.label || r.channelId,
+                      value: Math.round(r.budget),
+                    }))}
+                  />
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-base">Räckviddsprognos över perioden</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ForecastCurve uniqueReach={uniqueReach} durationDays={duration} />
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Channel Breakdown Table */}
           <Card className="border-0 shadow-sm">
