@@ -9,71 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Globe, Sparkles, Copy, Check, ChevronRight } from 'lucide-react';
 import { nordicMarkets } from '@/lib/constants/markets';
+import { mockLocalizations, type LocalizedResult } from '@/lib/constants/localization-mocks';
 import { cn } from '@/lib/utils';
-
-interface LocalizedResult {
-  market: string;
-  headline: string;
-  body: string;
-  cta: string;
-  scores: { linguistic: number; cultural: number; legal: number };
-  adaptations: Array<{
-    type: string;
-    original: string;
-    adapted: string;
-    reason: string;
-  }>;
-  alternativeHeadlines: Array<{ text: string; confidence: number }>;
-}
-
-const mockLocalizations: Record<string, LocalizedResult> = {
-  dk: {
-    market: 'dk',
-    headline: 'Dit første hjem starter med en simpel beregning',
-    body: 'At købe sin første bolig er en stor beslutning. Vi ved, det kan føles overvældende med afdragskrav, udbetaling og rentebinding. Derfor har vi gjort det nemt. Med vores boliglånsberegner får du svar på få minutter – helt uforpligtende.',
-    cta: 'Prøv beregneren',
-    scores: { linguistic: 92, cultural: 88, legal: 85 },
-    adaptations: [
-      { type: 'linguistic', original: 'bolånekalkylator', adapted: 'boliglånsberegner', reason: 'Dansk terminologi för bolåneverktyg' },
-      { type: 'cultural', original: 'kontantinsats', adapted: 'udbetaling', reason: 'Dansk term för handpenning' },
-      { type: 'tone', original: 'steg för steg', adapted: 'nemt', reason: 'Danskare föredrar enkel, direkt kommunikation' },
-    ],
-    alternativeHeadlines: [
-      { text: 'Din første bolig? Start med en hurtig beregning', confidence: 88 },
-      { text: 'Se hvad du har råd til – på få minutter', confidence: 82 },
-    ],
-  },
-  no: {
-    market: 'no',
-    headline: 'Din første bolig starter med en enkel kalkulator',
-    body: 'Å kjøpe sin første bolig er stort. Vi vet at det kan føles overveldende med avdragskrav, egenkapital og rentebinding. Derfor har vi gjort det enkelt. Med vår boliglånskalkulator får du svar på noen minutter – uten forpliktelser.',
-    cta: 'Test kalkulatoren',
-    scores: { linguistic: 95, cultural: 90, legal: 87 },
-    adaptations: [
-      { type: 'linguistic', original: 'kontantinsats', adapted: 'egenkapital', reason: 'Norsk term för handpenning' },
-      { type: 'legal', original: 'amorteringskrav', adapted: 'avdragskrav', reason: 'Norsk juridisk terminologi' },
-    ],
-    alternativeHeadlines: [
-      { text: 'Drømmer du om egen bolig? Start her', confidence: 85 },
-      { text: 'Finn ut hva du har råd til – helt gratis', confidence: 80 },
-    ],
-  },
-  fi: {
-    market: 'fi',
-    headline: 'Ensimmäinen kotisi alkaa yksinkertaisella laskelmalla',
-    body: 'Ensimmäisen asunnon ostaminen on iso asia. Tiedämme, että se voi tuntua ylivoimaiselta lyhennysvaatimusten, käsirahan ja korkojen kanssa. Siksi olemme tehneet siitä helppoa. Asuntolainlaskurillamme saat vastaukset muutamassa minuutissa – ilman sitoumuksia.',
-    cta: 'Kokeile laskuria',
-    scores: { linguistic: 88, cultural: 92, legal: 90 },
-    adaptations: [
-      { type: 'cultural', original: 'steg för steg', adapted: 'yksinkertaisella', reason: 'Finsk kultur värderar rakhet och effektivitet' },
-      { type: 'tone', original: 'Vi hjälper dig förstå', adapted: 'Olemme tehneet siitä helppoa', reason: 'Mer faktabaserad ton för finsk marknad' },
-    ],
-    alternativeHeadlines: [
-      { text: 'Paljonko sinulla on varaa? Selvitä minuuteissa', confidence: 90 },
-      { text: 'Ensiasunnon ostajan laskuri – nopea ja helppo', confidence: 86 },
-    ],
-  },
-};
 
 export default function LocalizationPage() {
   const [sourceMarket, setSourceMarket] = useState('se');

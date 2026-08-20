@@ -13,10 +13,9 @@ interface ImproveCopyRequest {
 const mockImprovement = {
   analysis: {
     toneScores: {
-      humanWarm: 72,
-      clearSimple: 65,
-      confidentHumble: 58,
-      forwardLooking: 70,
+      personlig: 72,
+      expert: 65,
+      ansvarsfull: 70,
     },
     overallScore: 66,
   },
@@ -59,16 +58,15 @@ export async function POST(request: Request) {
         max_tokens: 2000,
         system: `${NORDEA_SYSTEM_PROMPT}
 
-Du är en expert på att förbättra marknadsföringstexter. Analysera given copy och ge konkreta förbättringsförslag baserat på Nordeas Tone of Voice.
+Du är en expert på att förbättra marknadsföringstexter. Analysera given copy och ge konkreta förbättringsförslag baserat på Nordeas Tone of Voice-pelare: personlig (mänsklig, varm, i ögonhöjd), expert (kunnig, tydlig, konkret) och ansvarsfull (ärlig, transparent, inga överdrifter).
 
 Svara ENDAST i följande JSON-format:
 {
   "analysis": {
     "toneScores": {
-      "humanWarm": 0-100,
-      "clearSimple": 0-100,
-      "confidentHumble": 0-100,
-      "forwardLooking": 0-100
+      "personlig": 0-100,
+      "expert": 0-100,
+      "ansvarsfull": 0-100
     },
     "overallScore": 0-100
   },

@@ -50,10 +50,9 @@ interface CopyVariant {
   hashtags: string | null;
   brandFitScore: number;
   toneScores: {
-    humanWarm: number;
-    clearSimple: number;
-    confidentHumble: number;
-    forwardLooking: number;
+    personlig: number;
+    expert: number;
+    ansvarsfull: number;
   };
 }
 
@@ -114,11 +113,11 @@ const OBJECTIVES: Record<ObjectiveKey, string> = {
   retention: 'Lojalitet',
 };
 
+// Nordeas tre ToV-pelare — samma modell som QA-gaten (lib/qa/tov-scorer.ts)
 const TONE_LABELS = [
-  { key: 'humanWarm', label: 'Mänsklig & varm' },
-  { key: 'clearSimple', label: 'Tydlig & enkel' },
-  { key: 'confidentHumble', label: 'Självsäker men ödmjuk' },
-  { key: 'forwardLooking', label: 'Framåtblickande' },
+  { key: 'personlig', label: 'Personlig' },
+  { key: 'expert', label: 'Expert' },
+  { key: 'ansvarsfull', label: 'Ansvarsfull' },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -135,7 +134,7 @@ const generateMockVariants = (): CopyVariant[] => [
     cta: 'Börja din resa',
     hashtags: '#Nordea #FörstaBostad #Bolån',
     brandFitScore: 87,
-    toneScores: { humanWarm: 92, clearSimple: 85, confidentHumble: 78, forwardLooking: 88 },
+    toneScores: { personlig: 92, expert: 82, ansvarsfull: 85 },
   },
   {
     id: '2',
@@ -146,7 +145,7 @@ const generateMockVariants = (): CopyVariant[] => [
     cta: 'Testa kalkylatorn',
     hashtags: '#Nordea #Bolånekalkyl',
     brandFitScore: 82,
-    toneScores: { humanWarm: 72, clearSimple: 94, confidentHumble: 85, forwardLooking: 78 },
+    toneScores: { personlig: 74, expert: 94, ansvarsfull: 86 },
   },
   {
     id: '3',
@@ -157,7 +156,7 @@ const generateMockVariants = (): CopyVariant[] => [
     cta: 'Kom igång nu',
     hashtags: '#Nordea #Bolån',
     brandFitScore: 79,
-    toneScores: { humanWarm: 68, clearSimple: 88, confidentHumble: 65, forwardLooking: 92 },
+    toneScores: { personlig: 68, expert: 88, ansvarsfull: 71 },
   },
 ];
 
@@ -165,7 +164,7 @@ const generateMockImprovement = (): ImprovedCopy => ({
   headline: 'Ditt första boende börjar med en enkel kalkyl',
   body: 'Att köpa sin första bostad är stort. Vi hjälper dig förstå vad du har råd med – steg för steg, utan förpliktelser.',
   cta: 'Se vad du har råd med',
-  toneScores: { humanWarm: 85, clearSimple: 92, confidentHumble: 80, forwardLooking: 82 },
+  toneScores: { personlig: 85, expert: 90, ansvarsfull: 84 },
   suggestions: [
     { severity: 'high', field: 'Rubrik', issue: 'För generisk och säljande ton', suggestion: 'Fokusera på kundens resa' },
     { severity: 'medium', field: 'Brödtext', issue: 'Bankjargong', suggestion: 'Berätta vad kunden får' },
