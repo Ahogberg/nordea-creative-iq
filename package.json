@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "personas:seed-sql": "tsx scripts/personas/generate-seed-sql.ts",
     "brand:frames": "tsx scripts/brand/extract-frames.ts",
-    "brand:validate": "tsx scripts/brand/validate.ts"
+    "brand:validate": "tsx scripts/brand/validate.ts",
+    "brand:prepare": "tsx scripts/brand/extract-frames.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",

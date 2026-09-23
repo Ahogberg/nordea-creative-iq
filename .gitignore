@@ -47,10 +47,9 @@ next-env.d.ts
 /.claude/*
 !/.claude/skills/
 
-# brand-reference: videor är stora — bildrutorna (frames/) committas i stället
-/brand-reference/ads/**/*.mp4
-/brand-reference/ads/**/*.mov
-/brand-reference/ads/**/*.webm
-/brand-reference/ads/**/*.m4v
+# brand-reference: originalen är ofta för stora att ladda upp och stannar
+# lokalt. `npm run brand:prepare` gör små kopior (stills/, frames/) som committas.
+/brand-reference/ads/*
+!/brand-reference/ads/.gitkeep
 
 .vercel

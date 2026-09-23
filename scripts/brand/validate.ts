@@ -4,7 +4,7 @@
 //
 // Kontrollerar:
 //  - manifest.csv ↔ filer i brand-reference/ads/
-//  - att videor har bildrutor (npm run brand:frames)
+//  - att annonserna har analyskopior (npm run brand:prepare)
 //  - varje analysis/<ad_id>.json mot AdAnalysisSchema
 //  - visual-grammar.json mot VisualGrammarSchema, och att varje regel
 //    pekar på annonser som faktiskt är analyserade
@@ -19,7 +19,7 @@ import {
   VisualGrammarSchema,
   type AdAnalysis,
 } from '../../lib/brand/visual-grammar/schema';
-import { ANALYSIS_DIR, FRAMES_DIR, GRAMMAR_FILE, VIDEO_EXT, adIdFromFile, listAds, readManifest } from './shared';
+import { ANALYSIS_DIR, FRAMES_DIR, GRAMMAR_FILE, STILLS_DIR, adIdFromFile, listAds, readManifest } from './shared';
 
 const errors: string[] = [];
 const warnings: string[] = [];
@@ -44,12 +44,19 @@ function formatIssues(file: string, issues: z.core.$ZodIssue[]) {
 
 const ads = listAds();
 const adIds = new Map<string, { kind: 'static' | 'video' }>(ads.map((a) => [a.adId, a]));
-// Videor committas inte — finns bara bildrutorna räknas annonsen ändå som känd.
+// Originalen committas inte — finns bara kopiorna (stills/, frames/) räknas
+// annonsen ändå som känd, t.ex. i en molnsession eller hos en kollega.
 if (existsSync(FRAMES_DIR)) {
   for (const id of readdirSync(FRAMES_DIR)) {
     if (!adIds.has(id) && existsSync(path.join(FRAMES_DIR, id, 'frames.json'))) {
       adIds.set(id, { kind: 'video' });
     }
+  }
+}
+if (existsSync(STILLS_DIR)) {
+  for (const name of readdirSync(STILLS_DIR).filter((n) => n.endsWith('.jpg'))) {
+    const id = name.slice(0, -4);
+    if (!adIds.has(id)) adIds.set(id, { kind: 'static' });
   }
 }
 const duplicateIds = ads.filter((a, i) => ads.findIndex((b) => b.adId === a.adId) !== i);
@@ -59,15 +66,18 @@ const manifest = readManifest();
 const manifestFiles = new Set(manifest.map((r) => r.file));
 for (const row of manifest) {
   if (!row.file) continue;
-  const framesOnly = adIds.has(adIdFromFile(row.file)) && VIDEO_EXT.includes(path.extname(row.file).toLowerCase());
-  if (!ads.some((a) => a.file === row.file) && !framesOnly) {
+  const copyOnly = adIds.has(adIdFromFile(row.file));
+  if (!ads.some((a) => a.file === row.file) && !copyOnly) {
     errors.push(`manifest.csv: "${row.file}" finns inte i brand-reference/ads/`);
   }
 }
 for (const ad of ads) {
   if (!manifestFiles.has(ad.file)) warnings.push(`${ad.file} saknas i manifest.csv (produkt/kanal blir okänd)`);
   if (ad.kind === 'video' && !existsSync(path.join(FRAMES_DIR, ad.adId, 'frames.json'))) {
-    warnings.push(`${ad.file} har inga bildrutor — kör \`npm run brand:frames\``);
+    warnings.push(`${ad.file} har inga bildrutor — kör \`npm run brand:prepare\``);
+  }
+  if (ad.kind === 'static' && !existsSync(path.join(STILLS_DIR, `${ad.adId}.jpg`))) {
+    warnings.push(`${ad.file} saknar analyskopia — kör \`npm run brand:prepare\``);
   }
 }
 
@@ -94,7 +104,7 @@ if (existsSync(ANALYSIS_DIR)) {
   }
 }
 
-const unanalyzed = ads.filter((a) => !analyses.has(a.adId));
+const unanalyzed = [...adIds.entries()].filter(([id]) => !analyses.has(id));
 
 // ── Grammatik ──
 
@@ -140,12 +150,13 @@ if (existsSync(GRAMMAR_FILE)) {
 // ── Rapport ──
 
 console.log('Brand reference');
-console.log(`  Annonser:     ${ads.length} (${ads.filter((a) => a.kind === 'static').length} statiska, ${ads.filter((a) => a.kind === 'video').length} video)`);
+const known = [...adIds.values()];
+console.log(`  Annonser:     ${adIds.size} (${known.filter((a) => a.kind === 'static').length} statiska, ${known.filter((a) => a.kind === 'video').length} video)`);
 console.log(`  Analyserade:  ${analyses.size}`);
 console.log(`  Grammatik:    ${grammarStatus}`);
 if (unanalyzed.length > 0) {
   console.log(`\nEj analyserade (${unanalyzed.length}):`);
-  for (const a of unanalyzed) console.log(`  - ${a.adId}  (${a.file})`);
+  for (const [id, a] of unanalyzed) console.log(`  - ${id}  (${a.kind === 'video' ? `frames/${id}/` : `stills/${id}.jpg`})`);
 }
 if (warnings.length > 0) {
   console.log(`\nVarningar (${warnings.length}):`);

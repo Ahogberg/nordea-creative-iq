@@ -6,8 +6,9 @@ Resultatet blir en **visuell grammatik** som Motion Studio genererar efter.
 
 ```
 brand-reference/
-├── ads/            ← lägg annonserna här (undermappar går bra)
+├── ads/            ← lägg originalen här (stannar lokalt, laddas aldrig upp)
 ├── manifest.csv    ← en rad per annons: produkt, kanal, kampanj …
+├── stills/         ← genereras: små kopior av statiska annonser
 ├── frames/         ← genereras: bildrutor ur videorna
 ├── analysis/       ← genereras: en JSON-analys per annons
 └── VISUAL-GRAMMAR.md ← genereras: läsbar sammanfattning för granskning
@@ -32,8 +33,11 @@ eftersom det är där vi behöver mest underlag.
 **Filnamn:** beskrivande, t.ex. `Bolån Vår 2025 (9x16).mp4`. Filnamnet blir
 annonsens id (`bolan-var-2025-9x16`), så två filer får inte heta likadant.
 
-**Videor committas inte** (de är gitignorerade för att de är stora). Bildrutorna
-i `frames/` committas i stället. Kör Claude Code lokalt där videorna finns.
+**Originalen laddas aldrig upp.** Allt i `ads/` är gitignorerat, eftersom
+annonsfiler ofta är för stora för GitHub. `npm run brand:prepare` gör små
+analyskopior som committas i stället: stillbilder i `stills/` (max 1600 px)
+och bildrutor ur videorna i `frames/` (max 960 px). En affisch på 30 MB blir
+under 1 MB, och en 30-sekundersfilm blir några MB med bildrutor.
 
 ## 2. Fyll i manifest.csv
 
@@ -55,11 +59,13 @@ file,product,channel,campaign,year,result_notes,notes
 ## 3. Kör analysen
 
 ```bash
-npm run brand:frames     # plockar ut bildrutor ur videorna
+npm run brand:prepare    # gör analyskopior: stills/ + frames/
 npm run brand:validate   # visar vad som finns och vad som saknar analys
 ```
 
-Be sedan Claude Code: **"Kör nordea-visual-grammar"** (skillen ligger i
+Committa och pusha `manifest.csv`, `stills/` och `frames/`. Då kan analysen
+köras även i en molnsession utan originalen. Be sedan Claude Code:
+**"Kör nordea-visual-grammar"** (skillen ligger i
 `.claude/skills/nordea-visual-grammar/`). Claude:
 
 1. analyserar varje annons till `analysis/<id>.json`,

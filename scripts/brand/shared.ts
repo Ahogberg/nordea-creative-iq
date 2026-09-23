@@ -6,6 +6,7 @@ import path from 'node:path';
 export const ROOT = path.join(process.cwd(), 'brand-reference');
 export const ADS_DIR = path.join(ROOT, 'ads');
 export const FRAMES_DIR = path.join(ROOT, 'frames');
+export const STILLS_DIR = path.join(ROOT, 'stills');
 export const ANALYSIS_DIR = path.join(ROOT, 'analysis');
 export const MANIFEST = path.join(ROOT, 'manifest.csv');
 export const GRAMMAR_FILE = path.join(process.cwd(), 'lib', 'brand', 'visual-grammar', 'visual-grammar.json');

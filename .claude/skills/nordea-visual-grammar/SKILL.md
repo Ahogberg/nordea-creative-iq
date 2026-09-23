@@ -15,8 +15,9 @@ Marknad: **Sverige**. Analysera bara svenska annonser.
 
 | Vad | Var |
 |---|---|
-| Annonser (bilder + videor) | `brand-reference/ads/` |
+| Original (bilder + videor, bara lokalt) | `brand-reference/ads/` |
 | Metadata per annons | `brand-reference/manifest.csv` |
+| Analyskopia av statisk annons | `brand-reference/stills/<ad_id>.jpg` |
 | Bildrutor ur videor | `brand-reference/frames/<ad_id>/` (+ `frames.json` med tidpunkter) |
 | Analys per annons | `brand-reference/analysis/<ad_id>.json` |
 | Syntes (styr AI:n) | `lib/brand/visual-grammar/visual-grammar.json` |
@@ -28,7 +29,9 @@ Marknad: **Sverige**. Analysera bara svenska annonser.
 
 ## Steg 0 — Läge
 
-1. Kör `npm run brand:frames` (plockar ut rutor för videor som saknar dem).
+1. Kör `npm run brand:prepare` om originalen finns i `ads/` (gör kopior som
+   saknas). Finns bara `stills/` och `frames/` — t.ex. i en molnsession — är
+   det underlaget; originalen behövs inte.
 2. Kör `npm run brand:validate` — den listar annonser som inte är analyserade.
 3. Läs `lib/brand/visual-grammar/schema.ts`, `docs/nordea_brand_reference.md`
    (färger, typsnitt, format) och typerna `SceneType`/`MotionConfig` i
@@ -38,7 +41,7 @@ Marknad: **Sverige**. Analysera bara svenska annonser.
 
 För varje annons som saknar analys:
 
-- **Statisk:** läs bildfilen.
+- **Statisk:** läs `stills/<ad_id>.jpg` (originalet i `ads/` om kopian saknas).
 - **Video:** läs `frames.json` och sedan rutorna. Läs *alla* rutor från de första
   2 sekunderna (hooken och hur illustration/logo byggs upp) och från slutet
   (CTA, end card). Tidpunkten står i filnamnet (`t001250ms.jpg` = 1,25 s).
