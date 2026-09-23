@@ -5,8 +5,9 @@
 // renderarens förmågor (illustrationer, fetstil, rubrikfärg, juridik).
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, RotateCcw, Sparkles, AlertCircle, SquarePen, RefreshCw } from "lucide-react";
-import { useStudioStore, type ChatMessage } from "@/lib/studio/store";
+import { ArrowUp, RotateCcw, Sparkles, AlertCircle, SquarePen, RefreshCw, ScanEye, Check, Info } from "lucide-react";
+import { useStudioStore, type ChatMessage, type ChatReview } from "@/lib/studio/store";
+import { useStudioPlayer } from "./player-context";
 import { renderRichTokens, parseRichText } from "@/lib/remotion/rich-text";
 
 // Exempel att börja från — inom varumärkets ramar, men fria att bryta.
@@ -17,12 +18,12 @@ const STARTERS = [
 ];
 
 // Kontextuella förslag när det redan finns en video.
-function suggestionsFor(sceneTypes: string[], hasLegal: boolean): string[] {
+function suggestionsFor(sceneTypes: string[], hasLegal: boolean, format: string): string[] {
   const out: string[] = [];
   if (!sceneTypes.includes("canvas")) out.push("Gör första scenen till en isometrisk illustration");
   else out.push("Lägg till en liten rörelse i illustrationen");
   if (!hasLegal && !sceneTypes.includes("terms")) out.push("Lägg till villkor sist");
-  out.push("Gör en 1:1-version");
+  out.push(format === "story" ? "Gör en 1:1-version" : "Gör en 9:16-version");
   out.push("Sätt fetstil på nyckelorden");
   return out.slice(0, 3);
 }
@@ -44,6 +45,7 @@ export function ChatPanel() {
   const clearChat = useStudioStore((s) => s.clearChat);
   const scenes = useStudioStore((s) => s.config.scenes);
   const legal = useStudioStore((s) => s.config.legal);
+  const format = useStudioStore((s) => s.config.format);
   const selected = useStudioStore((s) => s.selectedSceneIndex);
 
   const [text, setText] = useState("");
@@ -73,7 +75,8 @@ export function ChatPanel() {
 
   const suggestions = suggestionsFor(
     scenes.map((s) => s.type),
-    !!legal
+    !!legal,
+    format
   );
 
   return (
@@ -249,6 +252,7 @@ function AssistantMessage({ message, canUndo }: { message: ChatMessage; canUndo:
             ))}
           </div>
         )}
+        {message.review && <ReviewBlock review={message.review} />}
         {canUndo && (
           <button
             type="button"
@@ -261,6 +265,94 @@ function AssistantMessage({ message, canUndo }: { message: ChatMessage; canUndo:
         )}
         {message.undone && <span className="mt-2 inline-block text-xs text-nordea-text-tertiary">Ångrad</span>}
       </div>
+    </div>
+  );
+}
+
+const SEVERITY_ORDER = { error: 0, warning: 1, info: 2 } as const;
+
+/** Självgranskningen under ett svar: bilderna AI:n tittade på och vad den hittade. */
+function ReviewBlock({ review }: { review: ChatReview }) {
+  const { seekToSeconds } = useStudioPlayer();
+  const [showAll, setShowAll] = useState(false);
+
+  if (review.status === "pending") {
+    return (
+      <div className="mt-2.5 flex items-center gap-2 text-xs text-nordea-text-tertiary">
+        <ScanEye className="w-3.5 h-3.5 animate-pulse text-nordea-blue" />
+        Granskar resultatet — renderar bilder och tittar på dem…
+      </div>
+    );
+  }
+  if (review.status === "error") {
+    return <div className="mt-2.5 text-xs text-nordea-text-tertiary">Granskningen kunde inte köras: {review.error}</div>;
+  }
+
+  const issues = [...(review.issues ?? [])].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+  const shown = showAll ? issues : issues.slice(0, 4);
+  const fixedCount = issues.filter((i) => i.fixed && review.applied).length;
+
+  return (
+    <div className="mt-2.5 rounded-lg border border-nordea-hairline bg-nordea-bg/60 p-2.5">
+      <div className="flex items-center gap-1.5 text-[11px] font-medium text-nordea-text-secondary">
+        <ScanEye className="w-3.5 h-3.5 text-nordea-blue" />
+        {review.visual ? "Självgranskning" : "Regelkontroll"}
+        <span className="font-normal text-nordea-text-tertiary">
+          · {issues.length === 0 ? "inga fel hittades" : fixedCount > 0 ? `${fixedCount} rättat` : `${issues.length} noterat`}
+        </span>
+      </div>
+
+      {review.frames && review.frames.length > 0 && (
+        <div className="flex gap-1.5 mt-2">
+          {review.frames.map((f) => (
+            <button
+              key={`${f.sceneIndex}-${f.seconds}`}
+              type="button"
+              onClick={() => seekToSeconds(f.seconds)}
+              title={`Scen ${f.sceneIndex + 1} · ${f.seconds.toFixed(1).replace(".", ",")} s`}
+              className="flex-1 min-w-0 max-w-[64px] rounded overflow-hidden ring-1 ring-nordea-border hover:ring-nordea-blue/40 transition-shadow"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={f.src} alt={`Scen ${f.sceneIndex + 1}`} className="w-full h-auto block" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {shown.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {shown.map((issue, i) => {
+            const fixed = issue.fixed && review.applied;
+            return (
+              <li key={i} className="flex items-start gap-1.5 text-[11px] leading-snug">
+                {fixed ? (
+                  <Check className="w-3 h-3 mt-0.5 flex-shrink-0 text-nordea-green" />
+                ) : issue.severity === "info" ? (
+                  <Info className="w-3 h-3 mt-0.5 flex-shrink-0 text-nordea-text-faint" />
+                ) : (
+                  <AlertCircle className={`w-3 h-3 mt-0.5 flex-shrink-0 ${issue.severity === "error" ? "text-nordea-rose" : "text-nordea-amber"}`} />
+                )}
+                <span className={fixed ? "text-nordea-text-secondary" : issue.severity === "info" ? "text-nordea-text-tertiary" : "text-nordea-text"}>
+                  {fixed && "Rättat: "}
+                  {issue.message}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {issues.length > 4 && (
+        <button type="button" onClick={() => setShowAll((v) => !v)} className="mt-1 text-[11px] text-nordea-text-tertiary hover:text-nordea-text">
+          {showAll ? "Visa färre" : `Visa alla (${issues.length})`}
+        </button>
+      )}
+      {!review.visual && (
+        <p className="mt-1.5 text-[10px] text-nordea-text-faint">
+          {review.visualError
+            ? `Bara regelkontroll — ${review.visualError}.`
+            : "Ingen renderare i den här miljön — bara regelkontroll."}
+        </p>
+      )}
     </div>
   );
 }

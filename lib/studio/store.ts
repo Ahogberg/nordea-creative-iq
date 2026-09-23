@@ -74,6 +74,29 @@ export interface ChatMessage {
   /** Användarens text som svaret gäller — för Försök igen. */
   retryText?: string;
   startedAt?: number;
+  /** Självgranskningen av resultatet (körs automatiskt efter varje ändring). */
+  review?: ChatReview;
+}
+
+export interface ChatReviewIssue {
+  severity: "error" | "warning" | "info";
+  message: string;
+  fixed: boolean;
+  source: "regel" | "visuell";
+}
+
+export interface ChatReview {
+  status: "pending" | "done" | "error";
+  issues?: ChatReviewIssue[];
+  /** Stillbilderna som granskades. */
+  frames?: Array<{ sceneIndex: number; seconds: number; src: string }>;
+  /** Rättningar tillämpades på videon. */
+  applied?: boolean;
+  /** Visuell granskning gjordes (annars bara regelkontroll). */
+  visual?: boolean;
+  /** Varför den visuella granskningen inte kördes, om den försöktes. */
+  visualError?: string | null;
+  error?: string;
 }
 
 export type InspectorTab = "scene" | "style" | "motion" | "assets" | "variants";
@@ -450,7 +473,10 @@ async function runChatTurn(text: string, endpoint: string) {
           `Här är ett första utkast med ${next.scenes.length} scener. Beskriv vad du vill ändra.`,
         changes: isInitial ? undefined : changes,
         before,
+        review: { status: "pending" },
       });
+      // Videon syns direkt; granskningen körs efteråt och rättar tydliga fel.
+      await reviewTurn(reply.id, next, text);
     } else {
       // Bara ett svar, ingen ändring (t.ex. en fråga).
       patchReply({ status: "done", content: data.message ?? "Klart." });
@@ -462,6 +488,60 @@ async function runChatTurn(text: string, endpoint: string) {
     });
   } finally {
     setState({ isChatBusy: false });
+  }
+}
+
+/**
+ * Självgranskning: regelkontroll + AI som tittar på renderade stillbilder.
+ * Rättningar tillämpas bara om videon inte ändrats under tiden.
+ */
+async function reviewTurn(messageId: string, reviewed: VideoConfig, request: string) {
+  const { getState, setState } = useStudioStore;
+  const patchReview = (review: ChatReview, extra: Partial<ChatMessage> = {}) =>
+    setState((s) => ({
+      messages: s.messages.map((m) => (m.id === messageId ? { ...m, ...extra, review } : m)),
+    }));
+
+  try {
+    const res = await fetch("/api/studio/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config: reviewed, request }),
+    });
+    const data = (await res.json().catch(() => null)) as {
+      issues?: ChatReviewIssue[];
+      fixedConfig?: VideoConfig | null;
+      frames?: ChatReview["frames"];
+      visual?: boolean;
+      visualError?: string | null;
+      error?: string;
+    } | null;
+    if (!res.ok || !data) throw new Error(data?.error || "Granskningen misslyckades");
+
+    const fixed = data.fixedConfig;
+    const stillSame = getState().config === reviewed;
+    let applied = false;
+    let extra: Partial<ChatMessage> = {};
+    if (fixed && stillSame) {
+      const next = { ...fixed, motion: fixed.motion ?? DEFAULT_MOTION_CONFIG };
+      setState((s) => ({ config: next, selectedSceneIndex: clampScene(s.selectedSceneIndex, next) }));
+      applied = true;
+      const msg = getState().messages.find((m) => m.id === messageId);
+      if (msg?.changes) extra = { changes: [...new Set([...msg.changes, ...describeChanges(reviewed, next)])].slice(0, 8) };
+    }
+    patchReview(
+      {
+        status: "done",
+        issues: data.issues ?? [],
+        frames: data.frames ?? [],
+        applied,
+        visual: !!data.visual,
+        visualError: data.visualError ?? null,
+      },
+      extra
+    );
+  } catch (err) {
+    patchReview({ status: "error", error: err instanceof Error ? err.message : "Granskningen misslyckades" });
   }
 }
 

@@ -10,6 +10,7 @@ import {
 import { withVisualGrammar } from "@/lib/brand/visual-grammar";
 import { withMotionCapabilities } from "@/lib/remotion/prompt-capabilities";
 import { compileCanvasScenes } from "@/lib/remotion/compile";
+import { aiErrorMessage } from "@/lib/ai/error-message";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -121,10 +122,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[studio:initial-prompt] error:", error);
     return NextResponse.json(
-      {
-        error: "Failed to process prompt",
-        message: error instanceof Error ? error.message : "Unknown",
-      },
+      { error: aiErrorMessage(error, "Kunde inte skapa ett utkast från prompten") },
       { status: 500 }
     );
   }

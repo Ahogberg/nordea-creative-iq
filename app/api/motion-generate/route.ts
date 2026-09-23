@@ -3,6 +3,8 @@ import { getClaudeClient, CLAUDE_MODEL } from "@/lib/claude";
 import type { VideoConfig } from "@/lib/remotion/types";
 import { compileCanvasScenes, stripCompiledCanvas } from "@/lib/remotion/compile";
 import { withMotionCapabilities } from "@/lib/remotion/prompt-capabilities";
+import { applyPatch, type PatchOp } from "@/lib/remotion/json-patch";
+import { aiErrorMessage } from "@/lib/ai/error-message";
 import {
   NORDEA_COLORS,
   NORDEA_FONT_FAMILIES,
@@ -17,18 +19,28 @@ export const maxDuration = 120;
 
 const SYSTEM_PROMPT = `Du är en kreativ motion graphics-designer på Nordea. Du hjälper användare skapa animerade videos genom konversation.
 
-Du svarar ALLTID med ett JSON-objekt med denna form:
+Du svarar ALLTID med ETT JSON-objekt i en av dessa former:
+
+1) Ändring i den nuvarande videon (FÖREDRA DETTA när det finns en nuvarande konfiguration):
 {
-  "message": "<ditt svar till användaren — kort, vänligt, beskriv vad du gjort eller ger råd>",
-  "config": <VideoConfig-objekt OM du skapar/uppdaterar en video, annars null>
+  "message": "<kort svar till användaren>",
+  "patch": [ <JSON Patch-operationer (RFC 6902) mot den nuvarande konfigurationen> ]
 }
+Operationer: { "op": "replace", "path": "/scenes/1/headline", "value": "…" }, { "op": "add", "path": "/scenes/2", "value": { …scen… } } (lägg till på index; "/scenes/-" = sist), { "op": "remove", "path": "/scenes/0" }, { "op": "move", "from": "/scenes/2", "path": "/scenes/0" }, { "op": "add", "path": "/legal", "value": { … } }. Index räknas från 0 i den nuvarande konfigurationen och flyttas av tidigare operationer i samma patch. Ändra bara det som efterfrågas — allt annat lämnas orört. Ny eller ändrad animation i en canvas-scen: ersätt "/scenes/N/tsxCode" med hela den nya koden.
+
+2) Ny video eller en helt ny idé (ingen nuvarande konfiguration, eller användaren ber uttryckligen om att börja om):
+{
+  "message": "<kort svar>",
+  "config": <komplett VideoConfig>
+}
+
+3) Bara ett svar, ingen ändring (användaren frågar något):
+{ "message": "<svar>", "config": null }
 
 VIKTIGT:
 - Svara ENBART med valid JSON — ingen markdown, inga code-fences utanför JSON-strängen.
-- "message" är ALLTID med — beskriv vad du gjort, föreslå förbättringar, eller svara på frågor.
-- "config" är med när du skapar en ny video eller ändrar en befintlig. Utelämna (null) om användaren bara frågar något.
-- Om användaren ber dig ändra en befintlig video, utgå från currentConfig och modifiera enbart det som efterfrågas.
-- Var kreativ men koncis i message — max 2-3 meningar. Nämn specifikt vad du ändrade.
+- "message" är ALLTID med — max 2–3 meningar, nämn specifikt vad du ändrade.
+- Var kreativ, men ändra inte mer än användaren bett om.
 
 ═══ NORDEAS TONE OF VOICE ═══
 Ledord: ${NORDEA_TONE_OF_VOICE.keywords.join(', ')}.
@@ -131,8 +143,8 @@ export async function POST(req: NextRequest) {
     const text =
       response.content[0].type === "text" ? response.content[0].text : "";
 
-    // Parse the JSON response { message, config }
-    let parsed: { message?: string; config?: VideoConfig };
+    // Parse the JSON response { message, patch } | { message, config }
+    let parsed: { message?: string; config?: VideoConfig | null; patch?: PatchOp[] };
     try {
       const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, text];
       parsed = JSON.parse(jsonMatch[1]!.trim());
@@ -145,7 +157,23 @@ export async function POST(req: NextRequest) {
     }
 
     const assistantMessage = parsed.message || "Video uppdaterad.";
-    const config = parsed.config;
+    let config = parsed.config ?? null;
+
+    // Riktad ändring: tillämpa patchen på den nuvarande configen (med kod).
+    if (Array.isArray(parsed.patch) && parsed.patch.length > 0) {
+      if (!currentConfig) {
+        return NextResponse.json({ error: "AI:n svarade med en ändring men det finns ingen video" }, { status: 500 });
+      }
+      try {
+        config = applyPatch(stripCompiledCanvas(currentConfig as VideoConfig), parsed.patch);
+      } catch (err) {
+        console.error("Patch kunde inte tillämpas:", err, JSON.stringify(parsed.patch).slice(0, 2000));
+        return NextResponse.json(
+          { error: "AI:ns ändring gick inte att tillämpa — försök igen eller formulera om" },
+          { status: 500 }
+        );
+      }
+    }
 
     if (!config) {
       // Claude responded with just a message (no config change)
@@ -157,7 +185,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate basic structure
-    if (!config.scenes || !Array.isArray(config.scenes)) {
+    if (
+      !config.scenes ||
+      !Array.isArray(config.scenes) ||
+      config.scenes.some((s) => !s || typeof s.type !== "string" || !(s.durationSeconds > 0))
+    ) {
       return NextResponse.json(
         { error: "Ogiltig video-konfiguration" },
         { status: 500 }
@@ -176,10 +208,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Motion generate error:", error);
-    return NextResponse.json(
-      { error: "Något gick fel vid generering" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: aiErrorMessage(error) }, { status: 500 });
   }
 }
 

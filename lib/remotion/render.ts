@@ -37,7 +37,7 @@ export const RENDERS_DIR = path.join(process.cwd(), "public", "renders");
 // ── Bundle cache (module-scoped) ──
 let bundlePromise: Promise<string> | null = null;
 
-async function getBundle(): Promise<string> {
+export async function getBundle(): Promise<string> {
   if (!bundlePromise) {
     bundlePromise = bundle({
       entryPoint: path.join(process.cwd(), "remotion", "index.ts"),
