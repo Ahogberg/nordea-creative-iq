@@ -6,6 +6,7 @@ import { colors, fonts } from "../styles";
 import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import { getLottieUrl } from "../lottie-library";
 import type { LottieScene as LottieSceneProps } from "../types";
+import { useSceneTheme } from "../theme";
 
 /**
  * Element IDs for per-element transforms: "headline", "caption"
@@ -15,6 +16,7 @@ export const LottieSceneComponent: React.FC<{
   scene: LottieSceneProps;
   width: number;
 }> = ({ scene, width }) => {
+  const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
 
@@ -73,7 +75,7 @@ export const LottieSceneComponent: React.FC<{
         fontFamily: fonts.headline,
         fontSize: Math.round(56 * scale),
         fontWeight: 900,
-        color: colors.white,
+        color: theme.text,
         lineHeight: 1.15,
         textAlign: "center",
         margin: 0,
@@ -91,7 +93,7 @@ export const LottieSceneComponent: React.FC<{
         fontFamily: fonts.body,
         fontSize: Math.round(26 * scale),
         fontWeight: 400,
-        color: colors.dimText,
+        color: theme.textMuted,
         textAlign: "center",
         margin: 0,
         maxWidth: width * 0.8,
@@ -155,13 +157,14 @@ const LottieFallback: React.FC<{ size: number; error: string; scale: number }> =
   error,
   scale,
 }) => {
+  const theme = useSceneTheme();
   return (
     <div
       style={{
         width: size,
         height: size,
         borderRadius: 20 * scale,
-        border: `${3 * scale}px dashed ${colors.divider}`,
+        border: `${3 * scale}px dashed ${theme.hairline}`,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -182,7 +185,7 @@ const LottieFallback: React.FC<{ size: number; error: string; scale: number }> =
         style={{
           fontFamily: fonts.body,
           fontSize: Math.round(18 * scale),
-          color: colors.dimText,
+          color: theme.textMuted,
           textAlign: "center",
         }}
       >
@@ -192,7 +195,7 @@ const LottieFallback: React.FC<{ size: number; error: string; scale: number }> =
         style={{
           fontFamily: fonts.body,
           fontSize: Math.round(14 * scale),
-          color: "rgba(255,255,255,0.5)",
+          color: theme.textMuted,
           textAlign: "center",
         }}
       >
@@ -204,13 +207,14 @@ const LottieFallback: React.FC<{ size: number; error: string; scale: number }> =
 
 // ── Skeleton: shown while loading ──
 const LottieSkeleton: React.FC<{ size: number; scale: number }> = ({ size, scale }) => {
+  const theme = useSceneTheme();
   return (
     <div
       style={{
         width: size,
         height: size,
         borderRadius: 20 * scale,
-        backgroundColor: "rgba(255,255,255,0.08)",
+        backgroundColor: theme.surface,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -221,7 +225,7 @@ const LottieSkeleton: React.FC<{ size: number; scale: number }> = ({ size, scale
           width: 48 * scale,
           height: 48 * scale,
           borderRadius: "50%",
-          border: `${4 * scale}px solid rgba(255,255,255,0.25)`,
+          border: `${4 * scale}px solid ${theme.hairline}`,
           borderTopColor: colors.teal,
           animation: "spin 1s linear infinite",
         }}

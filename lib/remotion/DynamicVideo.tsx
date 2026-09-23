@@ -18,6 +18,7 @@ import { CanvasSceneComponent } from "./scenes/CanvasScene";
 import { SceneTransition } from "./animations/SceneTransition";
 import { LogoReveal } from "./animations/LogoReveal";
 import { renderSceneAssets } from "./scene-utils";
+import { SceneThemeContext, themeFor } from "./theme";
 
 const FPS = 30;
 
@@ -105,8 +106,11 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
   // Backward-compat: older templates without motion fall back to the default.
   const motion = config.motion ?? DEFAULT_MOTION_CONFIG;
   const timings = useMemo(() => computeSceneTimings(config.scenes), [config.scenes]);
+  const background = config.backgroundColor || colors.nordeaBlue;
+  const rootTheme = themeFor(background);
 
   return (
+    <SceneThemeContext.Provider value={rootTheme}>
     <AbsoluteFill
       style={{
         backgroundColor: config.backgroundColor || colors.nordeaBlue,
@@ -117,6 +121,8 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
         const { startFrame, durationFrames } = timings[i];
         return (
           <Sequence key={i} from={startFrame} durationInFrames={durationFrames}>
+            {/* En scen kan ha egen bakgrund — temat följer den. */}
+            <SceneThemeContext.Provider value={themeFor(scene.background ?? background)}>
             <SceneTransition
               startFrame={0}
               endFrame={durationFrames}
@@ -127,6 +133,7 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
               {renderScene(scene, width, motion, durationFrames)}
               {renderSceneAssets(scene, width / 1080)}
             </SceneTransition>
+            </SceneThemeContext.Provider>
           </Sequence>
         );
       })}
@@ -143,5 +150,6 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
         />
       )}
     </AbsoluteFill>
+    </SceneThemeContext.Provider>
   );
 };

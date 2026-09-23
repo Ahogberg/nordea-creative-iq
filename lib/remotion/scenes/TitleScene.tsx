@@ -7,6 +7,7 @@ import type { TitleScene as TitleSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
 import { AnimatedText } from "../animations/AnimatedText";
+import { useSceneTheme } from "../theme";
 
 const FPS = 30;
 
@@ -22,6 +23,7 @@ export const TitleSceneComponent: React.FC<{
   motion?: MotionConfig;
   durationFrames?: number;
 }> = ({ scene, width, motion, durationFrames }) => {
+  const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
   const { height } = useVideoConfig();
@@ -56,7 +58,7 @@ export const TitleSceneComponent: React.FC<{
       fontStyle={{
         fontSize: headlineSize,
         fontWeight: 900,
-        color: colors.white,
+        color: theme.text,
         fontFamily: fonts.headline,
         textAlign: isCenter ? "center" : "left",
         lineHeight: 1.15,
@@ -69,7 +71,7 @@ export const TitleSceneComponent: React.FC<{
       endFrame={endFrame}
       fontSize={headlineSize}
       fontWeight={900}
-      color={colors.white}
+      color={theme.text}
       mode={m.text.stagger}
       delayBetween={m.text.delayBetween}
       useSpring={m.text.useSpring}
@@ -85,7 +87,7 @@ export const TitleSceneComponent: React.FC<{
         fontFamily: fonts.body,
         fontSize: Math.round(32 * scale),
         fontWeight: 400,
-        color: "rgba(255,255,255,0.75)",
+        color: theme.textSecondary,
         marginTop: 20 * scale,
         textAlign: isCenter ? "center" : "left",
         ...subtitleAnim,

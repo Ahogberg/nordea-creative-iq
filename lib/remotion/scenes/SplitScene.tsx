@@ -4,11 +4,13 @@ import { fadeSlideUp, fadeIn, s2f } from "../utils";
 import { colors, fonts } from "../styles";
 import { resolveBackground } from "../scene-utils";
 import type { SplitScene as SplitSceneProps } from "../types";
+import { useSceneTheme } from "../theme";
 
 export const SplitSceneComponent: React.FC<{
   scene: SplitSceneProps;
   width: number;
 }> = ({ scene, width }) => {
+  const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
 
@@ -36,7 +38,7 @@ export const SplitSceneComponent: React.FC<{
             fontFamily: fonts.body,
             fontSize: Math.round(26 * scale),
             fontWeight: 500,
-            color: "rgba(255,255,255,0.7)",
+            color: theme.textSecondary,
             textTransform: "uppercase",
             letterSpacing: "0.08em",
             marginBottom: 16 * scale,
@@ -49,7 +51,7 @@ export const SplitSceneComponent: React.FC<{
             fontFamily: fonts.headline,
             fontSize: Math.round(72 * scale),
             fontWeight: 900,
-            color: colors.white,
+            color: theme.text,
           }}
         >
           {scene.leftValue}
@@ -69,7 +71,7 @@ export const SplitSceneComponent: React.FC<{
           style={{
             width: 2 * scale,
             height: 120 * scale * dividerHeight,
-            backgroundColor: "rgba(255,255,255,0.2)",
+            backgroundColor: theme.hairline,
           }}
         />
         <div
@@ -87,7 +89,7 @@ export const SplitSceneComponent: React.FC<{
           style={{
             width: 2 * scale,
             height: 120 * scale * dividerHeight,
-            backgroundColor: "rgba(255,255,255,0.2)",
+            backgroundColor: theme.hairline,
           }}
         />
       </div>
@@ -99,7 +101,7 @@ export const SplitSceneComponent: React.FC<{
             fontFamily: fonts.body,
             fontSize: Math.round(26 * scale),
             fontWeight: 500,
-            color: "rgba(255,255,255,0.7)",
+            color: theme.textSecondary,
             textTransform: "uppercase",
             letterSpacing: "0.08em",
             marginBottom: 16 * scale,

@@ -78,7 +78,7 @@ export function CreativeThumbnail({
 
   return (
     <div
-      className={`group relative overflow-hidden ${rounded} ${className}`}
+      className={`group relative overflow-hidden ring-1 ring-inset ring-black/5 ${rounded} ${className}`}
       style={{ aspectRatio: `${format.width} / ${format.height}`, backgroundColor: config.backgroundColor }}
       onMouseEnter={() => playOnHover && setHovering(true)}
       onMouseLeave={() => setHovering(false)}

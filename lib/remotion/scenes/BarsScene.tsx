@@ -4,6 +4,7 @@ import { barGrow, fadeSlideUp, fadeIn, s2f } from "../utils";
 import { colors, fonts } from "../styles";
 import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import type { BarsScene as BarsSceneProps } from "../types";
+import { useSceneTheme } from "../theme";
 
 /**
  * Element IDs for per-element transforms: "title"
@@ -13,6 +14,7 @@ export const BarsSceneComponent: React.FC<{
   scene: BarsSceneProps;
   width: number;
 }> = ({ scene, width }) => {
+  const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
   const barMaxHeight = 400 * scale;
@@ -25,7 +27,7 @@ export const BarsSceneComponent: React.FC<{
         fontFamily: fonts.headline,
         fontSize: Math.round(48 * scale),
         fontWeight: 900,
-        color: colors.white,
+        color: theme.text,
         marginBottom: 60 * scale,
         textAlign: "center",
         ...titleAnim,
@@ -66,7 +68,7 @@ export const BarsSceneComponent: React.FC<{
           const targetHeight = (bar.value / bar.maxValue) * barMaxHeight;
           const currentHeight = barGrow(frame, startFrame, s2f(1.2), 0, targetHeight);
           const labelOpacity = fadeIn(frame, startFrame + s2f(0.8), 12);
-          const barColor = bar.color || (i === scene.bars.length - 1 ? colors.teal : "rgba(255,255,255,0.45)");
+          const barColor = bar.color || (i === scene.bars.length - 1 ? colors.teal : theme.barMuted);
 
           return (
             <div
@@ -85,7 +87,7 @@ export const BarsSceneComponent: React.FC<{
                   fontFamily: fonts.body,
                   fontSize: Math.round(28 * scale),
                   fontWeight: 700,
-                  color: colors.white,
+                  color: theme.text,
                   marginBottom: 10 * scale,
                   opacity: labelOpacity,
                 }}
@@ -110,7 +112,7 @@ export const BarsSceneComponent: React.FC<{
                   fontFamily: fonts.body,
                   fontSize: Math.round(22 * scale),
                   fontWeight: 600,
-                  color: "rgba(255,255,255,0.75)",
+                  color: theme.textSecondary,
                   marginTop: 12 * scale,
                   textAlign: "center",
                   letterSpacing: "0.05em",

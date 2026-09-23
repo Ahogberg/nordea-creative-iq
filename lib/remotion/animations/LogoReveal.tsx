@@ -4,6 +4,7 @@ import type { ElementTransform, LogoRevealStyle } from "../types";
 import { colors, fonts } from "../styles";
 import { NORDEA_EASING } from "./easing";
 import { SPRING_CONFIGS } from "./springs";
+import { useSceneTheme, type SceneTheme } from "../theme";
 
 export type { LogoRevealStyle };
 
@@ -46,6 +47,7 @@ export const LogoReveal: React.FC<LogoRevealProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const theme = useSceneTheme();
   const localFrame = Math.max(0, frame - startFrame);
 
   // ── Animation ──
@@ -152,7 +154,7 @@ export const LogoReveal: React.FC<LogoRevealProps> = ({
     };
   }
 
-  return <div style={positionStyle}>{src ? renderImage(src) : renderLockup(widthScale)}</div>;
+  return <div style={positionStyle}>{src ? renderImage(src) : renderLockup(widthScale, theme)}</div>;
 };
 
 function renderImage(src: string): React.ReactNode {
@@ -167,7 +169,7 @@ function renderImage(src: string): React.ReactNode {
 // Reuses the legacy "N + Nordea" lockup from DynamicVideo's LogoOverlay so
 // motion-driven logo reveals keep the same fallback look as the existing
 // non-animated overlay.
-function renderLockup(widthScale: number): React.ReactNode {
+function renderLockup(widthScale: number, theme: SceneTheme): React.ReactNode {
   return (
     <div
       style={{
@@ -183,7 +185,7 @@ function renderLockup(widthScale: number): React.ReactNode {
           width: 44 * widthScale,
           height: 44 * widthScale,
           borderRadius: 10 * widthScale,
-          backgroundColor: "rgba(255,255,255,0.15)",
+          backgroundColor: theme.isLight ? colors.nordeaBlue : "rgba(255,255,255,0.15)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -201,7 +203,7 @@ function renderLockup(widthScale: number): React.ReactNode {
           fontFamily: fonts.headline,
           fontSize: Math.round(28 * widthScale),
           fontWeight: 700,
-          color: colors.white,
+          color: theme.text,
           letterSpacing: "0.04em",
         }}
       >

@@ -97,7 +97,7 @@ export const SAMPLE_CREATIVES: SampleCreative[] = [
       id: "sample-kort",
       title: "Kreditkort resa",
       format: "feed",
-      backgroundColor: "#00005E",
+      backgroundColor: "#FFFFFF",
       accentColor: "#40BFA3",
       motion: energetic,
       scenes: [

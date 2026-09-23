@@ -23,7 +23,7 @@ VideoConfig-schemat:
   "id": "generated-{timestamp}",
   "title": "Kort namn (max 50 tecken)",
   "format": "story" | "feed" | "landscape" | "vertical",
-  "backgroundColor": "#0000A0",
+  "backgroundColor": "#0000A0",  // eller "#FFFFFF" för ljus variant — text blir då automatiskt Nordea Blue
   "accentColor": "#40BFA3",
   "scenes": [ ...3-5 scener... ],
   "showLogo": true,

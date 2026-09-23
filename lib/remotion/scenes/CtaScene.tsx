@@ -8,6 +8,7 @@ import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
 import { CtaReveal } from "../animations/CtaReveal";
 import { AnimatedText } from "../animations/AnimatedText";
+import { useSceneTheme } from "../theme";
 
 const FPS = 30;
 
@@ -20,6 +21,7 @@ export const CtaSceneComponent: React.FC<{
   motion?: MotionConfig;
   durationFrames?: number;
 }> = ({ scene, width, motion, durationFrames }) => {
+  const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
   const { height } = useVideoConfig();
@@ -38,7 +40,7 @@ export const CtaSceneComponent: React.FC<{
       fontStyle={{
         fontSize: headlineSize,
         fontWeight: 900,
-        color: colors.white,
+        color: theme.text,
         fontFamily: fonts.headline,
         textAlign: "center",
         lineHeight: 1.2,
@@ -51,7 +53,7 @@ export const CtaSceneComponent: React.FC<{
       endFrame={endFrame}
       fontSize={headlineSize}
       fontWeight={900}
-      color={colors.white}
+      color={theme.text}
       mode={m.text.stagger}
       delayBetween={m.text.delayBetween}
       useSpring={m.text.useSpring}
@@ -67,7 +69,7 @@ export const CtaSceneComponent: React.FC<{
         fontFamily: fonts.body,
         fontSize: Math.round(28 * scale),
         fontWeight: 400,
-        color: "rgba(255,255,255,0.7)",
+        color: theme.textSecondary,
         marginTop: 20 * scale,
         textAlign: "center",
         ...subtitleAnim,

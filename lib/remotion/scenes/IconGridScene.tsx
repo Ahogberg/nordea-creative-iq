@@ -4,6 +4,7 @@ import { fadeSlideUp, s2f } from "../utils";
 import { colors, fonts } from "../styles";
 import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import type { IconGridScene as IconGridSceneProps } from "../types";
+import { useSceneTheme } from "../theme";
 
 /**
  * Element IDs for per-element transforms: "title"
@@ -13,6 +14,7 @@ export const IconGridSceneComponent: React.FC<{
   scene: IconGridSceneProps;
   width: number;
 }> = ({ scene, width }) => {
+  const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
 
@@ -25,7 +27,7 @@ export const IconGridSceneComponent: React.FC<{
         fontFamily: fonts.headline,
         fontSize: Math.round(48 * scale),
         fontWeight: 900,
-        color: colors.white,
+        color: theme.text,
         marginBottom: 50 * scale,
         textAlign: "center",
         ...titleAnim,
@@ -70,7 +72,7 @@ export const IconGridSceneComponent: React.FC<{
                 textAlign: "center",
                 padding: `${24 * scale}px`,
                 borderRadius: 16 * scale,
-                backgroundColor: "rgba(255,255,255,0.08)",
+                backgroundColor: theme.surface,
                 ...anim,
               }}
             >
@@ -82,7 +84,7 @@ export const IconGridSceneComponent: React.FC<{
                   fontFamily: fonts.body,
                   fontSize: Math.round(24 * scale),
                   fontWeight: 600,
-                  color: colors.white,
+                  color: theme.text,
                 }}
               >
                 {item.label}

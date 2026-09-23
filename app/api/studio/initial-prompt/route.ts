@@ -30,7 +30,7 @@ VideoConfig-schemat (alla fält obligatoriska där inget annat sägs):
   "id": "generated-{timestamp}",
   "title": "Kort namn på videon (svenska, max 50 tecken)",
   "format": "story" | "feed" | "landscape" | "vertical",  // välj baserat på briefens kanaler
-  "backgroundColor": "#0000A0",  // Nordea blue default — byt om briefen pekar på annat
+  "backgroundColor": "#0000A0",  // Nordea blue default. Ljus variant: "#FFFFFF" (text och logotyp blir då automatiskt Nordea Blue). Använd bara dessa två, #00005E eller #40BFA3
   "accentColor": "#40BFA3",  // Nordea teal default
   "scenes": [ ...3-5 scener... ],
   "showLogo": true,

@@ -12,6 +12,7 @@ import {
 import { colors, fonts } from "../styles";
 import * as animUtils from "../utils";
 import type { CanvasScene as CanvasSceneProps } from "../types";
+import { useSceneTheme } from "../theme";
 
 // ── Whitelisted scope injected into AI-generated component code ──
 // The compiled JS is executed via `new Function` with these names in scope.
@@ -128,6 +129,7 @@ class CanvasErrorBoundary extends React.Component<
 
 // ── Error state UI ──
 const CanvasErrorState: React.FC<{ message: string; scale: number }> = ({ message, scale }) => {
+  const theme = useSceneTheme();
   return (
     <AbsoluteFill
       style={{
@@ -151,7 +153,7 @@ const CanvasErrorState: React.FC<{ message: string; scale: number }> = ({ messag
         style={{
           fontFamily: fonts.body,
           fontSize: Math.round(26 * scale),
-          color: colors.white,
+          color: theme.text,
           textAlign: "center",
           fontWeight: 600,
         }}
@@ -162,7 +164,7 @@ const CanvasErrorState: React.FC<{ message: string; scale: number }> = ({ messag
         style={{
           fontFamily: fonts.body,
           fontSize: Math.round(16 * scale),
-          color: colors.dimText,
+          color: theme.textMuted,
           textAlign: "center",
           maxWidth: 520 * scale,
           lineHeight: 1.5,

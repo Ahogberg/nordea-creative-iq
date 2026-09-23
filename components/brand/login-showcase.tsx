@@ -17,7 +17,7 @@ const ADS = [
   {
     className: "left-[38%] top-[11%] w-[190px] rotate-[3deg] [animation-delay:-2s]",
     ratio: "1 / 1",
-    bg: "#FBD9CA",
+    bg: "#FFFFFF",
     headline: "Det är aldrig för sent att börja",
     sub: "Boka 30 min med en rådgivare",
     accent: "#0000A0",

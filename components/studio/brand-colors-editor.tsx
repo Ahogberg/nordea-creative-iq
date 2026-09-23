@@ -9,6 +9,10 @@ const NORDEA_PALETTE = [
   { name: "Nordea Teal", hex: "#40BFA3" },
 ];
 
+// Vit är den ljusa bakgrunden — text och logotyp blir då Nordea Blue
+// automatiskt (lib/remotion/theme.ts).
+const BACKGROUNDS = [...NORDEA_PALETTE, { name: "Vit", hex: "#FFFFFF" }];
+
 /**
  * Background + accent color picker. Writes to config.backgroundColor +
  * config.accentColor — the canonical Nordea palette is offered as quick
@@ -32,8 +36,8 @@ export function BrandColorsEditor() {
       <div>
         <Label className="text-xs">Bakgrund</Label>
         <div className="flex flex-wrap gap-1.5 mt-1.5">
-          {NORDEA_PALETTE.map((color) => {
-            const active = backgroundColor === color.hex;
+          {BACKGROUNDS.map((color) => {
+            const active = backgroundColor.toUpperCase() === color.hex;
             return (
               <button
                 type="button"

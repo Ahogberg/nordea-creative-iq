@@ -155,7 +155,7 @@ Returnera ett JSON-objekt med denna struktur:
   "id": "generated-<timestamp>",
   "title": "<beskrivande titel>",
   "format": "story",
-  "backgroundColor": "#0000A0",
+  "backgroundColor": "#0000A0",  // eller "#FFFFFF" för ljus variant — text blir då automatiskt Nordea Blue
   "accentColor": "#40BFA3",
   "scenes": [...],
   "showLogo": true,
