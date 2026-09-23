@@ -5,10 +5,11 @@
 // renderarens förmågor (illustrationer, fetstil, rubrikfärg, juridik).
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, RotateCcw, Sparkles, AlertCircle, SquarePen, RefreshCw, ScanEye, Check, Info } from "lucide-react";
+import { ArrowUp, RotateCcw, Sparkles, AlertCircle, SquarePen, RefreshCw, ScanEye, Check, Info, Users, GitCompare } from "lucide-react";
 import { useStudioStore, type ChatMessage, type ChatReview } from "@/lib/studio/store";
 import { useStudioPlayer } from "./player-context";
 import { renderRichTokens, parseRichText } from "@/lib/remotion/rich-text";
+import { AudienceBlock } from "./audience-card";
 
 // Exempel att börja från — inom varumärkets ramar, men fria att bryta.
 const STARTERS = [
@@ -38,11 +39,19 @@ const WORKING = [
   "Kontrollerar safe zone och juridik…",
 ];
 
+const AUDIENCE_WORKING = [
+  "Renderar bildrutor ur videon…",
+  "Personorna tittar på filmen…",
+  "Varje persona svarar tre gånger…",
+  "Sammanställer svaren…",
+];
+
 export function ChatPanel() {
   const messages = useStudioStore((s) => s.messages);
   const isBusy = useStudioStore((s) => s.isChatBusy);
   const send = useStudioStore((s) => s.sendChatMessage);
   const clearChat = useStudioStore((s) => s.clearChat);
+  const runAudienceTest = useStudioStore((s) => s.runAudienceTest);
   const scenes = useStudioStore((s) => s.config.scenes);
   const legal = useStudioStore((s) => s.config.legal);
   const format = useStudioStore((s) => s.config.format);
@@ -117,6 +126,17 @@ export function ChatPanel() {
       </div>
 
       <div className="border-t border-nordea-hairline p-3 flex-shrink-0">
+        {!isBusy && scenes.length > 0 && (
+          <button
+            type="button"
+            onClick={() => void runAudienceTest()}
+            title="Sex simulerade kundsegment tittar på videon och säger vad de tycker"
+            className="w-full mb-2 flex items-center justify-center gap-1.5 text-xs font-medium text-nordea-blue border border-nordea-blue/20 bg-nordea-blue-soft hover:bg-nordea-blue/10 rounded-lg py-1.5 transition-colors"
+          >
+            <Users className="w-3.5 h-3.5" />
+            Testa i fokusgrupp
+          </button>
+        )}
         {!isBusy && messages.length > 0 && scenes.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2.5">
             {suggestions.map((s) => (
@@ -209,24 +229,33 @@ function UserBubble({ message }: { message: ChatMessage }) {
 function AssistantMessage({ message, canUndo }: { message: ChatMessage; canUndo: boolean }) {
   const undo = useStudioStore((s) => s.undoMessage);
   const retry = useStudioStore((s) => s.retryMessage);
+  const runAudienceTest = useStudioStore((s) => s.runAudienceTest);
+  const compare = useStudioStore((s) => s.compareWithBefore);
+  const busy = useStudioStore((s) => s.isChatBusy);
 
-  if (message.status === "pending") return <Working startedAt={message.startedAt} />;
+  if (message.status === "pending") {
+    return <Working startedAt={message.startedAt} steps={message.audience ? AUDIENCE_WORKING : WORKING} />;
+  }
 
   if (message.status === "error") {
+    const canRetry = !!message.retryText || message.audience?.kind === "test";
     return (
       <div className="rounded-lg border border-nordea-rose/20 bg-nordea-rose-soft px-3 py-2.5 text-sm">
         <div className="flex items-start gap-2 text-nordea-rose">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span>{message.content}</span>
         </div>
-        <button
-          type="button"
-          onClick={() => void retry(message.id)}
-          className="mt-2 ml-6 inline-flex items-center gap-1 text-xs font-medium text-nordea-text hover:text-nordea-blue"
-        >
-          <RefreshCw className="w-3 h-3" />
-          Försök igen
-        </button>
+        {canRetry && (
+          <button
+            type="button"
+            onClick={() => void (message.audience ? runAudienceTest() : retry(message.id))}
+            disabled={busy}
+            className="mt-2 ml-6 inline-flex items-center gap-1 text-xs font-medium text-nordea-text hover:text-nordea-blue disabled:opacity-50"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Försök igen
+          </button>
+        )}
       </div>
     );
   }
@@ -237,9 +266,13 @@ function AssistantMessage({ message, canUndo }: { message: ChatMessage; canUndo:
         <Sparkles className="w-3.5 h-3.5 text-nordea-blue" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className={`text-sm leading-relaxed ${message.undone ? "text-nordea-text-tertiary line-through" : "text-nordea-text"}`}>
-          {renderRichTokens(parseRichText(message.content))}
-        </p>
+        {message.audience ? (
+          <AudienceBlock messageId={message.id} audience={message.audience} />
+        ) : (
+          <p className={`text-sm leading-relaxed ${message.undone ? "text-nordea-text-tertiary line-through" : "text-nordea-text"}`}>
+            {renderRichTokens(parseRichText(message.content))}
+          </p>
+        )}
         {message.changes && message.changes.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {message.changes.map((c) => (
@@ -254,14 +287,26 @@ function AssistantMessage({ message, canUndo }: { message: ChatMessage; canUndo:
         )}
         {message.review && <ReviewBlock review={message.review} />}
         {canUndo && (
-          <button
-            type="button"
-            onClick={() => undo(message.id)}
-            className="mt-2 inline-flex items-center gap-1 text-xs text-nordea-text-tertiary hover:text-nordea-text"
-          >
-            <RotateCcw className="w-3 h-3" />
-            Ångra
-          </button>
+          <div className="mt-2 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => undo(message.id)}
+              className="inline-flex items-center gap-1 text-xs text-nordea-text-tertiary hover:text-nordea-text"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Ångra
+            </button>
+            <button
+              type="button"
+              onClick={() => void compare(message.id)}
+              disabled={busy}
+              title="Personorna ser versionen före och efter ändringen och väljer"
+              className="inline-flex items-center gap-1 text-xs text-nordea-text-tertiary hover:text-nordea-blue disabled:opacity-50"
+            >
+              <GitCompare className="w-3 h-3" />
+              Jämför före/efter
+            </button>
+          </div>
         )}
         {message.undone && <span className="mt-2 inline-block text-xs text-nordea-text-tertiary">Ångrad</span>}
       </div>
@@ -357,7 +402,7 @@ function ReviewBlock({ review }: { review: ChatReview }) {
   );
 }
 
-function Working({ startedAt }: { startedAt?: number }) {
+function Working({ startedAt, steps }: { startedAt?: number; steps: string[] }) {
   const [start] = useState(() => startedAt ?? Date.now());
   const [now, setNow] = useState(start);
   useEffect(() => {
@@ -365,7 +410,7 @@ function Working({ startedAt }: { startedAt?: number }) {
     return () => clearInterval(id);
   }, []);
   const seconds = Math.max(0, Math.floor((now - start) / 1000));
-  const step = WORKING[Math.min(WORKING.length - 1, Math.floor(seconds / 5))];
+  const step = steps[Math.min(steps.length - 1, Math.floor(seconds / 5))];
 
   return (
     <div className="flex gap-2.5">

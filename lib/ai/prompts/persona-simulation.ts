@@ -5,6 +5,7 @@
 // om DB-raden hunnit bli inaktuell. Egna personas byggs från request-fälten.
 
 import { findPersona, type PersonaProfile } from '@/lib/persona-library';
+import { marketFactsBlock } from '@/lib/audience/market-data';
 
 export interface PersonaIdentity {
   /** Stabilt id för standardpersonas, annars undefined. */
@@ -127,6 +128,9 @@ export function buildPersonaProfileBlock(identity: PersonaIdentity): string {
     lines.push('');
     lines.push(identity.systemPrompt);
   }
+  // Verifierad marknadsstatistik för standardsegmenten (lib/audience/market-data).
+  const facts = marketFactsBlock(identity.libraryId);
+  if (facts) lines.push(facts);
 
   return lines.join('\n');
 }

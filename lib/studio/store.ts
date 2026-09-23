@@ -26,6 +26,7 @@ import {
   DEFAULT_ELEMENT_TRANSFORM,
 } from "@/lib/remotion/types";
 import { describeChanges } from "./describe-changes";
+import type { AudienceCompareResponse, AudienceTestResponse } from "@/lib/audience/types";
 
 export type AspectRatio = VideoConfig["format"]; // 'story' | 'feed' | 'landscape' | 'vertical'
 
@@ -66,6 +67,8 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  /** Hela texten som skickades till AI:n, när bubblan visar en kortare etikett. */
+  prompt?: string;
   status: "pending" | "done" | "error";
   /** Korta etiketter för vad som ändrades (describeChanges). */
   changes?: string[];
@@ -77,7 +80,13 @@ export interface ChatMessage {
   startedAt?: number;
   /** Självgranskningen av resultatet (körs automatiskt efter varje ändring). */
   review?: ChatReview;
+  /** Fokusgruppstest eller före/efter-jämförelse. */
+  audience?: ChatAudience;
 }
+
+export type ChatAudience =
+  | { kind: "test"; status: "pending" | "done" | "error"; data?: AudienceTestResponse; error?: string }
+  | { kind: "compare"; status: "pending" | "done" | "error"; data?: AudienceCompareResponse; error?: string };
 
 export interface ChatReviewIssue {
   severity: "error" | "warning" | "info";
@@ -120,10 +129,17 @@ interface StudioState {
   inspectorTab: InspectorTab | null;
   setInspectorTab: (tab: InspectorTab | null) => void;
   startFromPrompt: (prompt: string) => Promise<void>;
-  sendChatMessage: (text: string) => Promise<void>;
+  /** `display` visas i bubblan i stället för en lång genererad text. */
+  sendChatMessage: (text: string, display?: string) => Promise<void>;
   undoMessage: (id: string) => void;
   retryMessage: (id: string) => Promise<void>;
   clearChat: () => void;
+  /** Kör fokusgruppen på videon som den ser ut nu. */
+  runAudienceTest: () => Promise<void>;
+  /** Före (svarets `before`) mot nu: vilken version föredrar personorna? */
+  compareWithBefore: (messageId: string) => Promise<void>;
+  /** Skickar fokusgruppens invändningar till AI:n som en ändringsbegäran. */
+  fixFromAudience: (messageId: string) => Promise<void>;
 
   // Lager och keyframes
   selectedKeyframe: SelectedKeyframe | null;
@@ -200,21 +216,25 @@ export const useStudioStore = create<StudioState>()(
       set({ isDrafting: false });
     },
 
-    sendChatMessage: async (text) => {
+    sendChatMessage: async (text, display) => {
       if (get().isChatBusy || !text.trim()) return;
-      await runChatTurn(text.trim(), "/api/motion-generate");
+      await runChatTurn(text.trim(), "/api/motion-generate", display);
     },
 
     retryMessage: async (id) => {
-      const msg = get().messages.find((m) => m.id === id);
+      const all = get().messages;
+      const idx = all.findIndex((m) => m.id === id);
+      const msg = all[idx];
       if (!msg?.retryText || get().isChatBusy) return;
+      const question = all[idx - 1];
+      const display = question?.role === "user" && question.prompt ? question.content : undefined;
       // Ta bort det misslyckade svaret och frågan, skicka om.
       set((s) => ({
         messages: s.messages.filter(
           (m, i, all) => m.id !== id && !(m.role === "user" && all[i + 1]?.id === id)
         ),
       }));
-      await runChatTurn(msg.retryText, "/api/motion-generate");
+      await runChatTurn(msg.retryText, "/api/motion-generate", display);
     },
 
     undoMessage: (id) =>
@@ -230,6 +250,34 @@ export const useStudioStore = create<StudioState>()(
       }),
 
     clearChat: () => set({ messages: [] }),
+
+    runAudienceTest: async () => {
+      if (get().isChatBusy) return;
+      const config = get().config;
+      await runAudienceTurn(
+        "Testa i fokusgrupp",
+        { kind: "test", status: "pending" },
+        "/api/studio/audience-test",
+        { config }
+      );
+    },
+
+    compareWithBefore: async (messageId) => {
+      const msg = get().messages.find((m) => m.id === messageId);
+      if (!msg?.before || get().isChatBusy) return;
+      await runAudienceTurn(
+        "Jämför före och efter i fokusgruppen",
+        { kind: "compare", status: "pending" },
+        "/api/studio/audience-compare",
+        { a: msg.before, b: get().config }
+      );
+    },
+
+    fixFromAudience: async (messageId) => {
+      const msg = get().messages.find((m) => m.id === messageId);
+      if (msg?.audience?.kind !== "test" || !msg.audience.data) return;
+      await get().sendChatMessage(audienceFixPrompt(msg.audience.data), "Rätta det fokusgruppen invände mot");
+    },
 
     selectedKeyframe: null,
     selectKeyframe: (kf) => set({ selectedKeyframe: kf }),
@@ -443,12 +491,18 @@ const newId = () => `msg-${Date.now()}-${++messageSeq}`;
  *  - /api/motion-generate: ändringar i en befintlig video ({ config, message })
  * Tidigare lyckade fråga/svar-par skickas som historik.
  */
-async function runChatTurn(text: string, endpoint: string) {
+async function runChatTurn(text: string, endpoint: string, display?: string) {
   const { getState, setState } = useStudioStore;
   const before = getState().config;
   const selected = getState().selectedSceneIndex;
 
-  const userMsg: ChatMessage = { id: newId(), role: "user", content: text, status: "done" };
+  const userMsg: ChatMessage = {
+    id: newId(),
+    role: "user",
+    content: display ?? text,
+    prompt: display ? text : undefined,
+    status: "done",
+  };
   const reply: ChatMessage = {
     id: newId(),
     role: "assistant",
@@ -574,6 +628,91 @@ async function reviewTurn(messageId: string, reviewed: VideoConfig, request: str
   }
 }
 
+// ── Fokusgrupp i chatten ──
+
+async function runAudienceTurn(
+  label: string,
+  initial: ChatAudience,
+  endpoint: string,
+  payload: Record<string, unknown>
+) {
+  const { setState } = useStudioStore;
+  const userMsg: ChatMessage = { id: newId(), role: "user", content: label, status: "done" };
+  const reply: ChatMessage = {
+    id: newId(),
+    role: "assistant",
+    content: "",
+    status: "pending",
+    startedAt: Date.now(),
+    audience: initial,
+  };
+  setState((s) => ({ messages: [...s.messages, userMsg, reply], isChatBusy: true }));
+  const patchReply = (patch: Partial<ChatMessage>) =>
+    setState((s) => ({ messages: s.messages.map((m) => (m.id === reply.id ? { ...m, ...patch } : m)) }));
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = (await res.json().catch(() => null)) as
+      | (AudienceTestResponse & AudienceCompareResponse & { error?: string })
+      | null;
+    if (!res.ok || !data) throw new Error(data?.error || "Fokusgruppen kunde inte köras");
+    if (initial.kind === "test") {
+      patchReply({ status: "done", content: audienceTestSummary(data), audience: { kind: "test", status: "done", data } });
+    } else {
+      patchReply({
+        status: "done",
+        content: audienceCompareSummary(data),
+        audience: { kind: "compare", status: "done", data },
+      });
+    }
+  } catch (err) {
+    const error = err instanceof Error ? err.message : "Fokusgruppen kunde inte köras";
+    patchReply({ status: "error", content: error, audience: { ...initial, status: "error", error } });
+  } finally {
+    setState({ isChatBusy: false });
+  }
+}
+
+/** Kort text som hamnar i chatthistoriken, så att AI:n vet vad panelen tyckte. */
+function audienceTestSummary(d: AudienceTestResponse): string {
+  const score = d.weightSource ? d.summary.weighted : d.summary.unweighted;
+  const objections = d.personas.flatMap((p) => p.objections?.slice(0, 1) ?? []).slice(0, 4);
+  return `Fokusgruppen (simulerad): ${score} % klickvilja, ${d.summary.clickers} av ${d.summary.responded} skulle klicka.${
+    objections.length ? ` Invändningar: ${objections.join("; ")}.` : ""
+  }`;
+}
+
+function audienceCompareSummary(d: AudienceCompareResponse): string {
+  const b = d.summary.weightedPreferB;
+  const verdict = b > 55 ? "föredrar den nya versionen" : b < 45 ? "föredrar versionen före ändringen" : "ser ingen tydlig skillnad";
+  return `Fokusgruppen (simulerad) ${verdict}: ${b} % för den nya, ${100 - b} % för den gamla.`;
+}
+
+/** Ändringsbegäran byggd på fokusgruppens svar — svagaste segmenten först. */
+export function audienceFixPrompt(d: AudienceTestResponse): string {
+  const answered = d.personas
+    .filter((p) => p.wouldClick)
+    .sort((a, b) => (a.wouldClick?.mean ?? 0) - (b.wouldClick?.mean ?? 0));
+  const lines = answered.slice(0, 4).map((p) => {
+    const parts = [
+      p.objections?.length ? `invänder: ${p.objections.slice(0, 2).join("; ")}` : "",
+      p.dropOff ? `slutar titta: ${p.dropOff}` : "",
+      p.suggestion ? `föreslår: ${p.suggestion}` : "",
+    ].filter(Boolean);
+    return `- ${p.name} (${p.wouldClick?.mean} %): ${parts.join(" · ")}`;
+  });
+  return [
+    "Fokusgruppen reagerade så här på videon:",
+    ...lines,
+    "",
+    "Förbättra videon utifrån de invändningar som återkommer, inom Nordeas ramar. Behåll idén och det som fungerar. Hitta inte på räntor, priser eller andra siffror som inte redan finns i videon — saknas fakta, lägg hellre till en tydlig väg vidare (t.ex. läs mer eller boka möte).",
+  ].join("\n");
+}
+
 /** Lyckade fråga/svar-par som historik till AI:n (senaste tio meddelandena). */
 function completedTurns(messages: ChatMessage[]) {
   const turns: Array<{ role: "user" | "assistant"; content: string }> = [];
@@ -581,7 +720,7 @@ function completedTurns(messages: ChatMessage[]) {
     const q = messages[i];
     const a = messages[i + 1];
     if (q.role === "user" && a.role === "assistant" && a.status === "done" && !a.undone) {
-      turns.push({ role: "user", content: q.content }, { role: "assistant", content: a.content });
+      turns.push({ role: "user", content: q.prompt ?? q.content }, { role: "assistant", content: a.content });
       i++;
     }
   }

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Users, Play, RefreshCw, Eye, MessageSquareWarning, TrendingUp, TrendingDown } from "lucide-react";
 import { PersonaImage } from "@/components/ui/persona-image";
 import { findPersona } from "@/lib/persona-library";
+import { aggregatePanel, summarize, type Spread } from "@/lib/audience/aggregate";
+import { populationWeights } from "@/lib/audience/market-data";
 import type { ProductCategory } from "@/lib/product-detection";
 
 export interface FocusGroupPersona {
@@ -31,12 +33,23 @@ export interface FocusGroupContext {
 interface Reaction {
   firstImpression: string;
   wouldClick: number;
+  /** Spridning mellan personans upprepade svar. */
+  spread: Spread;
   objections: string[];
   firstNoticed?: string | null;
   sawVisual?: boolean;
+  /** Exempelsvar utan AI — räknas aldrig in i resultatet. */
+  mock: boolean;
 }
 
-type Slot = { status: "idle" } | { status: "thinking" } | { status: "done"; reaction: Reaction } | { status: "error" };
+type Slot =
+  | { status: "idle" }
+  | { status: "thinking" }
+  | { status: "done"; reaction: Reaction }
+  | { status: "error"; message: string };
+
+/** Antal oberoende svar per persona — visar hur säker panelen är. */
+const SAMPLES_PER_PERSONA = 3;
 
 interface FocusGroupPanelProps {
   personas: FocusGroupPersona[];
@@ -81,22 +94,29 @@ export function FocusGroupPanel({ personas, getContext, disabled, runSignal }: F
               personaDigitalMaturity: p.digital_maturity,
               personaSystemPrompt: p.system_prompt,
               responseStyle: p.response_style,
+              samples: SAMPLES_PER_PERSONA,
               ...ctx,
             }),
           });
-          const data = await res.json();
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || typeof data.wouldClick !== "number") {
+            throw new Error(data.error || "Personan kunde inte svara");
+          }
           slot = {
             status: "done",
             reaction: {
               firstImpression: data.firstImpression ?? "",
-              wouldClick: typeof data.wouldClick === "number" ? data.wouldClick : 50,
+              wouldClick: data.wouldClick,
+              spread: data.spread ?? summarize([data.wouldClick]),
               objections: Array.isArray(data.objections) ? data.objections : [],
               firstNoticed: data.firstNoticed ?? null,
               sawVisual: data.sawVisual === true,
+              mock: data.simulation === "mock",
             },
           };
-        } catch {
-          slot = { status: "error" };
+        } catch (err) {
+          // Ett fel är aldrig en röst — det visas som fel och räknas inte in.
+          slot = { status: "error", message: err instanceof Error ? err.message : "Personan kunde inte svara" };
         }
         // Svaren visas ett i taget, även om de kommer samtidigt.
         revealAt = Math.max(revealAt + MIN_REVEAL_GAP_MS, Date.now());
@@ -116,12 +136,23 @@ export function FocusGroupPanel({ personas, getContext, disabled, runSignal }: F
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runSignal]);
 
-  const done = personas
+  const answered = personas
     .map((p) => ({ p, slot: slots[p.id] }))
     .filter((x): x is { p: FocusGroupPersona; slot: { status: "done"; reaction: Reaction } } => x.slot?.status === "done");
-  const allDone = done.length === personas.length && personas.length > 0;
-  const avg = done.length > 0 ? Math.round(done.reduce((s, x) => s + x.slot.reaction.wouldClick, 0) / done.length) : 0;
-  const clickers = done.filter((x) => x.slot.reaction.wouldClick >= 50).length;
+  // Exempelsvar (ingen AI) räknas bara om ALLA svar är exempel — och märks då.
+  const allMock = answered.length > 0 && answered.every((x) => x.slot.reaction.mock);
+  const done = allMock ? answered : answered.filter((x) => !x.slot.reaction.mock);
+  const failed = personas.filter((p) => slots[p.id]?.status === "error").length;
+  const settled = answered.length + failed;
+  const allDone = settled === personas.length && personas.length > 0;
+
+  // Vikter: segmentets storlek i befolkningen (verifierad statistik) när den finns.
+  const libraryIds = done.map((x) => findPersona(x.p.name)?.id ?? x.p.id);
+  const { weights, source: weightSource } = populationWeights(libraryIds);
+  const summary = aggregatePanel(
+    done.map((x, i) => ({ personaId: libraryIds[i], wouldClick: x.slot.reaction.spread })),
+    weights
+  );
   const sorted = [...done].sort((a, b) => b.slot.reaction.wouldClick - a.slot.reaction.wouldClick);
   const best = sorted[0];
   const worst = sorted[sorted.length - 1];
@@ -158,13 +189,29 @@ export function FocusGroupPanel({ personas, getContext, disabled, runSignal }: F
             done.length > 0 ? "opacity-100" : "opacity-40"
           }`}
         >
-          <div className="flex items-baseline gap-2">
-            <span className="nordea-display text-4xl text-nordea-deep tabular-nums">{avg}%</span>
-            <span className="text-xs text-nordea-text-tertiary">snitt klickvilja</span>
+          <div>
+            <div className="flex items-baseline gap-2">
+              <span className="nordea-display text-4xl text-nordea-deep tabular-nums">
+                {done.length > 0 ? `${weightSource ? summary.weighted : summary.unweighted}%` : "–"}
+              </span>
+              <span className="text-xs text-nordea-text-tertiary">
+                {weightSource ? "simulerad klickvilja, viktad" : "simulerad klickvilja, snitt"}
+              </span>
+            </div>
+            {summary.maxSd > 0 && (
+              <div className="text-[11px] text-nordea-text-tertiary mt-0.5">
+                Svaren varierar upp till ±{summary.maxSd} per persona ({SAMPLES_PER_PERSONA} svar var)
+              </div>
+            )}
           </div>
           <div className="text-sm text-nordea-text">
-            <span className="font-semibold tabular-nums">{clickers} av {personas.length}</span> skulle troligen klicka
-            {!allDone && <span className="text-nordea-text-tertiary"> · {done.length}/{personas.length} har svarat</span>}
+            <span className="font-semibold tabular-nums">{summary.clickers} av {done.length}</span> skulle troligen klicka
+            <div className="text-[11px] text-nordea-text-tertiary mt-0.5">
+              {settled < personas.length
+                ? `${settled}/${personas.length} har svarat`
+                : `${done.length} av ${personas.length} svarade${failed > 0 ? ` · ${failed} utan svar räknas inte` : ""}`}
+              {weightSource && ` · viktat efter segmentens storlek (${weightSource})`}
+            </div>
           </div>
           {allDone && best && worst && best !== worst && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
@@ -176,6 +223,18 @@ export function FocusGroupPanel({ personas, getContext, disabled, runSignal }: F
               </span>
             </div>
           )}
+        </div>
+      )}
+
+      {allMock && (
+        <div className="px-5 py-2 text-[11px] font-medium text-nordea-amber bg-nordea-amber-soft">
+          Exempelsvar — AI-nyckel saknas. Siffrorna är inte en simulering.
+        </div>
+      )}
+      {hasRun && (
+        <div className="px-5 py-2 text-[11px] text-nordea-text-tertiary border-b border-nordea-hairline">
+          Simulerade reaktioner, inte en prognos. Personorna bygger på profiler och verklig statistik om segmenten; hur de
+          reagerar på en annons är AI:ns bedömning tills den kalibrerats mot Nordeas kampanjresultat.
         </div>
       )}
 
@@ -232,16 +291,30 @@ function PersonaSlot({ persona, slot }: { persona: FocusGroupPersona; slot: Slot
         </div>
       )}
 
-      {slot.status === "error" && <p className="text-xs text-nordea-rose">Kunde inte få en reaktion.</p>}
+      {slot.status === "error" && (
+        <p className="text-xs text-nordea-rose">Inget svar — räknas inte in. {slot.message}</p>
+      )}
 
       {slot.status === "done" && (
         <div className="flex flex-col gap-2.5 flex-1 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="h-1.5 rounded-full bg-nordea-blue-soft overflow-hidden">
+          <div className="relative h-1.5 rounded-full bg-nordea-blue-soft">
             <div
               className="h-full rounded-full transition-[width] duration-1000 ease-out"
               style={{ width: `${slot.reaction.wouldClick}%`, backgroundColor: clickColor(slot.reaction.wouldClick) }}
             />
+            {/* Spannet mellan personans lägsta och högsta svar */}
+            {slot.reaction.spread.n > 1 && (
+              <div
+                className="absolute -top-px h-[calc(100%+2px)] rounded-full border border-nordea-deep/40"
+                style={{ left: `${slot.reaction.spread.min}%`, width: `${Math.max(1, slot.reaction.spread.max - slot.reaction.spread.min)}%` }}
+              />
+            )}
           </div>
+          {slot.reaction.spread.n > 1 && (
+            <span className="text-[10px] text-nordea-text-faint -mt-1.5 tabular-nums">
+              {slot.reaction.spread.n} svar: {slot.reaction.spread.min}–{slot.reaction.spread.max} %
+            </span>
+          )}
           <p className="text-[12.5px] text-nordea-text leading-relaxed line-clamp-4">&ldquo;{slot.reaction.firstImpression}&rdquo;</p>
           <div className="mt-auto flex flex-col gap-1.5">
             {slot.reaction.firstNoticed && (

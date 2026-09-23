@@ -350,10 +350,13 @@ export default function CopyStudioPage() {
           channel,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      // Fel visas aldrig som en reaktion (routen svarar 502 vid fel).
+      if (!res.ok) throw new Error(data.error || 'Personan kunde inte svara');
       setPersonaReaction(data);
     } catch (e) {
       console.error(e);
+      setPersonaReaction(null);
     }
     setIsLoadingReaction(false);
   };

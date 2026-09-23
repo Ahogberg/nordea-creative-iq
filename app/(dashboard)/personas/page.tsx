@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Plus, Pencil, Trash2, X, Loader2, Search, MessageCircle, Target, AlertCircle,
-  Sparkles, Users, Send, Smartphone, Phone, Building2, Globe, Quote, UserRound,
+  Sparkles, Users, Send, Smartphone, Phone, Building2, Globe, Quote, UserRound, BarChart3,
 } from 'lucide-react';
+import { segmentData, type MarketFact } from '@/lib/audience/market-data';
 import { createClient } from '@/lib/supabase/client';
 import { PERSONA_LIBRARY, type PersonaProfile } from '@/lib/persona-library';
 import { PersonaImage } from '@/components/ui/persona-image';
@@ -326,6 +327,7 @@ export default function PersonasPage() {
                           {selected.traits.map((t) => <NordeaBadge key={t} tone="cobalt">{t}</NordeaBadge>)}
                         </div>
                       </div>
+                      <MarketFacts personaId={selected.id} />
                       <div className="flex items-center justify-between text-xs text-nordea-text-tertiary mb-5">
                         <span>Når bäst via</span>
                         <ChannelIcons channels={selected.channelPreference} />
@@ -519,6 +521,45 @@ function ChannelIcons({ channels }: { channels: string[] }) {
           </span>
         );
       })}
+    </div>
+  );
+}
+
+/** Verifierad statistik om segmentet — samma underlag som personan får i fokusgruppen. */
+function MarketFacts({ personaId }: { personaId: string }) {
+  const seg = segmentData(personaId);
+  const facts = seg ? [seg.population, ...seg.facts].filter((f): f is MarketFact => !!f) : [];
+  return (
+    <div className="mb-5">
+      <div className="flex items-center gap-2 nordea-eyebrow mb-2">
+        <BarChart3 className="w-3.5 h-3.5 text-nordea-blue" /> Segmentet i siffror
+      </div>
+      {facts.length === 0 ? (
+        <p className="text-[12px] text-nordea-text-tertiary leading-snug">
+          Ingen verifierad statistik inlagd för segmentet än — profilen bygger på antaganden.
+        </p>
+      ) : (
+        <ul className="space-y-1.5">
+          {facts.map((f) => (
+            <li key={`${f.label}-${f.year}`} className="text-[12px] leading-snug">
+              <span className="text-nordea-text-secondary">{f.label}: </span>
+              <span className="font-medium text-nordea-text tabular-nums">
+                {f.value.toLocaleString('sv-SE', { maximumFractionDigits: 1 })}
+                {f.unit === '%' ? ' %' : ` ${f.unit}`}
+              </span>
+              <a
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-1 text-[10px] text-nordea-text-faint hover:text-nordea-blue underline-offset-2 hover:underline"
+                title={[f.scope, f.note].filter(Boolean).join(' — ')}
+              >
+                {f.source} {f.year}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
