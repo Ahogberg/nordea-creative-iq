@@ -1899,3 +1899,15 @@ label, [data-slot="label"] { color: var(--text-primary); }
   50% { translate: 0 -10px; }
 }
 .login-float { animation: login-float 7s ease-in-out infinite; }
+
+/* Skanningslinje medan uppmärksamheten beräknas */
+@keyframes attention-scan {
+  0% { top: -6rem; }
+  100% { top: 100%; }
+}
+
+/* Skimmer i skelettkort */
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}

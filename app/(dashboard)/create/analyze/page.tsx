@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { FeedbackList } from '@/components/ui/nordea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Image as ImageIcon, Send, ChevronDown, ChevronUp, Plus, Loader2, Upload, AlertTriangle, X, Sparkles, LayoutList, Smartphone, MessageCircle, Quote, Eye } from 'lucide-react';
+import { Image as ImageIcon, Send, ChevronDown, ChevronUp, Plus, Loader2, Upload, AlertTriangle, X, Sparkles, LayoutList, Smartphone, MessageCircle, Quote, Eye, ScanEye } from 'lucide-react';
 import { detectProductFromText, getRelevantPersonas, PRODUCT_LABELS, type ProductMatch } from '@/lib/product-detection';
 import { downscaleDataUrl } from '@/lib/image-utils';
 import { findPersona } from '@/lib/persona-library';
@@ -20,6 +20,9 @@ import { FormatChip } from '@/components/ui/format-chip';
 import { PersonaImage } from '@/components/ui/persona-image';
 import { ScoreRing } from '@/components/ui/score-ring';
 import { FeedMockup } from '@/components/preview/feed-mockup';
+import { AttentionOverlay } from '@/components/preview/attention-overlay';
+import { FocusGroupPanel, type FocusGroupContext } from '@/components/focus-group/focus-group-panel';
+import type { AttentionResult } from '@/app/api/attention/route';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -130,6 +133,8 @@ const mockVideoAnalysis: AnalysisResult = {
 // Main component
 // ---------------------------------------------------------------------------
 
+type Placement = 'story' | 'feed' | 'raw' | 'attention';
+
 export default function AdStudioPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -153,7 +158,10 @@ export default function AdStudioPage() {
   const [isLoadingReaction, setIsLoadingReaction] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
-  const [placement, setPlacement] = useState<'story' | 'feed' | 'raw'>('feed');
+  const [placement, setPlacement] = useState<Placement>('feed');
+  const [attention, setAttention] = useState<AttentionResult | null>(null);
+  const [attentionLoading, setAttentionLoading] = useState(false);
+  const [focusGroupSignal, setFocusGroupSignal] = useState(0);
   // Bild/bildrutor som personas får se. Byggs en gång per uppladdning.
   const personaImagesRef = useRef<{ source: string; images: string[] } | null>(null);
 
@@ -216,6 +224,8 @@ export default function AdStudioPage() {
 
   const handleMediaUpload = useCallback((file: File) => {
     const isVideo = file.type.startsWith('video/');
+    setAttention(null);
+    setPlacement((p) => (p === 'attention' ? 'feed' : p));
     setMediaType(isVideo ? 'video' : 'image');
     setMediaFile(file);
     if (isVideo) {
@@ -233,6 +243,8 @@ export default function AdStudioPage() {
     setMediaPreview(null);
     setMediaType(null);
     setAnalysis(null);
+    setAttention(null);
+    setPlacement((p) => (p === 'attention' ? 'feed' : p));
   };
 
   // Nedskalad bild (eller 4 bildrutor ur videon) som skickas med till personas.
@@ -258,8 +270,42 @@ export default function AdStudioPage() {
     }
   };
 
+  const loadAttention = async () => {
+    if (mediaType !== 'image' || attentionLoading) return;
+    setAttentionLoading(true);
+    try {
+      const [image] = await getPersonaImages();
+      if (!image) return;
+      const res = await fetch('/api/attention', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image, headline, cta }),
+      });
+      if (res.ok) setAttention(await res.json());
+    } catch (error) {
+      console.error('Uppmärksamhetsanalys misslyckades:', error);
+    } finally {
+      setAttentionLoading(false);
+    }
+  };
+
+  const changePlacement = (p: Placement) => {
+    setPlacement(p);
+    if (p === 'attention' && !attention) void loadAttention();
+  };
+
+  const getFocusGroupContext = async (): Promise<FocusGroupContext> => ({
+    copy: { headline, body: bodyText, cta },
+    channel,
+    images: await getPersonaImages(),
+    isVideo: mediaType === 'video',
+    productCategory: (detectedProduct || detectProductFromText(headline, bodyText, cta)).category,
+  });
+
   // Analyze with real API + fallback
   const handleAnalyze = async () => {
+    setFocusGroupSignal((n) => n + 1);
+    if (mediaType === 'image' && !attention) void loadAttention();
     setIsAnalyzing(true);
     setAnalysis(null);
     setPersonaReaction(null);
@@ -494,13 +540,14 @@ export default function AdStudioPage() {
           {/* ── Scen: annonsen ── */}
           <div className="nordea-card overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3 border-b border-nordea-hairline">
-              <SegmentedTabs<'story' | 'feed' | 'raw'>
+              <SegmentedTabs<Placement>
                 value={placement}
-                onChange={setPlacement}
+                onChange={changePlacement}
                 tabs={[
                   { id: 'feed', label: 'I flödet', icon: LayoutList },
                   { id: 'story', label: 'Story', icon: Smartphone },
                   { id: 'raw', label: 'Original', icon: ImageIcon },
+                  ...(mediaType === 'image' ? [{ id: 'attention' as const, label: 'Uppmärksamhet', icon: ScanEye }] : []),
                 ]}
               />
               {mediaPreview && (
@@ -532,6 +579,22 @@ export default function AdStudioPage() {
                   </div>
                   <input type="file" accept="image/*,video/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleMediaUpload(e.target.files[0])} />
                 </label>
+              ) : placement === 'attention' ? (
+                attention && !attentionLoading ? (
+                  <AttentionOverlay src={mediaPreview} points={attention.points} />
+                ) : (
+                  <div className="relative rounded-xl overflow-hidden shadow-[0_20px_50px_-12px_rgba(0,0,94,0.3)]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={mediaPreview} alt="Uppladdad annons" className="block max-h-[600px] max-w-full" />
+                    <div className="absolute inset-0 bg-[#00005E]/35" />
+                    <div className="absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-nordea-teal/40 to-transparent animate-[attention-scan_1.6s_ease-in-out_infinite]" />
+                    <div className="absolute inset-x-0 bottom-4 flex justify-center">
+                      <span className="px-3 py-1.5 rounded-full bg-white/90 text-xs font-medium text-nordea-text inline-flex items-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-nordea-blue" /> Uppskattar var blicken hamnar…
+                      </span>
+                    </div>
+                  </div>
+                )
               ) : placement === 'raw' ? (
                 <div className="max-h-[600px] max-w-full rounded-xl overflow-hidden shadow-[0_20px_50px_-12px_rgba(0,0,94,0.3)]">
                   {mediaType === 'video' ? (
@@ -720,9 +783,19 @@ export default function AdStudioPage() {
           </div>
         </div>
 
+        {/* ── Fokusgrupp ── */}
+        <div className="mt-5">
+          <FocusGroupPanel
+            personas={personas}
+            getContext={getFocusGroupContext}
+            disabled={!hasContent}
+            runSignal={focusGroupSignal}
+          />
+        </div>
+
         {/* ── Resultat ── */}
         {(analysis || isAnalyzing) && (
-          <div className="mt-5 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-5">
+          <div className="mt-5 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-5 items-start">
             <div className="nordea-card p-6">
               {isAnalyzing || !analysis ? (
                 <div className="flex items-center gap-6 animate-pulse">
@@ -776,6 +849,60 @@ export default function AdStudioPage() {
                 </div>
               )}
             </div>
+
+            {mediaType === 'image' && (
+              <div className="nordea-card p-5">
+                <SectionTitle
+                  title="Uppmärksamhet"
+                  right={attention ? (
+                    <NordeaBadge tone={attention.source === 'ai' ? 'teal' : 'neutral'}>
+                      {attention.source === 'ai' ? 'AI-uppskattning' : 'Layoutuppskattning'}
+                    </NordeaBadge>
+                  ) : undefined}
+                />
+                {!attention || attentionLoading ? (
+                  <div className="space-y-2 animate-pulse">
+                    <div className="h-3 rounded bg-nordea-blue-soft w-2/3" />
+                    <div className="h-3 rounded bg-nordea-blue-soft w-full" />
+                    <div className="h-3 rounded bg-nordea-blue-soft w-4/5" />
+                  </div>
+                ) : (
+                  <div className="space-y-3.5 animate-in fade-in duration-500">
+                    <div>
+                      <div className="nordea-eyebrow mb-1">Ses först</div>
+                      <p className="text-[15px] font-semibold text-nordea-text">{attention.first_seen}</p>
+                    </div>
+                    <p className="text-[13px] text-nordea-text-secondary leading-relaxed">{attention.summary}</p>
+                    <ol className="space-y-1.5">
+                      {[...attention.points].sort((a, b) => a.order - b.order).map((pt) => (
+                        <li key={`${pt.order}-${pt.label}`} className="flex items-center gap-2.5 text-[13px] text-nordea-text">
+                          <span className="w-5 h-5 rounded-full bg-nordea-blue-soft text-nordea-blue text-[10px] font-bold flex items-center justify-center shrink-0">{pt.order}</span>
+                          <span className="flex-1 truncate">{pt.label}</span>
+                          <span className="w-16 h-1.5 rounded-full bg-nordea-blue-soft overflow-hidden">
+                            <span className="block h-full rounded-full bg-nordea-teal" style={{ width: `${pt.weight * 100}%` }} />
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                    {attention.warnings.length > 0 && (
+                      <div className="space-y-1.5">
+                        {attention.warnings.map((w) => (
+                          <div key={w} className="flex items-start gap-2 text-[12.5px] text-nordea-text-secondary">
+                            <AlertTriangle className="w-3.5 h-3.5 text-nordea-amber mt-0.5 shrink-0" /> {w}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button type="button" onClick={() => changePlacement('attention')} className="nordea-btn nordea-btn-secondary nordea-btn-sm w-full">
+                      <ScanEye className="w-3.5 h-3.5" /> Visa på annonsen
+                    </button>
+                    <p className="text-[10.5px] text-nordea-text-faint leading-snug">
+                      Uppskattning av var blicken hamnar — inte eye-tracking. Använd som stöd, inte facit.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

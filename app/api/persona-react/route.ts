@@ -75,6 +75,24 @@ const mockReactions: Record<
     whatWorked: 'Ämnet pension är relevant för mig',
     suggestion: 'Erbjud möjlighet att boka ett personligt rådgivningsmöte',
   },
+  Företagaren: {
+    firstImpression:
+      'Det här pratar till privatpersoner, inte till mig som driver företag. Jag ser inte vad det sparar mig i tid eller pengar.',
+    wouldClick: 30,
+    objections: ['Gäller det här företagskunder?', 'Får jag en egen kontaktperson?', 'Hur snabbt får jag besked?'],
+    relevance: { score: 35 },
+    whatWorked: 'Lugn och saklig ton',
+    suggestion: 'Säg tydligt vad företaget vinner — tid, likviditet eller en kontaktperson',
+  },
+  Studenten: {
+    firstImpression:
+      'Ser snyggt ut och är lätt att förstå. Men jag vet inte om det här är för någon som mig med CSN och extrajobb.',
+    wouldClick: 58,
+    objections: ['Kostar det något?', 'Kan jag börja med små belopp?'],
+    relevance: { score: 60 },
+    whatWorked: 'Enkelt språk utan bankjargong',
+    suggestion: 'Visa att man kan börja med några hundralappar i månaden',
+  },
 };
 
 export async function POST(request: Request) {
