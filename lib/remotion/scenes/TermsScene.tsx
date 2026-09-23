@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from "remotion";
-import { fonts } from "../styles";
+import { fonts, contentTop } from "../styles";
 import { resolveBackground } from "../scene-utils";
 import type { TermsScene as TermsSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
@@ -42,7 +42,7 @@ export const TermsSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        padding: `${Math.max(150 * scale, height * 0.11)}px ${120 * scale}px ${40 * scale}px`,
+        padding: `${contentTop(width, height)}px ${120 * scale}px ${40 * scale}px`,
         opacity,
       }}
     >

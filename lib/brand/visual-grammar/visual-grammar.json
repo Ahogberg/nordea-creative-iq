@@ -820,7 +820,7 @@
   ],
   "do": [
     {
-      "rule": "Loggan står stilla överst i mitten från första till sista rutan och behåller exakt position över alla scenbyten (ca 7–11 % ned i 1:1 och 4:5, ca 16–17 % i 9:16).",
+      "rule": "Loggan (ordmärket) står stilla överst i mitten från första till sista rutan och behåller exakt position över alla scenbyten. Uppmätt: 1:1 bredd 23 % av bildbredden, överkant 5,9 % av höjden; 4:5 bredd 29 %, överkant 4,8 %; 9:16 bredd 28,5 %, överkant 15,7 %. Renderaren placerar loggan så automatiskt.",
       "evidence": [
         "7711d667-f7d0-4741-853f-92c5e77617a8",
         "9035e2f3-1d6d-445c-93f7-5717fcf0196d",

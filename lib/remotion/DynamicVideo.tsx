@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { AbsoluteFill, Sequence, useCurrentFrame } from "remotion";
-import { colors, FORMAT_PRESETS } from "./styles";
+import { colors, FORMAT_PRESETS, logoBox } from "./styles";
 import type { VideoConfig, Scene, MotionConfig } from "./types";
 import { DEFAULT_MOTION_CONFIG } from "./types";
 
@@ -132,6 +132,8 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
   const currentScene = config.scenes[currentIndex >= 0 ? currentIndex : config.scenes.length - 1];
   const currentTheme = currentScene ? sceneTheme(currentScene) : rootTheme;
 
+  const logo = logoBox(width, height);
+
   // Juridisk text nertill: scenerna ritas ovanför den.
   const reserve = legalReserve(config.legal, config.format, height);
 
@@ -185,6 +187,9 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
             videoWidth={width}
             transform={config.logo?.transform}
             position="top-center"
+            // Storlek och läge per format enligt Nordeas annonser (LOGO_LAYOUT).
+            size={logo.width}
+            topOffset={logo.top}
           />
         </SceneThemeContext.Provider>
       )}

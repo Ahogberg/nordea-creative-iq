@@ -229,8 +229,17 @@ utskurna produktbilder.
 ## 10. Gör / gör inte
 
 **Gör**
-- Logga stilla överst i mitten, på samma plats genom hela filmen: ca 7–11 % ned i 1:1
-  och 4:5, ca 16–17 % i 9:16.
+- Logga (ordmärket) stilla överst i mitten, på samma plats genom hela filmen.
+  Uppmätt i annonserna (bredd av bildbredden / överkant av bildhöjden):
+
+  | Format | Bredd | Överkant | Belägg |
+  |---|---|---|---|
+  | 1:1 | 23 % | 5,9 % | 4 av 6 |
+  | 4:5 | 29 % | 4,8 % | 4 av 6 |
+  | 9:16 | 28,5 % | 15,7 % | 3 av 6 |
+
+  Bolånekampanjen (`85b1de33`, `9a635d11`) har en något mindre logga (25 %, 6,9 %)
+  i 4:5, och betalarmbandet i 9:16 har 24 % och 14,8 %.
 - Visa budskapet inom 0,5 s.
 - Håll filmen till 6–8 s med 2–3 scener och byt scen kring 3–3,5 s.
 - Låt en enda liten rörelse bära illustrationen.
@@ -293,9 +302,11 @@ Status 2026-09-23. ✅ = åtgärdat i renderaren, ◐ = delvis, ☐ = kvar.
    mynt, palett, `fall`/`slideAlongIso`/`loop` m.fl.
    Det som återstår är ett större bibliotek med färdiga motiv. Spargris, varukorg och
    fordon byggs i dag av AI:n ur primitiverna, och kvaliteten beror på koden.
-5. ◐ **Logga.** Loggan följer nu aktuell scens bakgrund: vit på blått, blå på persika
-   och ljusblått. Det gäller bara den ritade reservloggan; en uppladdad logobild byter
-   inte färg. Positionen i 9:16 (ca 16–17 % ned) är fortfarande fast överst.
+5. ✅ **Logga.** Storlek och avstånd från toppen följer de uppmätta värdena per format
+   (`LOGO_LAYOUT` i `lib/remotion/styles.ts`); 16:9 saknar underlag och är härlett
+   ur 1:1. Standardloggan är Nordeas ordmärke (`public/images/nordea-logo-neg.png`),
+   färgat efter aktuell scen: vit på blått, blå på persika och ljusblått. En uppladdad
+   logobild får samma storlek och läge men byter inte färg.
 6. ✅ **Färgbyte och mask-reveal** går att göra i canvas-scener (penseldrag som avslöjar
    rubriken finns som exempel i AI-prompten).
 7. ◐ **Ordmorf och rubrik som glider** går att skriva fritt i canvas, men mallscenerna

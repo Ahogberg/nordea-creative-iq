@@ -69,6 +69,39 @@ export function getDimensions(
   };
 }
 
+// ── LOGGA ──
+// Uppmätt i Nordeas annonser (brand-reference/, 18 videor): ordmärkets bredd
+// i andel av bildbredden och glyfernas överkant i andel av bildhöjden.
+// Huvudklustret per format; 16:9 saknar underlag och är härlett ur 1:1.
+export const LOGO_ASPECT = 567 / 118; // public/images/nordea-logo-neg.png, tight bbox
+export const LOGO_LAYOUT: Record<keyof typeof FORMAT_PRESETS, { widthPct: number; topPct: number }> = {
+  story: { widthPct: 0.285, topPct: 0.157 },
+  vertical: { widthPct: 0.289, topPct: 0.048 },
+  feed: { widthPct: 0.231, topPct: 0.059 },
+  landscape: { widthPct: 0.13, topPct: 0.059 },
+};
+
+function formatFor(width: number, height: number): keyof typeof FORMAT_PRESETS {
+  const r = height / width;
+  if (r >= 1.6) return "story";
+  if (r >= 1.15) return "vertical";
+  if (r >= 0.8) return "feed";
+  return "landscape";
+}
+
+/** Loggans storlek och läge i px för en bildyta. `bottom` = underkant. */
+export function logoBox(width: number, height: number) {
+  const { widthPct, topPct } = LOGO_LAYOUT[formatFor(width, height)];
+  const w = width * widthPct;
+  const top = height * topPct;
+  return { width: w, top, bottom: top + w / LOGO_ASPECT };
+}
+
+/** Där innehållet under loggan kan börja (px): loggans underkant + luft. */
+export function contentTop(width: number, height: number): number {
+  return logoBox(width, height).bottom + height * 0.03;
+}
+
 // ── SAFE AREA ──
 export const safeArea = {
   top: 300,

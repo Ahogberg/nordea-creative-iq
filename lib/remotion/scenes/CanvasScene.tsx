@@ -11,7 +11,7 @@ import {
   random,
   Easing,
 } from "remotion";
-import { colors, fonts, headlineScale } from "../styles";
+import { colors, fonts, headlineScale, contentTop } from "../styles";
 import * as animUtils from "../utils";
 import * as kit from "../illustration/toolkit";
 import type { CanvasScene as CanvasSceneProps, MotionConfig } from "../types";
@@ -233,8 +233,8 @@ const IllustrationLayout: React.FC<{
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        // Plats för loggan överst.
-        paddingTop: Math.max(150 * scale, height * 0.11),
+        // Plats för loggan överst (dess läge varierar per format).
+        paddingTop: contentTop(width, height),
         paddingBottom: height * 0.04,
         gap: 36 * scale,
       }}

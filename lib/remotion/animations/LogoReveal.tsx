@@ -1,7 +1,7 @@
 import React from "react";
-import { useCurrentFrame, useVideoConfig, interpolate, spring, Img } from "remotion";
+import { useCurrentFrame, useVideoConfig, interpolate, spring, Img, staticFile } from "remotion";
 import type { ElementTransform, LogoRevealStyle } from "../types";
-import { colors, fonts } from "../styles";
+import { LOGO_ASPECT } from "../styles";
 import { NORDEA_EASING } from "./easing";
 import { SPRING_CONFIGS } from "./springs";
 import { useSceneTheme, type SceneTheme } from "../theme";
@@ -19,7 +19,7 @@ export type LogoPositionPreset =
 interface LogoRevealProps {
   /** Animation style applied to opacity/scale/translate. */
   style?: LogoRevealStyle;
-  /** Image url. If undefined, renders the "N + Nordea" text lockup fallback. */
+  /** Image url. If undefined, renders Nordea's wordmark in the scene's text colour. */
   src?: string;
   /** Frame at which the reveal starts. */
   startFrame?: number;
@@ -33,6 +33,8 @@ interface LogoRevealProps {
   position?: LogoPositionPreset;
   /** Logo width override. Defaults to 15% of canvas width. */
   size?: number;
+  /** Avstånd från toppen (px) för top-center. Standard 60 px × skala. */
+  topOffset?: number;
 }
 
 export const LogoReveal: React.FC<LogoRevealProps> = ({
@@ -44,6 +46,7 @@ export const LogoReveal: React.FC<LogoRevealProps> = ({
   transform,
   position = "top-center",
   size,
+  topOffset,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -137,7 +140,7 @@ export const LogoReveal: React.FC<LogoRevealProps> = ({
     const bottomOffset = padding + 100 * widthScale;
     const corner: Record<LogoPositionPreset, React.CSSProperties> = {
       "top-left": { top: padding, left: padding },
-      "top-center": { top: padding, left: "50%", transform: `translateX(-50%) ${animationTransform}` },
+      "top-center": { top: topOffset ?? padding, left: "50%", transform: `translateX(-50%) ${animationTransform}` },
       "top-right": { top: padding, right: padding },
       "bottom-left": { bottom: bottomOffset, left: padding },
       "bottom-center": { bottom: bottomOffset, left: "50%", transform: `translateX(-50%) ${animationTransform}` },
@@ -154,8 +157,32 @@ export const LogoReveal: React.FC<LogoRevealProps> = ({
     };
   }
 
-  return <div style={positionStyle}>{src ? renderImage(src) : renderLockup(widthScale, theme)}</div>;
+  return <div style={positionStyle}>{src ? renderImage(src) : renderWordmark(theme)}</div>;
 };
+
+/**
+ * Nordeas ordmärke (public/images/nordea-logo-neg.png) färgat efter scenen:
+ * PNG:n används som mask så att samma fil blir vit på blått och Nordea-blå på
+ * ljusa scener. Den osynliga <Img> gör att Remotion väntar tills filen laddats.
+ */
+function renderWordmark(theme: SceneTheme): React.ReactNode {
+  const src = staticFile("images/nordea-logo-neg.png");
+  const mask = `url("${src}") center / contain no-repeat`;
+  return (
+    <div style={{ position: "relative", width: "100%", aspectRatio: `${LOGO_ASPECT}` }}>
+      <Img src={src} style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: theme.text,
+          WebkitMask: mask,
+          mask,
+        }}
+      />
+    </div>
+  );
+}
 
 function renderImage(src: string): React.ReactNode {
   return (
@@ -163,52 +190,5 @@ function renderImage(src: string): React.ReactNode {
       src={src}
       style={{ width: "100%", height: "auto", display: "block" }}
     />
-  );
-}
-
-// Reuses the legacy "N + Nordea" lockup from DynamicVideo's LogoOverlay so
-// motion-driven logo reveals keep the same fallback look as the existing
-// non-animated overlay.
-function renderLockup(widthScale: number, theme: SceneTheme): React.ReactNode {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 12 * widthScale,
-        width: "100%",
-      }}
-    >
-      <div
-        style={{
-          width: 44 * widthScale,
-          height: 44 * widthScale,
-          borderRadius: 10 * widthScale,
-          backgroundColor: theme.isLight ? colors.nordeaBlue : "rgba(255,255,255,0.15)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: fonts.headline,
-          fontSize: Math.round(26 * widthScale),
-          fontWeight: 900,
-          color: colors.white,
-          flexShrink: 0,
-        }}
-      >
-        N
-      </div>
-      <span
-        style={{
-          fontFamily: fonts.headline,
-          fontSize: Math.round(28 * widthScale),
-          fontWeight: 700,
-          color: theme.text,
-          letterSpacing: "0.04em",
-        }}
-      >
-        Nordea
-      </span>
-    </div>
   );
 }

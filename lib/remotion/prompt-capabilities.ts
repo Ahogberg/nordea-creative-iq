@@ -43,7 +43,7 @@ Två lägen:
 1) Illustrationsscen (vanligast): sätt headline (+ subtitle) och illustrationLayout. Scenen renderar rubriken med Nordeas typografi; din kod ritar BARA illustrationen i sin yta (width × height du får som props, höjd = illustrationHeightPercent av bilden). Rita INTE rubriken i koden.
    - "illustration-top": illustration i mitten, rubrik under (arketyp "illustration-mitt-rubrik-under")
    - "illustration-bottom": rubrik överst, illustration under (arketyp "rubrik-over-bild")
-2) Helbild: utan headline ritar koden hela bilden (egen text, masker, övergångar). Loggan ritas ändå av renderaren överst — lämna ca 12 % fritt där.
+2) Helbild: utan headline ritar koden hela bilden (egen text, masker, övergångar). Loggan ritas ändå av renderaren överst i mitten — lämna fritt ovanför ca 12 % av höjden i 1:1 och 4:5, ca 22 % i 9:16 (där sitter loggan lägre, som i Nordeas annonser).
 
 Kodregler:
 - Definiera \`function Scene({ width, height, scale }) { ... }\` och returnera en <AbsoluteFill>-rot. Inga import-satser, inga fetch/eval.
