@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { SectionHeader, FeedbackList, PersonaAvatar } from '@/components/ui/nordea';
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Image as ImageIcon, Video, Send, ChevronDown, ChevronUp, Plus, Loader2, Upload, AlertTriangle, X } from 'lucide-react';
 import { detectProductFromText, getRelevantPersonas, PRODUCT_LABELS, type ProductMatch } from '@/lib/product-detection';
+import { downscaleDataUrl } from '@/lib/image-utils';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,6 +55,8 @@ interface PersonaReaction {
   objections: string[];
   whatWorked?: string;
   suggestion?: string;
+  firstNoticed?: string;
+  sawVisual?: boolean;
 }
 
 interface ChatMessage {
@@ -143,6 +146,8 @@ export default function AdStudioPage() {
   const [isLoadingReaction, setIsLoadingReaction] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
+  // Bild/bildrutor som personas får se. Byggs en gång per uppladdning.
+  const personaImagesRef = useRef<{ source: string; images: string[] } | null>(null);
 
   // Import copy from Copy Studio via sessionStorage
   useEffect(() => {
@@ -217,6 +222,29 @@ export default function AdStudioPage() {
     setMediaPreview(null);
     setMediaType(null);
     setAnalysis(null);
+  };
+
+  // Nedskalad bild (eller 4 bildrutor ur videon) som skickas med till personas.
+  const getPersonaImages = async (): Promise<string[]> => {
+    if (!mediaPreview) return [];
+    if (personaImagesRef.current?.source === mediaPreview) return personaImagesRef.current.images;
+    try {
+      let images: string[] = [];
+      if (mediaType === 'video' && mediaFile) {
+        const { extractFramesFromVideo, getVideoMetadata } = await import('@/lib/video-utils');
+        const { duration } = await getVideoMetadata(mediaFile);
+        // 3 jämnt fördelade rutor + slutrutan (där CTA:n brukar ligga).
+        const frames = await extractFramesFromVideo(mediaFile, { frameInterval: Math.max(0.5, duration / 3), maxFrames: 3 });
+        images = await Promise.all(frames.slice(0, 4).map((f) => downscaleDataUrl(f.dataUrl)));
+      } else if (mediaType === 'image') {
+        images = [await downscaleDataUrl(mediaPreview)];
+      }
+      personaImagesRef.current = { source: mediaPreview, images };
+      return images;
+    } catch (error) {
+      console.error('Kunde inte förbereda bild för personas:', error);
+      return [];
+    }
   };
 
   // Analyze with real API + fallback
@@ -334,6 +362,7 @@ export default function AdStudioPage() {
     setChatMessages([]);
 
     const product = detectedProduct || detectProductFromText(headline, bodyText, cta);
+    const images = await getPersonaImages();
 
     try {
       const res = await fetch('/api/persona-react', {
@@ -344,12 +373,14 @@ export default function AdStudioPage() {
           personaDescription: selectedPersona.description,
           personaTraits: selectedPersona.traits,
           personaPainPoints: selectedPersona.pain_points,
+          personaGoals: selectedPersona.goals,
           personaAge: selectedPersona.age_min ? { min: selectedPersona.age_min, max: selectedPersona.age_max || selectedPersona.age_min + 10 } : undefined,
           personaDigitalMaturity: selectedPersona.digital_maturity,
           personaSystemPrompt: selectedPersona.system_prompt,
           responseStyle: selectedPersona.response_style,
           copy: { headline, body: bodyText, cta },
           channel,
+          images,
           isVideo: mediaType === 'video',
           productCategory: product.category,
         }),
@@ -361,6 +392,8 @@ export default function AdStudioPage() {
         objections: data.objections || [],
         whatWorked: data.whatWorked || undefined,
         suggestion: data.suggestion || undefined,
+        firstNoticed: data.firstNoticed || undefined,
+        sawVisual: data.sawVisual === true,
       });
     } catch {
       setPersonaReaction({
@@ -382,6 +415,7 @@ export default function AdStudioPage() {
     setChatInput('');
 
     const product = detectedProduct || detectProductFromText(headline, bodyText, cta);
+    const images = await getPersonaImages();
 
     try {
       const res = await fetch('/api/persona-chat', {
@@ -393,9 +427,12 @@ export default function AdStudioPage() {
           personaTraits: selectedPersona.traits,
           personaPainPoints: selectedPersona.pain_points,
           responseStyle: selectedPersona.response_style,
-          messages: [...chatMessages, userMsg].map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
+          // Historiken utan det nya meddelandet — det skickas som newMessage.
+          messages: chatMessages.map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
           adContext: { headline, body: bodyText, cta, channel },
           newMessage: msg,
+          images,
+          isVideo: mediaType === 'video',
           productCategory: product.category,
         }),
       });
@@ -610,6 +647,13 @@ export default function AdStudioPage() {
             {personaReaction && selectedPersona && (
               <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
                 <p className="text-sm text-gray-700 italic">&quot;{personaReaction.impression}&quot;</p>
+
+                {personaReaction.sawVisual && (
+                  <p className="text-xs text-gray-500">
+                    Bedömde {mediaType === 'video' ? 'bildrutor ur videon' : 'bilden'} + copy
+                    {personaReaction.firstNoticed ? ` · Såg först: ${personaReaction.firstNoticed}` : ''}
+                  </p>
+                )}
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Skulle klicka</span>

@@ -238,6 +238,8 @@ CREATE POLICY "Users can create localizations"
 -- ============================================
 -- SEED: Default Personas
 -- ============================================
+-- Första seeden. Aktuell persona-data finns i lib/persona-library.ts —
+-- kör supabase/personas_seed.sql efter denna fil för att synka.
 INSERT INTO public.personas (name, description, avatar, age_min, age_max, life_stage, income_level, location, traits, goals, pain_points, interests, products_interested, digital_maturity, channel_preference, system_prompt, response_style, is_default, is_active)
 VALUES
 (

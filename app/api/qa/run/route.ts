@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { RunQARequestSchema } from "@/lib/qa/types";
+import { RunQARequestSchema, type RunQARequest } from "@/lib/qa/types";
 import { runQAGate } from "@/lib/qa/gate";
 
 // QA gate dispatches 4 LLM calls in parallel (~5-10s wall clock).
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         user_id: "default-user",
         creative_kind: parsed.data.creative_kind,
         creative_ref: parsed.data.creative_ref,
-        creative_metadata: parsed.data.metadata ?? {},
+        creative_metadata: stripInlineImages(parsed.data.metadata ?? {}),
         status: "running",
       })
       .select()
@@ -87,4 +87,16 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+// Base64-bilder hör inte hemma i qa_runs — spara bara en markör.
+function stripInlineImages(
+  metadata: NonNullable<RunQARequest["metadata"]>
+): NonNullable<RunQARequest["metadata"]> {
+  const strip = (src: string) => (src.startsWith("data:") ? "[inline-bild]" : src);
+  return {
+    ...metadata,
+    image_url: metadata.image_url ? strip(metadata.image_url) : undefined,
+    frame_urls: metadata.frame_urls?.map(strip),
+  };
 }

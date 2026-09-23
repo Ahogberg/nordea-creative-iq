@@ -75,6 +75,8 @@ export const PERSONA_PRODUCT_RELEVANCE: Record<string, ProductCategory[]> = {
   'Spararen': ['savings', 'pension', 'insurance'],
   'Familjeföräldern': ['mortgage', 'savings', 'insurance', 'loans'],
   'Pensionsspararen': ['pension', 'savings', 'insurance'],
+  'Företagaren': ['business', 'loans', 'cards'],
+  'Studenten': ['savings', 'cards'],
 };
 
 // ---------------------------------------------------------------------------

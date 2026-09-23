@@ -22,15 +22,21 @@ export interface PersonaScore {
   trust_score: number; // 0-10
   click_intent: number; // 0-100 (%)
   reaction_quote: string;
+  /** Vad personan såg först — endast när bild/bildrutor skickades med. */
+  first_noticed?: string;
   objections: string[];
   suggestions: string[];
   weighted_score: number; // 0-100
 }
 
+/** Vad juryn faktiskt fick se: en bild, bildrutor ur en video, eller bara copy. */
+export type VisualInput = "image" | "frames" | "none";
+
 export interface PersonaJuryResult {
   scores: PersonaScore[];
   aggregate_score: number; // 0-100
   selection_method: "all" | "product-targeted" | "manual";
+  visual_input?: VisualInput;
 }
 
 // ── ToV ──
@@ -136,7 +142,10 @@ export const RunQARequestSchema = z.object({
       body: z.string().optional(),
       cta: z.string().optional(),
       video_url: z.string().optional(),
+      // Bild som juryn ser: data-URL, https-URL eller sökväg under /public.
       image_url: z.string().optional(),
+      // Bildrutor ur en video (samma format), används om image_url saknas.
+      frame_urls: z.array(z.string()).max(8).optional(),
       duration_s: z.number().optional(),
       template_id: z.string().optional(),
       production_job_id: z.string().optional(),

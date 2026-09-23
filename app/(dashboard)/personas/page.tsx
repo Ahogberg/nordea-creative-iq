@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2, X, Loader2, Search, MessageCircle, Target, AlertCircle, Sparkles, ChevronRight, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { defaultPersonas } from '@/lib/constants/personas';
 import { PERSONA_LIBRARY, type PersonaProfile } from '@/lib/persona-library';
 import { PersonaImage } from '@/components/ui/persona-image';
 import type { Persona, PersonaInsert } from '@/types/database';
@@ -84,13 +83,13 @@ export default function PersonasPage() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      setPersonas(defaultPersonas.map((p, i) => ({ ...p, id: `default-${i}`, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })));
+      setPersonas([]);
       setLoading(false);
       return;
     }
     const { data, error } = await supabase.from('personas').select('*').or(`user_id.eq.${user.id},is_default.eq.true`).order('is_default', { ascending: false }).order('created_at', { ascending: true });
     if (error || !data || data.length === 0) {
-      setPersonas(defaultPersonas.map((p, i) => ({ ...p, id: `default-${i}`, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })));
+      setPersonas([]);
     } else {
       setPersonas(data as Persona[]);
     }
@@ -137,19 +136,31 @@ export default function PersonasPage() {
     setChatMessages([{ role: 'persona', content: `Hej! Jag är ${persona.name}. ${persona.quote} Vad vill du veta?` }]);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!chatInput.trim() || !selectedLibraryPersona) return;
-    setChatMessages(prev => [...prev, { role: 'user', content: chatInput }]); setChatInput('');
-    const p = selectedLibraryPersona;
-    setTimeout(() => {
-      const responses = [
-        `Som ${p.shortName.toLowerCase()} tycker jag det beror på presentationen. ${p.painPoints[0]} är något jag tänker på.`,
-        `Bra fråga! Det handlar om ${p.goals[0].toLowerCase()} för mig. Om annonsen adresserar det fångar ni min uppmärksamhet.`,
-        `Jag är lite ${p.responseStyle === 'skeptical' ? 'skeptisk' : p.responseStyle === 'curious' ? 'nyfiken' : 'neutral'}. Men visa att ni förstår att ${p.painPoints[1]?.toLowerCase() || p.painPoints[0].toLowerCase()}, då lyssnar jag.`,
-      ];
-      setChatMessages(prev => [...prev, { role: 'persona', content: responses[Math.floor(Math.random() * responses.length)] }]);
-    }, 1000);
+    const message = chatInput;
+    const history = chatMessages;
+    setChatMessages(prev => [...prev, { role: 'user', content: message }]); setChatInput('');
+    try {
+      const res = await fetch('/api/persona-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          personaId: selectedLibraryPersona.id,
+          personaName: selectedLibraryPersona.shortName,
+          messages: history.map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
+          newMessage: message,
+        }),
+      });
+      const data = await res.json();
+      setChatMessages(prev => [...prev, { role: 'persona', content: data.reply || 'Kunde inte svara.' }]);
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'persona', content: 'Något gick fel — försök igen.' }]);
+    }
   };
+
+  // Standardpersonas visas i biblioteket; här listas bara egna.
+  const customPersonas = personas.filter((p) => !p.is_default);
 
   const filteredLibraryPersonas = PERSONA_LIBRARY.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.shortName.toLowerCase().includes(searchQuery.toLowerCase()) || p.traits.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -162,14 +173,14 @@ export default function PersonasPage() {
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Personas</h1>
-          <p className="text-gray-700">{PERSONA_LIBRARY.length} fördefinierade + {personas.length} anpassade kundprofiler</p>
+          <p className="text-gray-700">{PERSONA_LIBRARY.length} fördefinierade + {customPersonas.length} anpassade kundprofiler</p>
         </div>
         <button onClick={openCreate} className="btn-primary"><Plus className="w-4 h-4" /> Skapa persona</button>
       </div>
 
       <div className="tabs-list mb-6">
         <button onClick={() => setShowLibrary(true)} className={`tab-trigger ${showLibrary ? 'active' : ''}`}>Persona Library</button>
-        <button onClick={() => setShowLibrary(false)} className={`tab-trigger ${!showLibrary ? 'active' : ''}`}>Mina personas ({personas.length})</button>
+        <button onClick={() => setShowLibrary(false)} className={`tab-trigger ${!showLibrary ? 'active' : ''}`}>Mina personas ({customPersonas.length})</button>
       </div>
 
       {showLibrary && (
@@ -235,17 +246,16 @@ export default function PersonasPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {personas.map((persona) => (
+          {customPersonas.map((persona) => (
             <div key={persona.id} className="glass-card">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3"><PersonaImage name={persona.name} size="md" /><div><h3 className="font-medium text-gray-900 text-sm">{persona.name}</h3><p className="text-xs text-gray-500">{persona.age_min}-{persona.age_max} år</p></div></div>
-                {persona.is_default && <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700">Standard</span>}
               </div>
               {persona.description && <p className="text-sm text-gray-700 mb-3 line-clamp-2">{persona.description}</p>}
               <div className="flex flex-wrap gap-1 mb-4">{persona.traits?.slice(0, 2).map((t) => <span key={t} className="persona-trait">{t}</span>)}{persona.traits?.length > 2 && <span className="text-xs text-gray-500">+{persona.traits.length - 2}</span>}</div>
               <div className="flex gap-2">
                 <button className="btn-secondary flex-1 text-sm py-2" onClick={() => openEdit(persona)}><Pencil className="w-3 h-3" /> Redigera</button>
-                {!persona.is_default && <button className="btn-secondary text-sm py-2 text-nordea-accent-red" onClick={() => handleDelete(persona.id)}><Trash2 className="w-3 h-3" /></button>}
+                <button className="btn-secondary text-sm py-2 text-nordea-accent-red" onClick={() => handleDelete(persona.id)}><Trash2 className="w-3 h-3" /></button>
               </div>
             </div>
           ))}
