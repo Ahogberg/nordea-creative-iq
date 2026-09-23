@@ -82,15 +82,24 @@ export function Timeline() {
           const minWidth = 80;
 
           return (
-            <button
-              type="button"
+            // div + role="button": scenblocket innehåller en egen ta-bort-knapp,
+            // och <button> får inte ligga i <button>.
+            <div
+              role="button"
+              tabIndex={0}
               key={index}
               onClick={() => setSelectedScene(index)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedScene(index);
+                }
+              }}
               style={{
                 flex: `${duration} 1 ${minWidth}px`,
                 minWidth: `${minWidth}px`,
               }}
-              className={`relative h-16 rounded-lg p-2 text-left transition-all overflow-hidden ${
+              className={`relative h-16 rounded-lg p-2 text-left transition-all overflow-hidden cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-nordea-blue ${
                 isSelected
                   ? "ring-2 ring-nordea-blue ring-offset-2 ring-offset-white"
                   : "hover:ring-1 hover:ring-nordea-blue/30"
@@ -135,7 +144,7 @@ export function Timeline() {
                   )}
                 </div>
               </div>
-            </button>
+            </div>
           );
         })}
 

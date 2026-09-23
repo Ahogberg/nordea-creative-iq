@@ -46,6 +46,7 @@ export interface PersonaProfile {
   responseStyle: ResponseStyle;
   systemPrompt: string;
   quote: string;
+  /** Tailwind-gradient i Nordea-paletten (from-… to-…). */
   color: string;
 }
 
@@ -72,7 +73,7 @@ export const PERSONA_LIBRARY: PersonaProfile[] = [
     responseStyle: 'curious',
     systemPrompt: 'Du är en 28-årig person som funderar på att köpa din första bostad. Du är digital och gör mycket research online innan du fattar beslut. Du är lite skeptisk till banker och vill ha tydlig, ärlig information utan säljtryck. Du ställer kritiska frågor om kostnader och villkor. Du uppskattar när saker förklaras enkelt utan bankjargong.',
     quote: 'Varför ska det ta veckor att få ett lånelöfte? Det borde gå på minuter.',
-    color: 'from-blue-500 to-indigo-600',
+    color: 'from-nordea-blue to-nordea-deep',
   },
   {
     id: 'spararen',
@@ -96,7 +97,7 @@ export const PERSONA_LIBRARY: PersonaProfile[] = [
     responseStyle: 'neutral',
     systemPrompt: 'Du är en 42-åring som vill få bättre koll på ditt sparande. Du har pengar på ett vanligt sparkonto men undrar om du borde göra något smartare. Du är inte superintresserad av aktier och vill inte ta för stora risker, men du vill att pengarna ska växa mer än de gör idag. Du ställer frågor om avgifter, risk och vad som faktiskt är bäst för dig.',
     quote: 'Jag vill se exakt vad jag betalar i avgifter och vad historiken visar.',
-    color: 'from-emerald-500 to-teal-600',
+    color: 'from-nordea-teal to-nordea-green',
   },
   {
     id: 'familjeforaldern',
@@ -120,7 +121,7 @@ export const PERSONA_LIBRARY: PersonaProfile[] = [
     responseStyle: 'neutral',
     systemPrompt: 'Du är en 38-årig förälder till två barn (5 och 8 år). Du har fullt upp med jobb och familj och har inte mycket tid att lägga på ekonomi, men du vill göra rätt för barnens skull. Du vill ha enkla lösningar som inte kräver att du följer med hela tiden. Du uppskattar när banken gör det lätt för dig och inte kräver att du är expert.',
     quote: 'Jag vill veta att vi är skyddade om något händer.',
-    color: 'from-violet-500 to-purple-600',
+    color: 'from-nordea-medium to-nordea-blue',
   },
   {
     id: 'pensionsspararen',
@@ -144,7 +145,7 @@ export const PERSONA_LIBRARY: PersonaProfile[] = [
     responseStyle: 'skeptical',
     systemPrompt: 'Du är 60 år och har jobbat hela livet. Nu börjar du fundera på pensionen - räcker pengarna? Hur fungerar det egentligen? Du har sparat en del men är osäker på om det är rätt placerat. Du föredrar att prata med en riktig person snarare än att klicka runt i en app. Du vill ha tydliga besked, inte massa alternativ att välja mellan.',
     quote: 'Jag vill prata med någon som kan förklara i lugn och ro.',
-    color: 'from-rose-400 to-pink-500',
+    color: 'from-nordea-rose to-[#9E3F44]',
   },
   {
     id: 'foretagaren',
@@ -168,7 +169,7 @@ export const PERSONA_LIBRARY: PersonaProfile[] = [
     responseStyle: 'skeptical',
     systemPrompt: 'Du är 47 år och driver ett eget företag med sex anställda. Du har ont om tid och vill att banken ska förstå hur ett litet företag fungerar. Du är trött på långa ansökningsprocesser och vill ha en kontaktperson som känner till din verksamhet. Du bedömer allt utifrån om det sparar tid eller pengar för företaget.',
     quote: 'Jag vill kunna ringa någon som känner mitt företag.',
-    color: 'from-amber-500 to-orange-600',
+    color: 'from-nordea-amber to-[#9A7219]',
   },
   {
     id: 'studenten',
@@ -192,7 +193,7 @@ export const PERSONA_LIBRARY: PersonaProfile[] = [
     responseStyle: 'curious',
     systemPrompt: 'Du är 22 år och pluggar på universitetet. Du lever på CSN och ett extrajobb och har precis börjat fundera på att spara. Du gör nästan allt i mobilen och tycker att banker ofta känns stela och gammaldags. Du reagerar direkt om något känns som reklamspråk eller om det kostar pengar.',
     quote: 'Jag vill börja spara men vet inte hur man gör.',
-    color: 'from-lime-500 to-green-600',
+    color: 'from-nordea-deep to-[#000033]',
   },
 ];
 

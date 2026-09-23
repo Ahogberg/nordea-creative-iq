@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { validateNordeaEmail } from '@/lib/auth';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { LoginShowcase } from '@/components/brand/login-showcase';
+import { ArrowRight, Loader2 } from 'lucide-react';
 
 const DEMO_ENABLED = process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true';
 
@@ -79,101 +78,123 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-sm">
-        <div className="text-center mb-8">
-          <NordeaLogo className="mx-auto mb-4" />
-          <h1 className="text-xl font-semibold text-gray-900">CreativeIQ</h1>
-          <p className="text-sm text-gray-500 mt-1">Logga in för att fortsätta</p>
+    <div className="min-h-screen grid lg:grid-cols-[1.15fr_1fr] bg-white">
+      {/* Vänster: varumärke + vitrin */}
+      <div className="relative hidden lg:flex flex-col bg-nordea-blue text-white overflow-hidden">
+        <div className="absolute inset-0">
+          <LoginShowcase />
         </div>
+        <div className="relative z-10 px-12 pt-10">
+          <NordeaLogo variant="white" size={28} withProductName />
+        </div>
+        <div className="flex-1" />
+        <div className="relative z-10 px-12 pb-12 pt-24 bg-gradient-to-t from-nordea-blue via-nordea-blue/90 to-transparent">
+          <h2 className="nordea-display text-[40px] leading-[1.05] max-w-md text-white">
+            Från brief till godkänd annons.
+          </h2>
+          <p className="text-white/70 text-[15px] mt-3 max-w-md leading-relaxed">
+            Skapa on-brand annonser i volym, testa dem mot simulerade kunder och säkra compliance — innan de går ut.
+          </p>
+        </div>
+      </div>
 
-        {DEMO_ENABLED && (
-          <>
-            <Button
-              type="button"
-              onClick={handleDemoLogin}
-              className="w-full mb-6 bg-[#0000A0] hover:bg-[#000080]"
-            >
-              Logga in som demo-användare
-            </Button>
-
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-400">eller med Supabase</span>
-              </div>
-            </div>
-          </>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">E-postadress</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="din.email@nordea.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+      {/* Höger: formulär */}
+      <div className="flex items-center justify-center px-6 py-12 bg-nordea-bg lg:bg-white">
+        <div className="w-full max-w-sm">
+          <div className="lg:hidden mb-10">
+            <NordeaLogo size={28} withProductName />
           </div>
 
-          {mode !== 'magic' && (
-            <div className="space-y-2">
-              <Label htmlFor="password">Lösenord</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-          )}
+          <div className="nordea-eyebrow mb-2">Intern plattform · Nordea Marketing</div>
+          <h1 className="nordea-display text-3xl text-nordea-deep">
+            {mode === 'signup' ? 'Skapa konto' : mode === 'magic' ? 'Logga in med länk' : 'Välkommen tillbaka'}
+          </h1>
+          <p className="text-sm text-nordea-text-secondary mt-2 mb-8">
+            Endast för medarbetare med en @nordea.com-adress.
+          </p>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
-              {error}
-            </div>
-          )}
-
-          {message && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-600">
-              {message}
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            variant="outline"
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? 'Vänta...' : mode === 'signup' ? 'Skapa konto' : mode === 'magic' ? 'Skicka Magic Link' : 'Logga in med lösenord'}
-          </Button>
-        </form>
-
-        <div className="mt-4 text-center text-sm space-x-4">
-          {mode === 'login' && (
+          {DEMO_ENABLED && mode === 'login' && (
             <>
-              <button type="button" onClick={() => setMode('magic')} className="text-[#0000A0] hover:underline">
-                Magic link
+              <button type="button" onClick={handleDemoLogin} className="nordea-btn nordea-btn-cobalt nordea-btn-lg nordea-btn-full">
+                Fortsätt som demo-användare
+                <ArrowRight className="w-4 h-4" />
               </button>
-              <button type="button" onClick={() => setMode('signup')} className="text-[#0000A0] hover:underline">
-                Skapa konto
-              </button>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-nordea-hairline" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-nordea-bg lg:bg-white px-3 text-[11px] text-nordea-text-tertiary">eller med ditt konto</span>
+                </div>
+              </div>
             </>
           )}
-          {mode !== 'login' && (
-            <button type="button" onClick={() => setMode('login')} className="text-[#0000A0] hover:underline">
-              Tillbaka till login
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <label className="block">
+              <span className="nordea-eyebrow block mb-1.5">E-post</span>
+              <input
+                id="email"
+                type="email"
+                placeholder="fornamn.efternamn@nordea.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="nordea-input w-full h-11"
+              />
+            </label>
+
+            {mode !== 'magic' && (
+              <label className="block">
+                <span className="nordea-eyebrow block mb-1.5">Lösenord</span>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  className="nordea-input w-full h-11"
+                />
+              </label>
+            )}
+
+            {error && (
+              <div className="rounded-lg bg-nordea-rose-soft px-3 py-2.5 text-sm text-nordea-rose">{error}</div>
+            )}
+            {message && (
+              <div className="rounded-lg bg-nordea-green-soft px-3 py-2.5 text-sm text-nordea-green">{message}</div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`nordea-btn nordea-btn-lg nordea-btn-full disabled:opacity-60 ${DEMO_ENABLED ? 'nordea-btn-secondary' : 'nordea-btn-cobalt'}`}
+            >
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading ? 'Vänta…' : mode === 'signup' ? 'Skapa konto' : mode === 'magic' ? 'Skicka inloggningslänk' : 'Logga in'}
             </button>
-          )}
+          </form>
+
+          <div className="mt-5 flex justify-center gap-5 text-[13px]">
+            {mode === 'login' ? (
+              <>
+                <button type="button" onClick={() => setMode('magic')} className="text-nordea-blue hover:underline">
+                  Logga in med länk
+                </button>
+                <button type="button" onClick={() => setMode('signup')} className="text-nordea-blue hover:underline">
+                  Skapa konto
+                </button>
+              </>
+            ) : (
+              <button type="button" onClick={() => setMode('login')} className="text-nordea-blue hover:underline">
+                Tillbaka till inloggning
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
