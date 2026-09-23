@@ -15,6 +15,7 @@ import { MotionEditor } from "./motion-editor";
 import { BrandColorsEditor } from "./brand-colors-editor";
 import { AssetPicker, type PickedAsset } from "./asset-picker";
 import { VariantsPanel } from "./variants-panel";
+import { KeyframeEditor } from "./keyframe-editor";
 
 const TABS: Array<{ id: InspectorTab; label: string; icon: LucideIcon }> = [
   { id: "scene", label: "Scen", icon: SlidersHorizontal },
@@ -111,6 +112,11 @@ function InspectorBody({ tab }: { tab: InspectorTab }) {
           {selectedElementId && <SelectedElementPanel />}
           {scene && selectedSceneIndex !== null ? (
             <>
+              {scene.type === "canvas" && (scene.layers?.length ?? 0) > 0 && (
+                <Accordion title="Lager och keyframes" defaultOpen>
+                  <KeyframeEditor scene={scene} sceneIndex={selectedSceneIndex} />
+                </Accordion>
+              )}
               <Accordion title={`Scen ${selectedSceneIndex + 1}`} defaultOpen>
                 <ScenePropertyEditor scene={scene} index={selectedSceneIndex} />
               </Accordion>

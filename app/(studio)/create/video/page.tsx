@@ -7,6 +7,7 @@ import { StudioTopbar } from "@/components/studio/studio-topbar";
 import { ChatPanel } from "@/components/studio/chat-panel";
 import { Stage } from "@/components/studio/stage";
 import { SceneStrip } from "@/components/studio/scene-strip";
+import { LayerTracks } from "@/components/studio/layer-tracks";
 import { Inspector } from "@/components/studio/inspector";
 import { StudioPlayerProvider } from "@/components/studio/player-context";
 
@@ -32,17 +33,21 @@ function StudioPageInner() {
     void useStudioStore.getState().startFromPrompt(promptFromUrl);
   }, [promptFromUrl]);
 
-  // Markerar man ett element på videon öppnas scenens egenskaper.
-  useEffect(
-    () =>
-      useStudioStore.subscribe(
-        (s) => s.selectedElementId,
-        (id) => {
-          if (id) useStudioStore.getState().setInspectorTab("scene");
-        }
-      ),
-    []
-  );
+  // Markerar man ett element på videon eller en keyframe öppnas scenens egenskaper.
+  useEffect(() => {
+    const openScene = () => useStudioStore.getState().setInspectorTab("scene");
+    const offElement = useStudioStore.subscribe((s) => s.selectedElementId, (id) => id && openScene());
+    // Keyframes: bara på breda skärmar — på smala lägger sig panelen över
+    // lagerspåret och skymmer det man drar i.
+    const offKeyframe = useStudioStore.subscribe(
+      (s) => s.selectedKeyframe?.layerId ?? null,
+      (layerId) => layerId && window.matchMedia("(min-width: 1280px)").matches && openScene()
+    );
+    return () => {
+      offElement();
+      offKeyframe();
+    };
+  }, []);
 
   return (
     <StudioPlayerProvider>
@@ -52,6 +57,7 @@ function StudioPageInner() {
           <ChatPanel />
           <main className="flex-1 min-w-0 flex flex-col">
             <Stage />
+            <LayerTracks />
             <SceneStrip />
           </main>
           <Inspector />

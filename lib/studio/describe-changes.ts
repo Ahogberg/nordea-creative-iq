@@ -95,14 +95,13 @@ export function describeChanges(prev: VideoConfig, next: VideoConfig): string[] 
       out.push(`Scen ${i + 1}: ${sceneName(b)}`);
       continue;
     }
-    if (a.type === "canvas" && b.type === "canvas" && a.tsxCode !== b.tsxCode) {
-      out.push(`Animation scen ${i + 1}`);
-    }
+    const codeChanged = a.type === "canvas" && b.type === "canvas" && a.tsxCode !== b.tsxCode;
+    const timingChanged = a.type === "canvas" && b.type === "canvas" && !same(a.layers, b.layers);
+    if (codeChanged) out.push(`Animation scen ${i + 1}`);
+    if (timingChanged) out.push(`Timing scen ${i + 1}`);
     if (sceneHeadline(a) !== sceneHeadline(b)) out.push(`Text scen ${i + 1}`);
     else if (a.durationSeconds !== b.durationSeconds) out.push(`Längd scen ${i + 1}`);
-    else if (!(a.type === "canvas" && b.type === "canvas" && a.tsxCode !== b.tsxCode)) {
-      out.push(`Scen ${i + 1}`);
-    }
+    else if (!codeChanged && !timingChanged) out.push(`Scen ${i + 1}`);
   }
 
   // Dubbletter bort, högst sex etiketter.

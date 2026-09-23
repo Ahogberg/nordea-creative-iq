@@ -59,6 +59,22 @@ export function lintVideoConfig(config: VideoConfig): LintIssue[] {
     if (scene.type === "canvas" && scene.compileError) {
       issues.push({ id: `compile-${i}`, severity: "error", message: `Scen ${n}: animationen går inte att köra (${scene.compileError})` });
     }
+    if (scene.type === "canvas") {
+      const codeIds = [...(scene.tsxCode ?? "").matchAll(/<Layer\b[^>]*\bid=["'{]+([\w-]+)/g)].map((m) => m[1]);
+      const dataIds = (scene.layers ?? []).map((l) => l.id);
+      for (const id of dataIds.filter((d) => !codeIds.includes(d))) {
+        issues.push({ id: `layer-orphan-${i}-${id}`, severity: "warning", message: `Scen ${n}: keyframes för lagret "${id}" som inte finns i koden` });
+      }
+      for (const id of codeIds.filter((c) => !dataIds.includes(c))) {
+        issues.push({ id: `layer-static-${i}-${id}`, severity: "info", message: `Scen ${n}: lagret "${id}" saknar keyframes och står still` });
+      }
+      const late = (scene.layers ?? []).some((l) =>
+        Object.values(l.keyframes).some((frames) => (frames ?? []).some((k) => k.t < 0 || k.t > scene.durationSeconds))
+      );
+      if (late) {
+        issues.push({ id: `layer-time-${i}`, severity: "warning", message: `Scen ${n}: keyframes utanför scenens ${scene.durationSeconds} s` });
+      }
+    }
     const headline = headlineOf(scene);
     if (headline && stripRichText(headline).length > 70) {
       issues.push({ id: `long-${i}`, severity: "warning", message: `Scen ${n}: rubriken är lång (${stripRichText(headline).length} tecken)` });

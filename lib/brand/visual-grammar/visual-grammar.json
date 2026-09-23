@@ -956,7 +956,35 @@
             "description": "Hus och myntstapel på blå cirkel, ett mynt faller",
             "headline": "Spara **tid** eller\nspara **pengar?**",
             "illustrationLayout": "illustration-top",
-            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 10;\n  const coin = fall(frame, 20, 18, 240 * scale);\n  const lit = progress(frame, 50, 20);\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <Disc cx={width / 2} cy={height * 0.5} r={height * 0.42} />\n        <g transform={`translate(${width / 2 - u} ${height * 0.62})`}>\n          <IsoShadow x={1} y={1} r={1.8} unit={u} />\n          <IsoHouse x={0} y={0} unit={u} lit={lit} />\n          <IsoCoinStack x={3.2} y={0.8} count={4} unit={u} />\n          <g transform={`translate(0 ${coin.y})`} opacity={coin.opacity}><IsoCoin x={3.2} y={0.8} z={0.8} unit={u} /></g>\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}"
+            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 10;\n  const lit = progress(frame, 50, 20);\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <Disc cx={width / 2} cy={height * 0.5} r={height * 0.42} />\n        <g transform={`translate(${width / 2 - u} ${height * 0.62})`}>\n          <IsoShadow x={1} y={1} r={1.8} unit={u} />\n          <IsoHouse x={0} y={0} unit={u} lit={lit} />\n          <IsoCoinStack x={3.2} y={0.8} count={4} unit={u} />\n          <Layer id=\"mynt\"><IsoCoin x={3.2} y={0.8} z={0.8} unit={u} /></Layer>\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}",
+            "layers": [
+              {
+                "id": "mynt",
+                "name": "Mynt",
+                "keyframes": {
+                  "y": [
+                    {
+                      "t": 0.67,
+                      "v": -240
+                    },
+                    {
+                      "t": 1.27,
+                      "v": 0
+                    }
+                  ],
+                  "opacity": [
+                    {
+                      "t": 0.67,
+                      "v": 0
+                    },
+                    {
+                      "t": 0.9,
+                      "v": 1
+                    }
+                  ]
+                }
+              }
+            ]
           },
           {
             "type": "title",
@@ -1012,7 +1040,61 @@
             "description": "Korg där mynt faller ner",
             "headline": "Samla lån och krediter",
             "illustrationLayout": "illustration-top",
-            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 9;\n  const a = fall(frame, 18, 14, 260 * scale);\n  const b = fall(frame, 34, 20, 260 * scale);\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <g transform={`translate(${width / 2} ${height * 0.66})`}>\n          <IsoShadow x={0} y={0} r={1.7} unit={u} />\n          <IsoBox x={-1} y={-1} w={2} d={2} h={1.2} unit={u} colors={{ top: palette.electric, left: palette.mid, right: palette.sky }} />\n          <g transform={`translate(0 ${a.y})`} opacity={a.opacity}><IsoCoin x={0} y={0} z={1.3} unit={u} /></g>\n          <g transform={`translate(0 ${b.y})`} opacity={b.opacity * 0.6}><IsoCoin x={-0.6} y={0.5} z={1.9} unit={u} /></g>\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}"
+            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 9;\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <g transform={`translate(${width / 2} ${height * 0.66})`}>\n          <IsoShadow x={0} y={0} r={1.7} unit={u} />\n          <IsoBox x={-1} y={-1} w={2} d={2} h={1.2} unit={u} colors={{ top: palette.electric, left: palette.mid, right: palette.sky }} />\n          <Layer id=\"mynt1\"><IsoCoin x={0} y={0} z={1.3} unit={u} /></Layer>\n          <Layer id=\"mynt2\"><IsoCoin x={-0.6} y={0.5} z={1.9} unit={u} /></Layer>\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}",
+            "layers": [
+              {
+                "id": "mynt1",
+                "name": "Mynt 1",
+                "keyframes": {
+                  "y": [
+                    {
+                      "t": 0.6,
+                      "v": -260
+                    },
+                    {
+                      "t": 1.07,
+                      "v": 0
+                    }
+                  ],
+                  "opacity": [
+                    {
+                      "t": 0.6,
+                      "v": 0
+                    },
+                    {
+                      "t": 0.79,
+                      "v": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "mynt2",
+                "name": "Mynt 2",
+                "keyframes": {
+                  "y": [
+                    {
+                      "t": 1.13,
+                      "v": -260
+                    },
+                    {
+                      "t": 1.8,
+                      "v": 0
+                    }
+                  ],
+                  "opacity": [
+                    {
+                      "t": 1.13,
+                      "v": 0
+                    },
+                    {
+                      "t": 1.4,
+                      "v": 0.6
+                    }
+                  ]
+                }
+              }
+            ]
           },
           {
             "type": "canvas",
@@ -1020,7 +1102,61 @@
             "description": "Samma korg, nästa textkort",
             "headline": "och sänk din **månadskostnad**",
             "illustrationLayout": "illustration-top",
-            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 9;\n  const a = fall(frame, 18, 14, 260 * scale);\n  const b = fall(frame, 34, 20, 260 * scale);\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <g transform={`translate(${width / 2} ${height * 0.66})`}>\n          <IsoShadow x={0} y={0} r={1.7} unit={u} />\n          <IsoBox x={-1} y={-1} w={2} d={2} h={1.2} unit={u} colors={{ top: palette.electric, left: palette.mid, right: palette.sky }} />\n          <g transform={`translate(0 ${a.y})`} opacity={a.opacity}><IsoCoin x={0} y={0} z={1.3} unit={u} /></g>\n          <g transform={`translate(0 ${b.y})`} opacity={b.opacity * 0.6}><IsoCoin x={-0.6} y={0.5} z={1.9} unit={u} /></g>\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}"
+            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 9;\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <g transform={`translate(${width / 2} ${height * 0.66})`}>\n          <IsoShadow x={0} y={0} r={1.7} unit={u} />\n          <IsoBox x={-1} y={-1} w={2} d={2} h={1.2} unit={u} colors={{ top: palette.electric, left: palette.mid, right: palette.sky }} />\n          <Layer id=\"mynt1\"><IsoCoin x={0} y={0} z={1.3} unit={u} /></Layer>\n          <Layer id=\"mynt2\"><IsoCoin x={-0.6} y={0.5} z={1.9} unit={u} /></Layer>\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}",
+            "layers": [
+              {
+                "id": "mynt1",
+                "name": "Mynt 1",
+                "keyframes": {
+                  "y": [
+                    {
+                      "t": 0.6,
+                      "v": -260
+                    },
+                    {
+                      "t": 1.07,
+                      "v": 0
+                    }
+                  ],
+                  "opacity": [
+                    {
+                      "t": 0.6,
+                      "v": 0
+                    },
+                    {
+                      "t": 0.79,
+                      "v": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "mynt2",
+                "name": "Mynt 2",
+                "keyframes": {
+                  "y": [
+                    {
+                      "t": 1.13,
+                      "v": -260
+                    },
+                    {
+                      "t": 1.8,
+                      "v": 0
+                    }
+                  ],
+                  "opacity": [
+                    {
+                      "t": 1.13,
+                      "v": 0
+                    },
+                    {
+                      "t": 1.4,
+                      "v": 0.6
+                    }
+                  ]
+                }
+              }
+            ]
           },
           {
             "type": "terms",
@@ -1085,7 +1221,81 @@
             "description": "Buss och flygplan glider in",
             "headline": "Få **reseförsäkring**\nför familjen",
             "illustrationLayout": "illustration-top",
-            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 11;\n  const bus = slideAlongIso(frame, 8, 30, [5, 0, 0], u);\n  const plane = slideIn(frame, 24, 30, [-260 * scale, 120 * scale]);\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <g transform={`translate(${width / 2 - 2 * u} ${height * 0.56})`}>\n          <g transform={`translate(${bus.x} ${bus.y})`} opacity={bus.opacity}>\n            <IsoShadow x={2} y={0.6} r={1.6} unit={u} opacity={0.35} />\n            <IsoBox x={0} y={0} w={4} d={1.2} h={1.3} unit={u} />\n            {[0.4, 1.3, 2.2, 3.1].map((wx) => (\n              <IsoFaceRect key={wx} face=\"left\" at={1.2} a={[wx, wx + 0.6]} b={[0.6, 1.05]} unit={u} fill={palette.pale} />\n            ))}\n          </g>\n        </g>\n        <g transform={`translate(${width * 0.36 + plane.x} ${height * 0.2 + plane.y}) rotate(-28)`} opacity={plane.opacity}>\n          <ellipse cx={0} cy={0} rx={130 * scale} ry={22 * scale} fill={palette.sky} />\n          <polygon points={`${-10 * scale},0 ${40 * scale},${-95 * scale} ${70 * scale},${-95 * scale} ${40 * scale},0`} fill={palette.mid} />\n          <polygon points={`${-10 * scale},0 ${40 * scale},${95 * scale} ${70 * scale},${95 * scale} ${40 * scale},0`} fill={palette.pale} />\n          <polygon points={`${-110 * scale},0 ${-130 * scale},${-45 * scale} ${-105 * scale},${-45 * scale} ${-80 * scale},0`} fill={palette.mid} />\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}"
+            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 11;\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <g transform={`translate(${width / 2 - 2 * u} ${height * 0.56})`}>\n          <Layer id=\"buss\">\n            <IsoShadow x={2} y={0.6} r={1.6} unit={u} opacity={0.35} />\n            <IsoBox x={0} y={0} w={4} d={1.2} h={1.3} unit={u} />\n            {[0.4, 1.3, 2.2, 3.1].map((wx) => (\n              <IsoFaceRect key={wx} face=\"left\" at={1.2} a={[wx, wx + 0.6]} b={[0.6, 1.05]} unit={u} fill={palette.pale} />\n            ))}\n          </Layer>\n        </g>\n        <Layer id=\"flygplan\"><g transform={`translate(${width * 0.36} ${height * 0.2}) rotate(-28)`}>\n          <ellipse cx={0} cy={0} rx={130 * scale} ry={22 * scale} fill={palette.sky} />\n          <polygon points={`${-10 * scale},0 ${40 * scale},${-95 * scale} ${70 * scale},${-95 * scale} ${40 * scale},0`} fill={palette.mid} />\n          <polygon points={`${-10 * scale},0 ${40 * scale},${95 * scale} ${70 * scale},${95 * scale} ${40 * scale},0`} fill={palette.pale} />\n          <polygon points={`${-110 * scale},0 ${-130 * scale},${-45 * scale} ${-105 * scale},${-45 * scale} ${-80 * scale},0`} fill={palette.mid} />\n        </g></Layer>\n      </svg>\n    </AbsoluteFill>\n  );\n}",
+            "layers": [
+              {
+                "id": "buss",
+                "name": "Buss",
+                "keyframes": {
+                  "x": [
+                    {
+                      "t": 0.27,
+                      "v": 300
+                    },
+                    {
+                      "t": 1.27,
+                      "v": 0
+                    }
+                  ],
+                  "y": [
+                    {
+                      "t": 0.27,
+                      "v": 173
+                    },
+                    {
+                      "t": 1.27,
+                      "v": 0
+                    }
+                  ],
+                  "opacity": [
+                    {
+                      "t": 0.27,
+                      "v": 0
+                    },
+                    {
+                      "t": 0.77,
+                      "v": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "flygplan",
+                "name": "Flygplan",
+                "keyframes": {
+                  "x": [
+                    {
+                      "t": 0.8,
+                      "v": -260
+                    },
+                    {
+                      "t": 1.8,
+                      "v": 0
+                    }
+                  ],
+                  "y": [
+                    {
+                      "t": 0.8,
+                      "v": 120
+                    },
+                    {
+                      "t": 1.8,
+                      "v": 0
+                    }
+                  ],
+                  "opacity": [
+                    {
+                      "t": 0.8,
+                      "v": 0
+                    },
+                    {
+                      "t": 1.3,
+                      "v": 1
+                    }
+                  ]
+                }
+              }
+            ]
           },
           {
             "type": "terms",

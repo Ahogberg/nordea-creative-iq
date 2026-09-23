@@ -18,6 +18,7 @@ import type {
   LogoConfig,
   ElementTransform,
   SceneAsset,
+  MotionLayer,
 } from "@/lib/remotion/types";
 import {
   DEFAULT_VIDEO_CONFIG,
@@ -101,6 +102,13 @@ export interface ChatReview {
 
 export type InspectorTab = "scene" | "style" | "motion" | "assets" | "variants";
 
+/** Markerad keyframe i lagerspåret (alla egenskaper vid tiden t). */
+export interface SelectedKeyframe {
+  sceneIndex: number;
+  layerId: string;
+  t: number;
+}
+
 interface StudioState {
   config: VideoConfig;
 
@@ -116,6 +124,12 @@ interface StudioState {
   undoMessage: (id: string) => void;
   retryMessage: (id: string) => Promise<void>;
   clearChat: () => void;
+
+  // Lager och keyframes
+  selectedKeyframe: SelectedKeyframe | null;
+  selectKeyframe: (kf: SelectedKeyframe | null) => void;
+  /** Ändrar ett lager i en canvas-scen via en ren funktion (lib/studio/layer-edits). */
+  updateLayer: (sceneIndex: number, layerId: string, fn: (layer: MotionLayer) => MotionLayer) => void;
 
   selectedSceneIndex: number | null;
   previewKey: number;
@@ -216,6 +230,21 @@ export const useStudioStore = create<StudioState>()(
       }),
 
     clearChat: () => set({ messages: [] }),
+
+    selectedKeyframe: null,
+    selectKeyframe: (kf) => set({ selectedKeyframe: kf }),
+
+    updateLayer: (sceneIndex, layerId, fn) =>
+      set((state) => {
+        const scene = state.config.scenes[sceneIndex];
+        if (!scene || scene.type !== "canvas" || !scene.layers) return state;
+        const scenes = [...state.config.scenes];
+        scenes[sceneIndex] = {
+          ...scene,
+          layers: scene.layers.map((l) => (l.id === layerId ? fn(l) : l)),
+        };
+        return { config: { ...state.config, scenes } };
+      }),
     selectedSceneIndex: 0,
     previewKey: 0,
     isRendering: false,

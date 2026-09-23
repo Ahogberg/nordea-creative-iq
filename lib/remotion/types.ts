@@ -183,6 +183,32 @@ export interface HighlightNumberScene extends SceneBase {
 //  - "illustration-bottom": rubrik överst under loggan, illustration under
 export type CanvasLayout = "fill" | "illustration-top" | "illustration-bottom";
 
+// ── Lager och keyframes ──
+// Rörelse som data: canvas-koden ritar objekt inne i <Layer id="…">, och
+// scenens `layers` beskriver hur varje lager rör sig över tid. Då kan både
+// AI:n (med små patchar) och användaren (i lagerspåret) justera timing och
+// värden utan att koden skrivs om.
+export type LayerProperty = "x" | "y" | "scale" | "rotation" | "opacity";
+export type KeyframeEase = "linear" | "ease-out" | "ease-in" | "ease-in-out";
+
+export interface Keyframe {
+  /** Sekunder från scenens början. */
+  t: number;
+  /** x/y: px i 1080-bred designskala (skalas med formatet); scale: faktor;
+   *  rotation: grader; opacity: 0–1. */
+  v: number;
+  /** Kurvan fram till nästa keyframe. Standard "ease-out". */
+  ease?: KeyframeEase;
+}
+
+export interface MotionLayer {
+  /** Samma id som <Layer id="…"> i koden. */
+  id: string;
+  /** Visningsnamn i lagerspåret, t.ex. "Mynt". */
+  name: string;
+  keyframes: Partial<Record<LayerProperty, Keyframe[]>>;
+}
+
 export interface CanvasScene extends SceneBase {
   type: "canvas";
   // TSX source — AI-generated component body. Human-readable.
@@ -200,6 +226,8 @@ export interface CanvasScene extends SceneBase {
   illustrationLayout?: CanvasLayout;
   // Illustrationsytans höjd i procent av bildhöjden (standard 48).
   illustrationHeightPercent?: number;
+  // Rörelsen för lagren i koden (se MotionLayer).
+  layers?: MotionLayer[];
 }
 
 // Villkor eller räkneexempel: centrerad liten text, första raden i bold.

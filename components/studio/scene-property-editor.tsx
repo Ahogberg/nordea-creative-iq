@@ -431,7 +431,7 @@ function CanvasFields({ scene, index }: { scene: CanvasScene; index: number }) {
         </>
       )}
       <p className="text-xs text-nordea-text-tertiary py-1 italic">
-        Illustrationen och dess animation ändras via chatten.
+        Formerna ändras via chatten, rörelsen i lagerspåret under videon.
       </p>
     </>
   );

@@ -13,6 +13,7 @@ import {
 } from "remotion";
 import { colors, fonts, headlineScale, type SafeInsets } from "../styles";
 import { useSafeArea } from "../safe-area";
+import { Layer, LayersContext, useLayer } from "../layers";
 import * as animUtils from "../utils";
 import * as kit from "../illustration/toolkit";
 import type { CanvasScene as CanvasSceneProps, MotionConfig } from "../types";
@@ -79,6 +80,9 @@ const buildScope = () => ({
   bob: kit.bob,
   drawOn: kit.drawOn,
   transformAt: kit.transformAt,
+  // Lager: rörelsen står i scenens `layers` (keyframes), inte i koden.
+  Layer,
+  useLayer,
 });
 
 type ScopeRecord = ReturnType<typeof buildScope>;
@@ -123,6 +127,7 @@ export const CanvasSceneComponent: React.FC<{
   }, [scene.compiledJs]);
 
   const layout = scene.headline ? (scene.illustrationLayout ?? "illustration-top") : "fill";
+  const layers = useMemo(() => ({ layers: scene.layers ?? [], scale }), [scene.layers, scale]);
 
   let drawing: React.ReactNode;
   if (scene.compileError) {
@@ -139,7 +144,9 @@ export const CanvasSceneComponent: React.FC<{
     return (
       drawing ?? (
         <CanvasErrorBoundary scale={scale}>
-          {SceneComponent && <SceneComponent width={width} height={height} scale={scale} safe={safe} />}
+          <LayersContext.Provider value={layers}>
+            {SceneComponent && <SceneComponent width={width} height={height} scale={scale} safe={safe} />}
+          </LayersContext.Provider>
         </CanvasErrorBoundary>
       )
     );
@@ -165,9 +172,11 @@ export const CanvasSceneComponent: React.FC<{
       illustration={
         drawing ?? (
           <CanvasErrorBoundary scale={scale}>
-            {SceneComponent && (
-              <SceneComponent width={width} height={illustrationHeight} scale={scale} safe={NO_INSETS} />
-            )}
+            <LayersContext.Provider value={layers}>
+              {SceneComponent && (
+                <SceneComponent width={width} height={illustrationHeight} scale={scale} safe={NO_INSETS} />
+              )}
+            </LayersContext.Provider>
           </CanvasErrorBoundary>
         )
       }
