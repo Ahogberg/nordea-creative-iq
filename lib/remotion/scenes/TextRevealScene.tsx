@@ -51,7 +51,7 @@ export const TextRevealSceneComponent: React.FC<{
               endFrame={endFrame}
               fontSize={Math.round(56 * scale)}
               fontWeight={900}
-              color={isHighlighted ? colors.teal : theme.text}
+              color={isHighlighted ? colors.teal : theme.headline}
               mode={innerMode}
               delayBetween={m.text.delayBetween}
               useSpring={m.text.useSpring}

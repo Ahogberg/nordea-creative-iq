@@ -11,7 +11,8 @@ export type SceneType =
   | "split"
   | "highlight-number"
   | "lottie"
-  | "canvas";
+  | "canvas"
+  | "terms";
 
 // Transform applied to a draggable/resizable element on the canvas.
 // x/y are fractions of canvas width/height (0-1). scale is a multiplier
@@ -99,13 +100,20 @@ export interface SceneBase {
   assets?: SceneAsset[];
   // Sprint 11A: per-scene text animation override (falls back to motion config).
   textAnimation?: SceneTextAnimation;
+  // Rubrikfärg för just den här scenen (hex). Vinner över VideoConfig.headlineColor.
+  headlineColor?: string;
 }
+
+// Rubriker, underrubriker, rader och bildtexter får innehålla `**fet**`:
+// löptexten blir regular och det markerade bold (se rich-text.tsx).
 
 export interface TitleScene extends SceneBase {
   type: "title";
   headline: string;
   subtitle?: string;
   alignment?: "center" | "left";
+  // Kort turkos linje ovanför rubriken. Av som standard — Nordeas annonser har ingen.
+  accentLine?: boolean;
 }
 
 export interface CounterScene extends SceneBase {
@@ -169,6 +177,12 @@ export interface HighlightNumberScene extends SceneBase {
   accentColor?: string;
 }
 
+// Var illustrationen ligger när canvas-scenen har rubrik:
+//  - "fill": koden ritar hela ytan (standard, ingen rubrik renderas)
+//  - "illustration-top": illustration i mitten/övre delen, rubrik under
+//  - "illustration-bottom": rubrik överst under loggan, illustration under
+export type CanvasLayout = "fill" | "illustration-top" | "illustration-bottom";
+
 export interface CanvasScene extends SceneBase {
   type: "canvas";
   // TSX source — AI-generated component body. Human-readable.
@@ -179,6 +193,21 @@ export interface CanvasScene extends SceneBase {
   compileError?: string;
   // Short description of what the scene shows — used for UI labels
   description?: string;
+  // Illustrationsscen: rubrik + underrubrik renderas av scenen, koden ritar
+  // bara illustrationen i sin yta. Utan headline ritar koden hela bilden.
+  headline?: string;
+  subtitle?: string;
+  illustrationLayout?: CanvasLayout;
+  // Illustrationsytans höjd i procent av bildhöjden (standard 48).
+  illustrationHeightPercent?: number;
+}
+
+// Villkor eller räkneexempel: centrerad liten text, första raden i bold.
+// Konsumentverkets varning läggs via VideoConfig.legal.creditWarning.
+export interface TermsScene extends SceneBase {
+  type: "terms";
+  heading?: string;
+  body: string;
 }
 
 export interface LottieScene extends SceneBase {
@@ -209,7 +238,8 @@ export type Scene =
   | SplitScene
   | HighlightNumberScene
   | LottieScene
-  | CanvasScene;
+  | CanvasScene
+  | TermsScene;
 
 export interface LogoConfig {
   // Public/data URL of the uploaded logo image (PNG/SVG, ideally transparent)
@@ -267,6 +297,18 @@ export const DEFAULT_MOTION_CONFIG: MotionConfig = {
   numbers: { enabled: true, duration: 45 },
 };
 
+// Juridisk text som ligger över scenerna.
+export interface LegalConfig {
+  // En rad längst ned genom hela filmen, t.ex. "Investeringar innebär en risk."
+  riskNote?: string;
+  // Konsumentverkets varning ("Att låna kostar pengar! …") i ett vitt band
+  // nertill. Scenernas innehåll hålls ovanför bandet hela filmen.
+  creditWarning?: {
+    // När bandet tonar in (sekunder). Standard 0.
+    fromSeconds?: number;
+  };
+}
+
 export interface VideoConfig {
   id: string;
   title: string;
@@ -274,6 +316,10 @@ export interface VideoConfig {
   quality?: "hd" | "4k";
   backgroundColor: string;
   accentColor: string;
+  // Rubrikfärg för alla scener (hex), t.ex. persika "#FBD9CA" på blått.
+  // Ignoreras på scener där den ger för låg kontrast mot bakgrunden.
+  headlineColor?: string;
+  legal?: LegalConfig;
   scenes: Scene[];
   showLogo: boolean;
   logo?: LogoConfig;

@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { AbsoluteFill, Sequence } from "remotion";
+import { AbsoluteFill, Sequence, useCurrentFrame } from "remotion";
 import { colors, FORMAT_PRESETS } from "./styles";
 import type { VideoConfig, Scene, MotionConfig } from "./types";
 import { DEFAULT_MOTION_CONFIG } from "./types";
@@ -14,6 +14,8 @@ import { SplitSceneComponent } from "./scenes/SplitScene";
 import { HighlightNumberSceneComponent } from "./scenes/HighlightNumberScene";
 import { LottieSceneComponent } from "./scenes/LottieScene";
 import { CanvasSceneComponent } from "./scenes/CanvasScene";
+import { TermsSceneComponent } from "./scenes/TermsScene";
+import { LegalOverlay, legalReserve } from "./legal";
 
 import { SceneTransition } from "./animations/SceneTransition";
 import { LogoReveal } from "./animations/LogoReveal";
@@ -83,7 +85,16 @@ function renderScene(
     case "lottie":
       return <LottieSceneComponent scene={scene} width={width} />;
     case "canvas":
-      return <CanvasSceneComponent scene={scene} width={width} />;
+      return (
+        <CanvasSceneComponent
+          scene={scene}
+          width={width}
+          motion={motion}
+          durationFrames={durationFrames}
+        />
+      );
+    case "terms":
+      return <TermsSceneComponent scene={scene} width={width} durationFrames={durationFrames} />;
     default:
       return null;
   }
@@ -101,13 +112,28 @@ function computeSceneTimings(scenes: Scene[]) {
 }
 
 export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
+  const frame = useCurrentFrame();
   const format = FORMAT_PRESETS[config.format] || FORMAT_PRESETS.story;
-  const { width } = format;
+  const { width, height } = format;
   // Backward-compat: older templates without motion fall back to the default.
   const motion = config.motion ?? DEFAULT_MOTION_CONFIG;
   const timings = useMemo(() => computeSceneTimings(config.scenes), [config.scenes]);
   const background = config.backgroundColor || colors.nordeaBlue;
-  const rootTheme = themeFor(background);
+  const rootTheme = themeFor(background, config.headlineColor);
+  // En scen kan ha egen bakgrund och rubrikfärg — temat följer den.
+  const sceneTheme = (scene: Scene) =>
+    themeFor(scene.background ?? background, scene.headlineColor ?? config.headlineColor);
+
+  // Aktuell scen: loggan och riskraden byter färg med scenens bakgrund
+  // (vit logga på blått, blå på persika eller ljusblått).
+  const currentIndex = timings.findIndex(
+    (t) => frame >= t.startFrame && frame < t.startFrame + t.durationFrames
+  );
+  const currentScene = config.scenes[currentIndex >= 0 ? currentIndex : config.scenes.length - 1];
+  const currentTheme = currentScene ? sceneTheme(currentScene) : rootTheme;
+
+  // Juridisk text nertill: scenerna ritas ovanför den.
+  const reserve = legalReserve(config.legal, config.format, height);
 
   return (
     <SceneThemeContext.Provider value={rootTheme}>
@@ -121,8 +147,8 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
         const { startFrame, durationFrames } = timings[i];
         return (
           <Sequence key={i} from={startFrame} durationInFrames={durationFrames}>
-            {/* En scen kan ha egen bakgrund — temat följer den. */}
-            <SceneThemeContext.Provider value={themeFor(scene.background ?? background)}>
+            <SceneThemeContext.Provider value={sceneTheme(scene)}>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: reserve }}>
             <SceneTransition
               startFrame={0}
               endFrame={durationFrames}
@@ -133,21 +159,34 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
               {renderScene(scene, width, motion, durationFrames)}
               {renderSceneAssets(scene, width / 1080)}
             </SceneTransition>
+            </div>
             </SceneThemeContext.Provider>
           </Sequence>
         );
       })}
 
-      {config.showLogo && (
-        <LogoReveal
-          style={motion.logo.reveal}
-          src={config.logo?.url}
-          startFrame={0}
-          durationFrames={motion.logo.duration}
-          videoWidth={width}
-          transform={config.logo?.transform}
-          position="top-center"
+      {config.legal && (
+        <LegalOverlay
+          legal={config.legal}
+          format={config.format}
+          width={width}
+          height={height}
+          textColor={currentTheme.text}
         />
+      )}
+
+      {config.showLogo && (
+        <SceneThemeContext.Provider value={currentTheme}>
+          <LogoReveal
+            style={motion.logo.reveal}
+            src={config.logo?.url}
+            startFrame={0}
+            durationFrames={motion.logo.duration}
+            videoWidth={width}
+            transform={config.logo?.transform}
+            position="top-center"
+          />
+        </SceneThemeContext.Provider>
       )}
     </AbsoluteFill>
     </SceneThemeContext.Provider>

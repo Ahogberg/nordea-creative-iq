@@ -8,6 +8,8 @@ import {
   type VideoConfig,
 } from "@/lib/remotion/types";
 import { withVisualGrammar } from "@/lib/brand/visual-grammar";
+import { withMotionCapabilities } from "@/lib/remotion/prompt-capabilities";
+import { compileCanvasScenes } from "@/lib/remotion/compile";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -25,7 +27,9 @@ VideoConfig-schemat:
   "format": "story" | "feed" | "landscape" | "vertical",
   "backgroundColor": "#0000A0",  // eller "#FFFFFF" för ljus variant — text blir då automatiskt Nordea Blue
   "accentColor": "#40BFA3",
-  "scenes": [ ...3-5 scener... ],
+  "headlineColor"?: "#FBD9CA",
+  "legal"?: { "riskNote"?: "...", "creditWarning"?: { "fromSeconds"?: 0 } },
+  "scenes": [ ...2-4 scener... ],
   "showLogo": true,
   "totalDurationSeconds": <summan av durationSeconds>,
   "motion": {
@@ -37,17 +41,13 @@ VideoConfig-schemat:
   }
 }
 
-Scen-typer:
-- title:    { "type": "title", "durationSeconds": 2-3, "headline": "...", "subtitle"?: "...", "alignment"?: "center"|"left" }
-- counter:  { "type": "counter", "durationSeconds": 2-4, "label": "VERSALER", "fromValue": 0, "toValue": <tal>, "suffix"?: " kr" }
-- cta:      { "type": "cta", "durationSeconds": 2-3, "headline": "...", "buttonText": "VERSALER", "subtitle"?: "..." }
-- highlight-number: { "type": "highlight-number", "durationSeconds": 2-3, "number": "...", "label": "..." }
-- text-reveal: { "type": "text-reveal", "durationSeconds": 3-4, "lines": ["...","..."] }
+Scentyper: se SCENKATALOG nedan. Utgå från layout-arketyperna och rörelserecepten i NORDEAS VISUELLA GRAMMATIK längst ned när briefen inte säger något annat — egna idéer och fri animation (canvas) är välkomna inom varumärkets fasta ramar.
 
 REGLER:
-- Använd strategins big_idea som ledtanke för title-scen
+- Använd strategins big_idea som ledtanke för första scenen (illustrationsscen eller titel)
 - Plocka EN av strategins key_messages för rubriker (välj den som passar valt format bäst)
-- Använd EN av desired_action / CTAs som CTA-scen
+- Använd EN av desired_action som avslut: URL eller mjuk uppmaning i ett textkort (cta-scen bara om strategin kräver en knapp)
+- Kreditprodukter: legal.creditWarning och en terms-scen. Sparande: legal.riskNote.
 - Om recommended_formats finns: använd första format-värdet
 - totalDurationSeconds = exakt summan
 - Behåll Nordea brand-tone
@@ -82,8 +82,8 @@ export async function POST(
     } else {
       const response = await client.messages.create({
         model: CLAUDE_MODEL,
-        max_tokens: 4000,
-        system: withVisualGrammar(CONFIG_PROMPT),
+        max_tokens: 12000,
+        system: withVisualGrammar(withMotionCapabilities(CONFIG_PROMPT)),
         messages: [
           {
             role: "user",
@@ -110,7 +110,7 @@ export async function POST(
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON in Claude response");
 
-      config = JSON.parse(jsonMatch[0]) as VideoConfig;
+      config = await compileCanvasScenes(JSON.parse(jsonMatch[0]) as VideoConfig);
       if (!config.motion) config.motion = DEFAULT_MOTION_CONFIG;
       config.totalDurationSeconds = config.scenes.reduce(
         (sum, s) => sum + (s.durationSeconds || 0),

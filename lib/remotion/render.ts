@@ -13,6 +13,7 @@
 import path from "node:path";
 import fs from "node:fs/promises";
 import { bundle } from "@remotion/bundler";
+import { withProjectAliases } from "./webpack-override";
 import {
   renderMedia,
   selectComposition,
@@ -41,7 +42,7 @@ async function getBundle(): Promise<string> {
     bundlePromise = bundle({
       entryPoint: path.join(process.cwd(), "remotion", "index.ts"),
       publicDir: path.join(process.cwd(), "public"),
-      webpackOverride: (config) => config,
+      webpackOverride: withProjectAliases,
     });
   }
   return bundlePromise;

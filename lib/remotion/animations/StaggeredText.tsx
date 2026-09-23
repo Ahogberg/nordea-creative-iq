@@ -3,6 +3,14 @@ import { useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
 import type { StaggerMode } from "../types";
 import { NORDEA_EASING } from "./easing";
 import { SPRING_CONFIGS } from "./springs";
+import {
+  hasRichMarkup,
+  parseRichText,
+  renderRichTokens,
+  tokenizeRichText,
+  RICH_REGULAR_WEIGHT,
+  type RichToken,
+} from "../rich-text";
 
 export type { StaggerMode };
 
@@ -46,6 +54,10 @@ export const StaggeredText: React.FC<StaggeredTextProps> = ({
     extrapolateRight: "clamp",
   });
 
+  // `**fet**`-markup: löptext i regular, nyckelord i bold.
+  const rich = hasRichMarkup(text);
+  const baseWeight = rich ? RICH_REGULAR_WEIGHT : fontWeight;
+
   if (mode === "none") {
     const fadeIn = interpolate(frame, [startFrame, startFrame + 12], [0, 1], {
       extrapolateLeft: "clamp",
@@ -57,32 +69,28 @@ export const StaggeredText: React.FC<StaggeredTextProps> = ({
         style={{
           fontFamily,
           fontSize,
-          fontWeight,
+          fontWeight: baseWeight,
           color,
           textAlign,
           lineHeight,
           margin: 0,
           opacity: Math.min(fadeIn, fadeOut),
+          whiteSpace: "pre-line",
         }}
       >
-        {text}
+        {rich ? renderRichTokens(parseRichText(text)) : text}
       </p>
     );
   }
 
-  const tokens =
-    mode === "word"
-      ? text.split(" ")
-      : mode === "character"
-      ? Array.from(text)
-      : text.split("\n");
+  const tokens = tokenizeRichText(text, mode);
 
   return (
     <p
       style={{
         fontFamily,
         fontSize,
-        fontWeight,
+        fontWeight: baseWeight,
         color,
         textAlign,
         lineHeight,
@@ -109,7 +117,7 @@ export const StaggeredText: React.FC<StaggeredTextProps> = ({
 };
 
 interface TokenAnimProps {
-  token: string;
+  token: RichToken[];
   index: number;
   startFrame: number;
   delayBetween: number;
@@ -161,20 +169,28 @@ const TokenAnim: React.FC<TokenAnimProps> = ({
     });
   }
 
-  const separator =
-    mode === "word" && !isLast ? " " : mode === "line" && !isLast ? "\n" : "";
+  // Ord bär sitt eget mellanslag (tokenizeRichText). En radbrytning i slutet
+  // av ett ord läggs utanför spanen så att raden bryts i stycket.
+  const last = token[token.length - 1];
+  const endsWithNewline = mode === "word" && !!last && last.text.endsWith("\n");
+  const pieces = endsWithNewline
+    ? [...token.slice(0, -1), { ...last, text: last.text.replace(/\n$/, "") }]
+    : token;
+  const separator = (mode === "line" && !isLast) || endsWithNewline ? "\n" : "";
 
   return (
-    <span
-      style={{
-        display: "inline-block",
-        opacity,
-        transform: `translateY(${translateY}px)`,
-        whiteSpace: "pre",
-      }}
-    >
-      {token}
+    <>
+      <span
+        style={{
+          display: "inline-block",
+          opacity,
+          transform: `translateY(${translateY}px)`,
+          whiteSpace: "pre",
+        }}
+      >
+        {renderRichTokens(pieces)}
+      </span>
       {separator}
-    </span>
+    </>
   );
 };

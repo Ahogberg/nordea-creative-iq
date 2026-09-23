@@ -25,21 +25,50 @@
     "f8d59013-9c9e-4272-8845-f05415557c42"
   ],
   "summary": "Nordeas sociala videoannonser är korta (6–8 s, högst 15 s), lugna och byggda på enfärgad Nordea-blå (#0000A0) bakgrund med vit Nordea-logga som står helt stilla överst i mitten från första till sista rutan. Budskapet syns inom 0,5 s. Text kommer in som hela block med mjuk toning, aldrig ord för ord, alltid centrerad och i meningsversal, med nyckelorden i bold och resten i regular i samma storlek. Rubriker på blått sätts ofta i persika-/krämton (#FBD9CA–#FDEEEC) medan loggan är ren vit. Bilden är antingen en isometrisk illustration (ca 30°, cel-skuggning utan konturer, monokromt blå med persika som enda varma accent) där EN liten rörelse bär berättelsen (mynt faller, boll rullar, fordon glider in), eller en livsstilsfilm med blått end card. Copy är oftast fråga + svar eller en mening delad över två textkort. Ingen annons har CTA-knapp eller turkos; CTA är en URL i text eller en mjuk uppmaning. Kreditprodukter avslutas med räkneexempel och Konsumentverkets varningsband (vitt band, svart text, röd triangel).",
-
   "layout_archetypes": [
     {
       "id": "illustration-mitt-rubrik-under",
       "name": "Illustration i mitten, rubrik under",
       "description": "Enfärgad bakgrund (oftast Nordea-blå, ibland ljusblå #E5EFFB). Logga överst i mitten. En centrerad illustration tar ca 20–45 % av ytan (ca 15–65 % av höjden), ibland på en klarare blå cirkel. Rubriken i 1–2 rader centrerad under illustrationen (ca 63–82 % av höjden). Eventuell disclaimer i en rad längst ned eller som vitt varningsband.",
-      "aspect_ratios": ["1:1", "4:5", "9:16"],
-      "zones": [
-        { "element": "logo", "position": "top-center", "approx_area_pct": 3 },
-        { "element": "illustration", "position": "center", "approx_area_pct": 35 },
-        { "element": "headline", "position": "bottom-center", "approx_area_pct": 8 },
-        { "element": "disclaimer", "position": "bottom-center", "approx_area_pct": 3, "notes": "En rad ('Investeringar innebär en risk.') eller vitt varningsband på ca 20–27 % för kreditprodukter." }
+      "aspect_ratios": [
+        "1:1",
+        "4:5",
+        "9:16"
       ],
-      "best_for": ["sparande", "lån", "bolån", "förmåner", "förklara en produkt med en symbol"],
-      "scene_types": ["lottie", "title"],
+      "zones": [
+        {
+          "element": "logo",
+          "position": "top-center",
+          "approx_area_pct": 3
+        },
+        {
+          "element": "illustration",
+          "position": "center",
+          "approx_area_pct": 35
+        },
+        {
+          "element": "headline",
+          "position": "bottom-center",
+          "approx_area_pct": 8
+        },
+        {
+          "element": "disclaimer",
+          "position": "bottom-center",
+          "approx_area_pct": 3,
+          "notes": "En rad ('Investeringar innebär en risk.') eller vitt varningsband på ca 20–27 % för kreditprodukter."
+        }
+      ],
+      "best_for": [
+        "sparande",
+        "lån",
+        "bolån",
+        "förmåner",
+        "förklara en produkt med en symbol"
+      ],
+      "scene_types": [
+        "canvas",
+        "title"
+      ],
       "evidence": [
         "f8d59013-9c9e-4272-8845-f05415557c42",
         "94e1b8a6-7e9e-4369-9bbf-b8579fd1f5c5",
@@ -53,15 +82,43 @@
       "id": "rubrik-over-bild",
       "name": "Rubrik överst, bild under",
       "description": "Enfärgad Nordea-blå. Logga överst i mitten, rubrik (+ ev. underrubrik) direkt under loggan (ca 22–41 % av höjden) och bildobjektet under rubriken: utskurna produktbilder (kreditkort som solfjäder) eller en platt illustration (golfhål). Används som öppningsscen.",
-      "aspect_ratios": ["1:1", "4:5", "9:16"],
-      "zones": [
-        { "element": "logo", "position": "top-center", "approx_area_pct": 3 },
-        { "element": "headline", "position": "top-center", "approx_area_pct": 8 },
-        { "element": "subline", "position": "top-center", "approx_area_pct": 3 },
-        { "element": "photo", "position": "bottom-center", "approx_area_pct": 30, "notes": "Utskuren produkt med mjuk skugga, eller illustration." }
+      "aspect_ratios": [
+        "1:1",
+        "4:5",
+        "9:16"
       ],
-      "best_for": ["kreditkort", "produktlansering", "förmån kopplad till en produkt"],
-      "scene_types": ["lottie", "title"],
+      "zones": [
+        {
+          "element": "logo",
+          "position": "top-center",
+          "approx_area_pct": 3
+        },
+        {
+          "element": "headline",
+          "position": "top-center",
+          "approx_area_pct": 8
+        },
+        {
+          "element": "subline",
+          "position": "top-center",
+          "approx_area_pct": 3
+        },
+        {
+          "element": "photo",
+          "position": "bottom-center",
+          "approx_area_pct": 30,
+          "notes": "Utskuren produkt med mjuk skugga, eller illustration."
+        }
+      ],
+      "best_for": [
+        "kreditkort",
+        "produktlansering",
+        "förmån kopplad till en produkt"
+      ],
+      "scene_types": [
+        "canvas",
+        "title"
+      ],
       "evidence": [
         "7711d667-f7d0-4741-853f-92c5e77617a8",
         "8a639c36-8e4a-44fa-8aa3-7f96dd214d59",
@@ -74,15 +131,42 @@
       "id": "typografisk-fraga-med-stapelmonster",
       "name": "Typografisk fråga med stapelmönster",
       "description": "Ingen bild. En kort fråga centrerad i stort fett snitt (ca 7–8 % av höjden) på enfärgad bakgrund. Nordeas stapelmönster (4–5 rundade vertikala staplar av olika höjd, som en ljudvåg) ligger nere till vänster och skärs av vänster- och nederkanten. Mönstret är Nordea-blått på ljus bakgrund eller klarare blått (#0200ED) på Nordea-blå.",
-      "aspect_ratios": ["1:1", "4:5"],
-      "zones": [
-        { "element": "logo", "position": "top-center", "approx_area_pct": 3 },
-        { "element": "headline", "position": "center", "approx_area_pct": 14 },
-        { "element": "subline", "position": "center", "approx_area_pct": 7 },
-        { "element": "pattern", "position": "bottom-left", "approx_area_pct": 12 }
+      "aspect_ratios": [
+        "1:1",
+        "4:5"
       ],
-      "best_for": ["bolån", "ränta", "ordlek", "kampanj utan bildmaterial"],
-      "scene_types": ["title", "text-reveal"],
+      "zones": [
+        {
+          "element": "logo",
+          "position": "top-center",
+          "approx_area_pct": 3
+        },
+        {
+          "element": "headline",
+          "position": "center",
+          "approx_area_pct": 14
+        },
+        {
+          "element": "subline",
+          "position": "center",
+          "approx_area_pct": 7
+        },
+        {
+          "element": "pattern",
+          "position": "bottom-left",
+          "approx_area_pct": 12
+        }
+      ],
+      "best_for": [
+        "bolån",
+        "ränta",
+        "ordlek",
+        "kampanj utan bildmaterial"
+      ],
+      "scene_types": [
+        "title",
+        "text-reveal"
+      ],
       "evidence": [
         "76b3ac7a-2fb2-4720-9a08-0a17ed7f08ed",
         "85b1de33-1ee6-4150-8b55-3c29f8c14bd9"
@@ -92,17 +176,52 @@
       "id": "helbildsfilm-rubrik-nedre-tredjedel",
       "name": "Helbildsfilm med rubrik i nedre tredjedelen",
       "description": "Utfallande livsstilsfilm/foto med långsam push-in. Vit logga överst i mitten, blått stapelmönster vid vänsterkanten (skuret av kanten), vit rubrik (bold + regular) och underrubrik centrerade i nedre tredjedelen direkt på bilden utan platta. En vit strålkrans pulserar runt produkten. Följs alltid av ett blått textkort (se centrerat-textkort).",
-      "aspect_ratios": ["1:1", "4:5", "9:16"],
-      "zones": [
-        { "element": "photo", "position": "full-bleed", "approx_area_pct": 100 },
-        { "element": "logo", "position": "top-center", "approx_area_pct": 2 },
-        { "element": "pattern", "position": "middle-left", "approx_area_pct": 7 },
-        { "element": "icon", "position": "center", "approx_area_pct": 4, "notes": "Vit strålkrans runt produkten ('tap'/kontaktlös)." },
-        { "element": "headline", "position": "bottom-center", "approx_area_pct": 7 },
-        { "element": "subline", "position": "bottom-center", "approx_area_pct": 2 }
+      "aspect_ratios": [
+        "1:1",
+        "4:5",
+        "9:16"
       ],
-      "best_for": ["livsstilsprodukter", "barn och familj", "produkt i användning"],
-      "scene_types": ["title"],
+      "zones": [
+        {
+          "element": "photo",
+          "position": "full-bleed",
+          "approx_area_pct": 100
+        },
+        {
+          "element": "logo",
+          "position": "top-center",
+          "approx_area_pct": 2
+        },
+        {
+          "element": "pattern",
+          "position": "middle-left",
+          "approx_area_pct": 7
+        },
+        {
+          "element": "icon",
+          "position": "center",
+          "approx_area_pct": 4,
+          "notes": "Vit strålkrans runt produkten ('tap'/kontaktlös)."
+        },
+        {
+          "element": "headline",
+          "position": "bottom-center",
+          "approx_area_pct": 7
+        },
+        {
+          "element": "subline",
+          "position": "bottom-center",
+          "approx_area_pct": 2
+        }
+      ],
+      "best_for": [
+        "livsstilsprodukter",
+        "barn och familj",
+        "produkt i användning"
+      ],
+      "scene_types": [
+        "title"
+      ],
       "evidence": [
         "307740cc-b6e4-4876-af5f-ef5c00f1d765",
         "6b8c07f2-ef6d-40cc-a8ee-e73608348b82",
@@ -116,14 +235,38 @@
       "id": "centrerat-textkort",
       "name": "Centrerat textkort (svar / end card)",
       "description": "Andra scenen i de flesta annonser: enfärgad yta (Nordea-blå, eller persika med blå text och blå logga), loggan kvar på exakt samma plats, ett centrerat textblock i 2–4 rader strax ovanför eller kring mitten med nyckelord i bold, och ev. URL i mindre regular under. Inga bilder.",
-      "aspect_ratios": ["1:1", "4:5", "9:16"],
-      "zones": [
-        { "element": "logo", "position": "top-center", "approx_area_pct": 3 },
-        { "element": "body", "position": "center", "approx_area_pct": 12 },
-        { "element": "cta", "position": "center", "approx_area_pct": 3, "notes": "URL som text, t.ex. 'nordea.se/betalarmband'. Ingen knapp." }
+      "aspect_ratios": [
+        "1:1",
+        "4:5",
+        "9:16"
       ],
-      "best_for": ["svar på frågan i scen 1", "extra fördel ('Dessutom …')", "URL-avslut"],
-      "scene_types": ["title", "text-reveal"],
+      "zones": [
+        {
+          "element": "logo",
+          "position": "top-center",
+          "approx_area_pct": 3
+        },
+        {
+          "element": "body",
+          "position": "center",
+          "approx_area_pct": 12
+        },
+        {
+          "element": "cta",
+          "position": "center",
+          "approx_area_pct": 3,
+          "notes": "URL som text, t.ex. 'nordea.se/betalarmband'. Ingen knapp."
+        }
+      ],
+      "best_for": [
+        "svar på frågan i scen 1",
+        "extra fördel ('Dessutom …')",
+        "URL-avslut"
+      ],
+      "scene_types": [
+        "title",
+        "text-reveal"
+      ],
       "evidence": [
         "307740cc-b6e4-4876-af5f-ef5c00f1d765",
         "cd7057b4-1ee7-4bb3-8c0b-820064321c36",
@@ -137,14 +280,37 @@
       "id": "villkor-med-varningsband",
       "name": "Villkor/räkneexempel med konsumentkreditvarning",
       "description": "Sista scenen för kreditprodukter. Villkor eller räkneexempel centrerat i vit, liten regular (första raden bold) på Nordea-blå. För konsumentkrediter ett vitt band över nedre ca 18–27 % med mörkröd varningstriangel och svart text 'Att låna kostar pengar! …'. I 1:1/4:5 står triangeln till vänster om texten, i 9:16 ovanför. Bandet kan ligga kvar över flera scener.",
-      "aspect_ratios": ["1:1", "4:5", "9:16"],
-      "zones": [
-        { "element": "logo", "position": "top-center", "approx_area_pct": 3 },
-        { "element": "disclaimer", "position": "center", "approx_area_pct": 20 },
-        { "element": "disclaimer", "position": "bottom-center", "approx_area_pct": 22, "notes": "Konsumentverkets varning: vitt band, svart text, röd triangel." }
+      "aspect_ratios": [
+        "1:1",
+        "4:5",
+        "9:16"
       ],
-      "best_for": ["kreditkort", "privatlån", "bolån (räkneexempel utan varningsband)"],
-      "scene_types": ["title"],
+      "zones": [
+        {
+          "element": "logo",
+          "position": "top-center",
+          "approx_area_pct": 3
+        },
+        {
+          "element": "disclaimer",
+          "position": "center",
+          "approx_area_pct": 20
+        },
+        {
+          "element": "disclaimer",
+          "position": "bottom-center",
+          "approx_area_pct": 22,
+          "notes": "Konsumentverkets varning: vitt band, svart text, röd triangel."
+        }
+      ],
+      "best_for": [
+        "kreditkort",
+        "privatlån",
+        "bolån (räkneexempel utan varningsband)"
+      ],
+      "scene_types": [
+        "terms"
+      ],
       "evidence": [
         "7711d667-f7d0-4741-853f-92c5e77617a8",
         "8a639c36-8e4a-44fa-8aa3-7f96dd214d59",
@@ -155,7 +321,6 @@
       ]
     }
   ],
-
   "color_rules": [
     {
       "rule": "Bakgrunden är enfärgad Nordea-blå #0000A0 i nästan alla scener. Inga gradienter och inga texturer på bakgrunden.",
@@ -247,7 +412,6 @@
       ]
     }
   ],
-
   "typography_rules": [
     {
       "rule": "Blanda vikter i samma rubrik: löptext i regular, nyckelordet/produktnamnet i bold, samma storlek och färg (t.ex. 'Spara **tid** eller spara **pengar?**', 'Få **reseförsäkring** för familjen').",
@@ -306,17 +470,39 @@
       ]
     }
   ],
-
   "illustration_style": {
     "summary": "Isometrisk projektion (ca 30°) med cel-skuggning: varje yta har en platt ton, 2–3 blå toner per objekt (ljus ovansida, mellan- och mörk sida), inga konturer och mjuk mörkblå slagskugga. Monokromt blå skala med persika som enda varma accent. Låg–medel detaljnivå, rundade hörn, inga människor. Objekten svävar fritt på den enfärgade bakgrunden, ensamma eller som ett centrerat kluster (ibland på en klarare blå cirkel). En enstaka liten rörelse ger liv: mynt som faller, pilar som sjunker, fordon som glider längs de isometriska axlarna, fönster som tänds. Platta, icke-isometriska varianter (golfhål, färgburk, pensel) följer samma palett och konturlösa stil.",
     "projection": "isometric",
     "angle_deg": 30,
     "shading": "cel",
     "outline": "none",
-    "palette": ["#0000A0", "#0300ED", "#1A1AF0", "#3D9BF5", "#9ECAF9", "#A5CEFC", "#FFFFFF", "#FBD9CA", "#00007A"],
+    "palette": [
+      "#0000A0",
+      "#0300ED",
+      "#1A1AF0",
+      "#3D9BF5",
+      "#9ECAF9",
+      "#A5CEFC",
+      "#FFFFFF",
+      "#FBD9CA",
+      "#00007A"
+    ],
     "detail_level": "low",
     "people": "none",
-    "recurring_motifs": ["hus med sadeltak", "mynt och myntstaplar", "spargris", "varukorg", "pilar nedåt", "pajdiagram", "pengasäck", "barnvagn", "granar", "flygplan, tåg och buss", "golfboll och hål", "färgburk och pensel"],
+    "recurring_motifs": [
+      "hus med sadeltak",
+      "mynt och myntstaplar",
+      "spargris",
+      "varukorg",
+      "pilar nedåt",
+      "pajdiagram",
+      "pengasäck",
+      "barnvagn",
+      "granar",
+      "flygplan, tåg och buss",
+      "golfboll och hål",
+      "färgburk och pensel"
+    ],
     "do": [
       "Håll dig till blå toner och låt persika markera det viktigaste objektet",
       "Platta ytor med 2–3 toner per objekt och tydlig ljus ovansida",
@@ -341,7 +527,6 @@
       "9035e2f3-1d6d-445c-93f7-5717fcf0196d"
     ]
   },
-
   "photography_style": {
     "summary": "Livsstilsfilm där produkten används i vardagen: närbild på produkten i skarp fokus, personen sedd bakifrån eller med ansiktet utanför fokus. Starkt, varmt naturligt solljus med hårda skuggor och grunt skärpedjup, ton-i-ton-styling (pastellrosa eller salviagrön) och långsam push-in. Vit text ligger direkt på bilden utan platta. Grafiska lager ovanpå: blått stapelmönster vid vänsterkanten och en vit pulserande strålkrans runt produkten. Filmen följs alltid av ett enfärgat blått textkort. Produktbilder (kreditkort) visas som utskurna renderingar med mjuk skugga på blått.",
     "do": [
@@ -367,7 +552,6 @@
       "8a639c36-8e4a-44fa-8aa3-7f96dd214d59"
     ]
   },
-
   "motion_recipes": [
     {
       "id": "illustration-fraga-svar",
@@ -375,14 +559,33 @@
       "description": "Scen 1: illustration + fråga eller första halvan av en mening, allt på plats inom 0,5 s; en liten loopande rörelse i illustrationen. Scen 2 (från ca 3,5 s): svaret som centrerat textkort. Logga och bakgrund konstanta; text tonar in som hela block.",
       "when_to_use": "Standard för grafisk bakgrund: sparande, lån, bolån och förmåner som kan symboliseras med ett objekt",
       "motion": {
-        "logo": { "reveal": "none", "duration": 1 },
-        "text": { "stagger": "none", "delayBetween": 0, "useSpring": false },
-        "cta": { "reveal": "fade", "spring": "gentle" },
-        "transitions": { "style": "crossfade", "duration": 15 },
-        "numbers": { "enabled": false, "duration": 45 }
+        "logo": {
+          "reveal": "none",
+          "duration": 1
+        },
+        "text": {
+          "stagger": "none",
+          "delayBetween": 0,
+          "useSpring": false
+        },
+        "cta": {
+          "reveal": "fade",
+          "spring": "gentle"
+        },
+        "transitions": {
+          "style": "crossfade",
+          "duration": 15
+        },
+        "numbers": {
+          "enabled": false,
+          "duration": 45
+        }
       },
       "text_animation": "fade-up",
-      "scene_sequence": ["lottie", "title"],
+      "scene_sequence": [
+        "canvas",
+        "title"
+      ],
       "typical_duration_s": 6,
       "evidence": [
         "f8d59013-9c9e-4272-8845-f05415557c42",
@@ -398,14 +601,34 @@
       "description": "0–2,5 s: rubrik + underrubrik överst och produkten (kreditkort) som fläktar ut från en stapel inom 0,5 s. 2,5–5 s: isometrisk illustration av förmånen där separata objekt glider in längs de isometriska axlarna, rubrik under. 5–7 s: villkor och konsumentkreditvarning.",
       "when_to_use": "Kreditkort och andra kreditprodukter där en förmån ska visas och villkor krävs",
       "motion": {
-        "logo": { "reveal": "none", "duration": 1 },
-        "text": { "stagger": "none", "delayBetween": 0, "useSpring": false },
-        "cta": { "reveal": "fade", "spring": "gentle" },
-        "transitions": { "style": "crossfade", "duration": 12 },
-        "numbers": { "enabled": false, "duration": 45 }
+        "logo": {
+          "reveal": "none",
+          "duration": 1
+        },
+        "text": {
+          "stagger": "none",
+          "delayBetween": 0,
+          "useSpring": false
+        },
+        "cta": {
+          "reveal": "fade",
+          "spring": "gentle"
+        },
+        "transitions": {
+          "style": "crossfade",
+          "duration": 12
+        },
+        "numbers": {
+          "enabled": false,
+          "duration": 45
+        }
       },
       "text_animation": "fade-up",
-      "scene_sequence": ["lottie", "lottie", "title"],
+      "scene_sequence": [
+        "canvas",
+        "canvas",
+        "terms"
+      ],
       "typical_duration_s": 7,
       "evidence": [
         "7711d667-f7d0-4741-853f-92c5e77617a8",
@@ -419,14 +642,34 @@
       "description": "Bara text och stapelmönster. Frågan tonar in vid 0,25 s tillsammans med mönstret; underrubriken tonar in ca 1,25 s senare medan rubriken glider upp för att hålla blocket centrerat (eller: ordet omformas, 'Ränteoro?' → 'Räntero.'). Ca 4 s: erbjudandet eller URL. Sista 3 s: räkneexempel.",
       "when_to_use": "Bolån och ränta när det inte finns bildmaterial; budskap som bärs av en ordlek eller en rak fråga",
       "motion": {
-        "logo": { "reveal": "none", "duration": 1 },
-        "text": { "stagger": "none", "delayBetween": 0, "useSpring": false },
-        "cta": { "reveal": "fade", "spring": "gentle" },
-        "transitions": { "style": "crossfade", "duration": 15 },
-        "numbers": { "enabled": false, "duration": 45 }
+        "logo": {
+          "reveal": "none",
+          "duration": 1
+        },
+        "text": {
+          "stagger": "none",
+          "delayBetween": 0,
+          "useSpring": false
+        },
+        "cta": {
+          "reveal": "fade",
+          "spring": "gentle"
+        },
+        "transitions": {
+          "style": "crossfade",
+          "duration": 15
+        },
+        "numbers": {
+          "enabled": false,
+          "duration": 45
+        }
       },
       "text_animation": "fade-up",
-      "scene_sequence": ["title", "text-reveal", "title"],
+      "scene_sequence": [
+        "title",
+        "text-reveal",
+        "terms"
+      ],
       "typical_duration_s": 9,
       "evidence": [
         "76b3ac7a-2fb2-4720-9a08-0a17ed7f08ed",
@@ -439,14 +682,33 @@
       "description": "0–3 s: helbildsfilm med långsam push-in; rubrik tonar in 0,25–0,5 s, vit strålkrans pulserar runt produkten från 0,75 s, underrubrik vid ca 1,75 s. Ca 3,5 s: byte till enfärgad blå platta med 'Dessutom …'-knorr och URL. Texten tonar ut sista 0,5 s. Loggan står still över bytet.",
       "when_to_use": "När det finns film eller foto på produkten i användning",
       "motion": {
-        "logo": { "reveal": "none", "duration": 1 },
-        "text": { "stagger": "none", "delayBetween": 0, "useSpring": false },
-        "cta": { "reveal": "fade", "spring": "gentle" },
-        "transitions": { "style": "crossfade", "duration": 9 },
-        "numbers": { "enabled": false, "duration": 45 }
+        "logo": {
+          "reveal": "none",
+          "duration": 1
+        },
+        "text": {
+          "stagger": "none",
+          "delayBetween": 0,
+          "useSpring": false
+        },
+        "cta": {
+          "reveal": "fade",
+          "spring": "gentle"
+        },
+        "transitions": {
+          "style": "crossfade",
+          "duration": 9
+        },
+        "numbers": {
+          "enabled": false,
+          "duration": 45
+        }
       },
       "text_animation": "fade-up",
-      "scene_sequence": ["title", "title"],
+      "scene_sequence": [
+        "title",
+        "title"
+      ],
       "typical_duration_s": 6,
       "evidence": [
         "307740cc-b6e4-4876-af5f-ef5c00f1d765",
@@ -463,14 +725,33 @@
       "description": "Scen 1 (0–3 s) på blått: en illustration (pensel eller färgburk) sprider persikafärg över bilden och frågan avslöjas av färgen (mask-reveal). Från ca 3 s är hela bakgrunden persika och logga och text blå; svaret står centrerat med nyckelord i bold. Tonar tillbaka till blått sista 0,5 s så att filmen loopar.",
       "when_to_use": "När budskapet handlar om förändring (renovera, byta, flytta) och en färgövergång kan bära det",
       "motion": {
-        "logo": { "reveal": "none", "duration": 1 },
-        "text": { "stagger": "none", "delayBetween": 0, "useSpring": false },
-        "cta": { "reveal": "fade", "spring": "gentle" },
-        "transitions": { "style": "crossfade", "duration": 15 },
-        "numbers": { "enabled": false, "duration": 45 }
+        "logo": {
+          "reveal": "none",
+          "duration": 1
+        },
+        "text": {
+          "stagger": "none",
+          "delayBetween": 0,
+          "useSpring": false
+        },
+        "cta": {
+          "reveal": "fade",
+          "spring": "gentle"
+        },
+        "transitions": {
+          "style": "crossfade",
+          "duration": 15
+        },
+        "numbers": {
+          "enabled": false,
+          "duration": 45
+        }
       },
       "text_animation": "mask-reveal",
-      "scene_sequence": ["canvas", "title"],
+      "scene_sequence": [
+        "canvas",
+        "title"
+      ],
       "typical_duration_s": 6,
       "evidence": [
         "a0ae388d-cf60-4fc3-ae21-9ab73c766e04",
@@ -478,7 +759,6 @@
       ]
     }
   ],
-
   "copy_patterns": [
     {
       "pattern": "Fråga + svar: en kort fråga till målgruppen i scen 1, ett lugnt rådgivande svar med nyckelordet i bold i scen 2",
@@ -538,7 +818,6 @@
       ]
     }
   ],
-
   "do": [
     {
       "rule": "Loggan står stilla överst i mitten från första till sista rutan och behåller exakt position över alla scenbyten (ca 7–11 % ned i 1:1 och 4:5, ca 16–17 % i 9:16).",
@@ -593,7 +872,9 @@
     },
     {
       "rule": "Sparprodukter med investeringsinslag bär riskupplysningen 'Investeringar innebär en risk.' på en rad längst ned genom hela filmen.",
-      "evidence": ["f8d59013-9c9e-4272-8845-f05415557c42"]
+      "evidence": [
+        "f8d59013-9c9e-4272-8845-f05415557c42"
+      ]
     },
     {
       "rule": "Håll nedre ca 20 % tom i 9:16 (plats för appens gränssnitt eller varningsbandet).",
@@ -605,7 +886,6 @@
       ]
     }
   ],
-
   "dont": [
     {
       "rule": "Ingen CTA-knapp. CTA är en URL i text eller en mjuk uppmaning.",
@@ -656,145 +936,193 @@
       ]
     }
   ],
-
   "golden_examples": [
     {
       "ad_id": "f8d59013-9c9e-4272-8845-f05415557c42",
-      "why": "Mest typiska grafiska annonsen: isometriskt kluster på blått, fråga + svar med bold nyckelord, statisk logga, riskupplysning. Lottie-animationen är en ersättare för den isometriska illustrationen; riskupplysningen ska ligga kvar hela filmen men renderaren saknar ett disclaimer-element.",
+      "why": "Mest typiska grafiska annonsen: isometriskt kluster på en klarare blå cirkel, fråga + svar med fetade nyckelord, stilla logga, riskupplysning genom hela filmen. Illustrationen är en förenklad återskapning (hus + mynt i stället för hela klustret).",
       "video_config": {
-        "id": "golden-sparasmart",
-        "title": "Spara tid eller spara pengar",
         "format": "feed",
         "backgroundColor": "#0000A0",
         "accentColor": "#FBD9CA",
         "showLogo": true,
         "totalDurationSeconds": 6.1,
+        "legal": {
+          "riskNote": "Investeringar innebär en risk."
+        },
         "scenes": [
           {
-            "type": "lottie",
+            "type": "canvas",
             "durationSeconds": 3.5,
-            "animationId": "piggy-bank",
-            "headline": "Spara tid eller spara pengar?",
-            "caption": "Investeringar innebär en risk.",
-            "sizePercent": 50,
-            "position": "center",
-            "loop": true
+            "description": "Hus och myntstapel på blå cirkel, ett mynt faller",
+            "headline": "Spara **tid** eller\nspara **pengar?**",
+            "illustrationLayout": "illustration-top",
+            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 10;\n  const coin = fall(frame, 20, 18, 240 * scale);\n  const lit = progress(frame, 50, 20);\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <Disc cx={width / 2} cy={height * 0.5} r={height * 0.42} />\n        <g transform={`translate(${width / 2 - u} ${height * 0.62})`}>\n          <IsoShadow x={1} y={1} r={1.8} unit={u} />\n          <IsoHouse x={0} y={0} unit={u} lit={lit} />\n          <IsoCoinStack x={3.2} y={0.8} count={4} unit={u} />\n          <g transform={`translate(0 ${coin.y})`} opacity={coin.opacity}><IsoCoin x={3.2} y={0.8} z={0.8} unit={u} /></g>\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}"
           },
           {
             "type": "title",
             "durationSeconds": 2.6,
-            "headline": "Välj SparaSmart",
-            "subtitle": "när du vill spara både tid och pengar.",
-            "alignment": "center"
+            "headline": "Välj **SparaSmart**",
+            "subtitle": "när du vill spara både tid och pengar."
           }
         ],
         "motion": {
-          "logo": { "reveal": "none", "duration": 1 },
-          "text": { "stagger": "none", "delayBetween": 0, "useSpring": false },
-          "cta": { "reveal": "fade", "spring": "gentle" },
-          "transitions": { "style": "crossfade", "duration": 15 },
-          "numbers": { "enabled": false, "duration": 45 }
+          "logo": {
+            "reveal": "none",
+            "duration": 1
+          },
+          "text": {
+            "stagger": "none",
+            "delayBetween": 0,
+            "useSpring": false
+          },
+          "cta": {
+            "reveal": "fade",
+            "spring": "gentle"
+          },
+          "transitions": {
+            "style": "crossfade",
+            "duration": 15
+          },
+          "numbers": {
+            "enabled": false,
+            "duration": 45
+          }
         }
       }
     },
     {
       "ad_id": "94e1b8a6-7e9e-4369-9bbf-b8579fd1f5c5",
-      "why": "En mening över två textkort på samma illustration, och villkor som sista scen. Konsumentkreditvarningen (vitt band nertill från ca 2,5 s) går inte att uttrycka i dag; coin-stack ersätter den isometriska varukorgen.",
+      "why": "En mening över två textkort på samma illustration, persika rubriker, Konsumentverkets varningsband från ca 2,5 s och villkor sist. Korgen är förenklad (låda med fallande mynt i stället för pilar).",
       "video_config": {
-        "id": "golden-samla-lan",
-        "title": "Samla lån och krediter",
         "format": "feed",
         "backgroundColor": "#0000A0",
         "accentColor": "#FBD9CA",
+        "headlineColor": "#FBD9CA",
         "showLogo": true,
         "totalDurationSeconds": 8.1,
+        "legal": {
+          "creditWarning": {
+            "fromSeconds": 2.5
+          }
+        },
         "scenes": [
           {
-            "type": "lottie",
+            "type": "canvas",
             "durationSeconds": 3.5,
-            "animationId": "coin-stack",
+            "description": "Korg där mynt faller ner",
             "headline": "Samla lån och krediter",
-            "sizePercent": 45,
-            "position": "center",
-            "loop": true
+            "illustrationLayout": "illustration-top",
+            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 9;\n  const a = fall(frame, 18, 14, 260 * scale);\n  const b = fall(frame, 34, 20, 260 * scale);\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <g transform={`translate(${width / 2} ${height * 0.66})`}>\n          <IsoShadow x={0} y={0} r={1.7} unit={u} />\n          <IsoBox x={-1} y={-1} w={2} d={2} h={1.2} unit={u} colors={{ top: palette.electric, left: palette.mid, right: palette.sky }} />\n          <g transform={`translate(0 ${a.y})`} opacity={a.opacity}><IsoCoin x={0} y={0} z={1.3} unit={u} /></g>\n          <g transform={`translate(0 ${b.y})`} opacity={b.opacity * 0.6}><IsoCoin x={-0.6} y={0.5} z={1.9} unit={u} /></g>\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}"
           },
           {
-            "type": "lottie",
+            "type": "canvas",
             "durationSeconds": 2.5,
-            "animationId": "coin-stack",
-            "headline": "och sänk din månadskostnad",
-            "sizePercent": 45,
-            "position": "center",
-            "loop": true
+            "description": "Samma korg, nästa textkort",
+            "headline": "och sänk din **månadskostnad**",
+            "illustrationLayout": "illustration-top",
+            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 9;\n  const a = fall(frame, 18, 14, 260 * scale);\n  const b = fall(frame, 34, 20, 260 * scale);\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <g transform={`translate(${width / 2} ${height * 0.66})`}>\n          <IsoShadow x={0} y={0} r={1.7} unit={u} />\n          <IsoBox x={-1} y={-1} w={2} d={2} h={1.2} unit={u} colors={{ top: palette.electric, left: palette.mid, right: palette.sky }} />\n          <g transform={`translate(0 ${a.y})`} opacity={a.opacity}><IsoCoin x={0} y={0} z={1.3} unit={u} /></g>\n          <g transform={`translate(0 ${b.y})`} opacity={b.opacity * 0.6}><IsoCoin x={-0.6} y={0.5} z={1.9} unit={u} /></g>\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}"
           },
           {
-            "type": "title",
+            "type": "terms",
             "durationSeconds": 2.1,
-            "headline": "Ränta 4,95 % – 12,95 %",
-            "subtitle": "(effektiv ränta 5,24 % – 13,97 %)",
-            "alignment": "center"
+            "heading": "Ränta 4,95 % – 12,95 %",
+            "body": "(effektiv ränta 5,24 % – 13,97 %) För ett lån på 100 000 kronor, med rak amortering upplagt på 7 år (84 avbetalningar) och rörlig årsränta 8,20 % blir den effektiva räntan 8,71 %, inklusive uppläggningsavgift 525 kronor, exklusive kostnad för Vardagspaketet. Totalt belopp att betala tillbaka blir 129 567 kronor. Första återbetalning är 1 873 kronor och sista 1 198 kronor. Årsränta per 2026-03-05."
           }
         ],
         "motion": {
-          "logo": { "reveal": "none", "duration": 1 },
-          "text": { "stagger": "none", "delayBetween": 0, "useSpring": false },
-          "cta": { "reveal": "fade", "spring": "gentle" },
-          "transitions": { "style": "crossfade", "duration": 15 },
-          "numbers": { "enabled": false, "duration": 45 }
+          "logo": {
+            "reveal": "none",
+            "duration": 1
+          },
+          "text": {
+            "stagger": "none",
+            "delayBetween": 0,
+            "useSpring": false
+          },
+          "cta": {
+            "reveal": "fade",
+            "spring": "gentle"
+          },
+          "transitions": {
+            "style": "crossfade",
+            "duration": 15
+          },
+          "numbers": {
+            "enabled": false,
+            "duration": 45
+          }
         }
       }
     },
     {
       "ad_id": "7711d667-f7d0-4741-853f-92c5e77617a8",
-      "why": "Produktintro → förmånsillustration → villkor, i 4:5. Korten ska vara utskurna produktbilder och fordonen isometriska; credit-card-animationen är en ersättare. Varningsbandet i sista scenen saknas i renderaren.",
+      "why": "Produktintro → förmånsillustration → villkor i 4:5. Korten fläktar ut inom 0,5 s, fordonen glider in längs de isometriska axlarna, kräm-vita rubriker, varningsband i sista scenen.",
       "video_config": {
-        "id": "golden-res-smart",
-        "title": "Res smart i sommar",
         "format": "vertical",
         "backgroundColor": "#0000A0",
         "accentColor": "#FBD9CA",
+        "headlineColor": "#FDEEEC",
         "showLogo": true,
         "totalDurationSeconds": 7,
+        "legal": {
+          "creditWarning": {
+            "fromSeconds": 5.2
+          }
+        },
         "scenes": [
           {
-            "type": "lottie",
+            "type": "canvas",
             "durationSeconds": 2.5,
-            "animationId": "credit-card",
+            "description": "Guld- och silverkort som fläktar ut",
             "headline": "Res smart i sommar",
-            "caption": "Betala med ditt kreditkort",
-            "sizePercent": 55,
-            "position": "bottom",
-            "loop": false
+            "subtitle": "Betala med ditt kreditkort",
+            "illustrationLayout": "illustration-bottom",
+            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const t = progress(frame, 6, 14);\n  const w = 190 * scale;\n  const h = 300 * scale;\n  const card = (fill, dx, rot) => (\n    <g transform={`translate(${width / 2 + dx * t} ${height * 0.5}) rotate(${rot * t})`}>\n      <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={16 * scale} fill={fill} />\n      <rect x={-w / 2 + 110 * scale} y={-h / 2 + 50 * scale} width={40 * scale} height={32 * scale} rx={6 * scale} fill={palette.white} opacity={0.55} />\n    </g>\n  );\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <ellipse cx={width / 2} cy={height * 0.5 + h * 0.56} rx={w * 1.3} ry={16 * scale} fill={palette.shadow} opacity={0.45} />\n        {card(\"#C8C8CC\", 80 * scale, 10)}\n        {card(\"#D9B27C\", -80 * scale, -10)}\n      </svg>\n    </AbsoluteFill>\n  );\n}"
           },
           {
-            "type": "title",
+            "type": "canvas",
             "durationSeconds": 2.7,
-            "headline": "Få reseförsäkring för familjen",
-            "alignment": "center"
+            "description": "Buss och flygplan glider in",
+            "headline": "Få **reseförsäkring**\nför familjen",
+            "illustrationLayout": "illustration-top",
+            "tsxCode": "function Scene({ width, height, scale }) {\n  const frame = useCurrentFrame();\n  const u = Math.min(width, height * 1.4) / 11;\n  const bus = slideAlongIso(frame, 8, 30, [5, 0, 0], u);\n  const plane = slideIn(frame, 24, 30, [-260 * scale, 120 * scale]);\n  return (\n    <AbsoluteFill>\n      <svg width={width} height={height}>\n        <g transform={`translate(${width / 2 - 2 * u} ${height * 0.56})`}>\n          <g transform={`translate(${bus.x} ${bus.y})`} opacity={bus.opacity}>\n            <IsoShadow x={2} y={0.6} r={1.6} unit={u} opacity={0.35} />\n            <IsoBox x={0} y={0} w={4} d={1.2} h={1.3} unit={u} />\n            {[0.4, 1.3, 2.2, 3.1].map((wx) => (\n              <IsoFaceRect key={wx} face=\"left\" at={1.2} a={[wx, wx + 0.6]} b={[0.6, 1.05]} unit={u} fill={palette.pale} />\n            ))}\n          </g>\n        </g>\n        <g transform={`translate(${width * 0.36 + plane.x} ${height * 0.2 + plane.y}) rotate(-28)`} opacity={plane.opacity}>\n          <ellipse cx={0} cy={0} rx={130 * scale} ry={22 * scale} fill={palette.sky} />\n          <polygon points={`${-10 * scale},0 ${40 * scale},${-95 * scale} ${70 * scale},${-95 * scale} ${40 * scale},0`} fill={palette.mid} />\n          <polygon points={`${-10 * scale},0 ${40 * scale},${95 * scale} ${70 * scale},${95 * scale} ${40 * scale},0`} fill={palette.pale} />\n          <polygon points={`${-110 * scale},0 ${-130 * scale},${-45 * scale} ${-105 * scale},${-45 * scale} ${-80 * scale},0`} fill={palette.mid} />\n        </g>\n      </svg>\n    </AbsoluteFill>\n  );\n}"
           },
           {
-            "type": "title",
+            "type": "terms",
             "durationSeconds": 1.8,
-            "headline": "Gäller Nordea Gold",
-            "subtitle": "Rörlig kreditränta 14,50 % (effektiv ränta 17,02 %) med Vardagspaketet. Vid månadsavgift 45 kr, e-faktura och 50 000 kr nyttjad kredit med 12 mån återbetalning blir totalt belopp 56 465 kr. Årsränta per 2026-03-10.",
-            "alignment": "center"
+            "heading": "Gäller Nordea Gold",
+            "body": "Rörlig kreditränta 14,50 % (effektiv ränta 17,02 %) med Vardagspaketet. Vid månadsavgift 45 kr, e-faktura och 50 000 kr nyttjad kredit med 12 mån återbetalning blir totalt belopp 56 465 kr. Årsränta per 2026-03-10."
           }
         ],
         "motion": {
-          "logo": { "reveal": "none", "duration": 1 },
-          "text": { "stagger": "none", "delayBetween": 0, "useSpring": false },
-          "cta": { "reveal": "fade", "spring": "gentle" },
-          "transitions": { "style": "crossfade", "duration": 12 },
-          "numbers": { "enabled": false, "duration": 45 }
+          "logo": {
+            "reveal": "none",
+            "duration": 1
+          },
+          "text": {
+            "stagger": "none",
+            "delayBetween": 0,
+            "useSpring": false
+          },
+          "cta": {
+            "reveal": "fade",
+            "spring": "gentle"
+          },
+          "transitions": {
+            "style": "crossfade",
+            "duration": 12
+          },
+          "numbers": {
+            "enabled": false,
+            "duration": 45
+          }
         }
       }
     },
     {
       "ad_id": "cd7057b4-1ee7-4bb3-8c0b-820064321c36",
-      "why": "Foto/film-spåret: livsstilsbild med rubrik i nedre tredjedelen och ett blått end card med knorr + URL. Scen 1 behöver en bild som bakgrund (background: url(...)); filmens rörelse, strålkransen och stapelmönstret går inte att återskapa i dag.",
+      "why": "Foto/film-spåret: livsstilsbild med rubrik i nedre tredjedelen och blått end card med knorr + URL. Scen 1 behöver en bild som bakgrund (background: url(...)); filmens rörelse och strålkransen kräver en canvas-scen ovanpå.",
       "video_config": {
-        "id": "golden-betalarmband",
-        "title": "Betalarmband för barn",
         "format": "vertical",
         "backgroundColor": "#0000A0",
         "accentColor": "#FFFFFF",
@@ -804,24 +1132,38 @@
           {
             "type": "title",
             "durationSeconds": 3.5,
-            "headline": "Betalarmband för barn",
-            "subtitle": "Enkelt och barnsäkert",
-            "alignment": "center"
+            "headline": "**Betalarmband**\nför barn",
+            "subtitle": "Enkelt och barnsäkert"
           },
           {
             "type": "title",
             "durationSeconds": 2.5,
-            "headline": "Dessutom mobilförbudssäker.",
-            "subtitle": "nordea.se/betalarmband",
-            "alignment": "center"
+            "headline": "Dessutom\n**mobilförbudssäker.**",
+            "subtitle": "nordea.se/betalarmband"
           }
         ],
         "motion": {
-          "logo": { "reveal": "none", "duration": 1 },
-          "text": { "stagger": "none", "delayBetween": 0, "useSpring": false },
-          "cta": { "reveal": "fade", "spring": "gentle" },
-          "transitions": { "style": "crossfade", "duration": 9 },
-          "numbers": { "enabled": false, "duration": 45 }
+          "logo": {
+            "reveal": "none",
+            "duration": 1
+          },
+          "text": {
+            "stagger": "none",
+            "delayBetween": 0,
+            "useSpring": false
+          },
+          "cta": {
+            "reveal": "fade",
+            "spring": "gentle"
+          },
+          "transitions": {
+            "style": "crossfade",
+            "duration": 9
+          },
+          "numbers": {
+            "enabled": false,
+            "duration": 45
+          }
         }
       }
     }

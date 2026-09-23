@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getClaudeClient, CLAUDE_MODEL } from "@/lib/claude";
-import type { VideoConfig, Scene } from "@/lib/remotion/types";
-import { formatLibraryForPrompt } from "@/lib/remotion/lottie-library";
-import { compileCanvasTsx } from "@/lib/remotion/compile";
+import type { VideoConfig } from "@/lib/remotion/types";
+import { compileCanvasScenes, stripCompiledCanvas } from "@/lib/remotion/compile";
+import { withMotionCapabilities } from "@/lib/remotion/prompt-capabilities";
 import {
   NORDEA_COLORS,
   NORDEA_FONT_FAMILIES,
@@ -40,94 +40,7 @@ Headlines: font-family '${NORDEA_FONT_FAMILIES.large.cssFamily}' med fontWeight 
 Body/subtext: font-family '${NORDEA_FONT_FAMILIES.small.cssFamily}' med fontWeight 300 (Light) eller 400 (Regular).
 CTA-text: font-family '${NORDEA_FONT_FAMILIES.small.cssFamily}' med fontWeight 500 (Medium), uppercase, letterSpacing 0.07em.
 
-Tillgängliga scene-typer:
-1. "title" — Headline + optional subtitle. Fält: headline (string), subtitle? (string), alignment? ("center"|"left")
-2. "counter" — Animerad räknare. Fält: label (string), fromValue (number), toValue (number), suffix? (string), prefix? (string), description? (string)
-3. "bars" — Stapeldiagram. Fält: title? (string), bars (array av {label, value, maxValue, color?})
-4. "text-reveal" — Text som avslöjas rad för rad. Fält: lines (string[]), highlight? (string — text att highlighta i teal)
-5. "icon-grid" — Rutnät med ikoner/emoji. Fält: title (string), items (array av {icon (emoji), label, value?})
-6. "cta" — Call-to-action avslut. Fält: headline (string), buttonText (string), subtitle? (string)
-7. "split" — Jämförelse sida vid sida. Fält: leftLabel, leftValue, rightLabel, rightValue, vsText?
-8. "highlight-number" — Stort nummer med glödande ring. Fält: number (string), label (string), description? (string), accentColor?
-9. "lottie" — Lottie-animation från curated bibliotek. Fält: animationId (string — MÅSTE vara en id från biblioteket nedan), headline? (string), caption? (string), sizePercent? (number 30-80, default 60), position? ("top"|"center"|"bottom"), loop? (boolean), playbackSpeed? (number)
-
-Lottie-bibliotek (välj animationId ENDAST från denna lista):
-${formatLibraryForPrompt()}
-
-Lottie-scen används för illustrationer och ikonanimationer — välj en animationId vars "useFor" passar budskapet. Placera gärna en lottie-scen tidigt för att etablera tema, eller mitt i för att bryta av text-tunga scener.
-
-10. "canvas" — FRIHANDSKOMPOSITION med TSX-kod. Använd när ingen mall räcker och användaren ber om något kreativt (linjer, former, custom layouts, partiklar, unika animationer). Fält:
-    - tsxCode (string): En React-komponent som heter 'Scene' skriven i TSX. Se regler och exempel nedan.
-    - description (string): En kort beskrivning av scenen (visas i UI:t).
-
-Canvas-scen regler:
-- Definiera komponenten som \`function Scene({ width, height, scale }) { ... }\`
-- Returnera alltid en <AbsoluteFill>-rot
-- ANVÄND INTE import-satser — alla primitiver finns redan i scope
-- I scope: React, AbsoluteFill, Sequence, Img, useCurrentFrame, interpolate, spring, useVideoConfig, random, colors, fonts
-- Animation-helpers i scope: fadeIn(frame, start, dur), fadeSlideUp(frame, start, dur, slide), easeOutExpo(t), easeInOutCubic(t), easeOutBack(t), easeOutElastic(t), scalePop(frame, start, dur, overshoot)
-- Nordea-palett via colors-objektet: colors.nordeaBlue (#0000A0), colors.nordeaDeep (#00005E), colors.teal (#40BFA3), colors.white, colors.dimText
-- Typsnitt via fonts: fonts.headline, fonts.body
-- SKRIV INGA externa API-anrop (fetch, XMLHttpRequest), ingen eval, inga imports
-- Använd useCurrentFrame() för tidsstyrda animationer
-- Skala alla pixelvärden med 'scale' så det funkar i alla format (scale kommer som prop)
-- SVG är perfekt för fri komposition av former och linjer
-- Bakgrund: sätt backgroundColor på AbsoluteFill eller lämna transparent (video-configens bakgrund syns igenom)
-
-EXEMPEL 1 — Diagonal linje som ritas upp, sen pulserande cirkel:
-\`\`\`tsx
-function Scene({ width, height, scale }) {
-  const frame = useCurrentFrame();
-  const drawProgress = interpolate(frame, [0, 30], [0, 1], { extrapolateRight: "clamp" });
-  const pulseScale = 1 + 0.08 * Math.sin(frame * 0.2);
-  const circleOpacity = fadeIn(frame, 30, 15);
-  return (
-    <AbsoluteFill style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <svg width={width} height={height} viewBox={\`0 0 \${width} \${height}\`}>
-        <line x1={width * 0.1} y1={height * 0.9} x2={width * 0.1 + (width * 0.75) * drawProgress} y2={height * 0.9 - (height * 0.75) * drawProgress} stroke={colors.teal} strokeWidth={8 * scale} strokeLinecap="round" />
-        <circle cx={width * 0.85} cy={height * 0.15} r={60 * scale * pulseScale} fill={colors.teal} opacity={circleOpacity} />
-      </svg>
-    </AbsoluteFill>
-  );
-}
-\`\`\`
-
-EXEMPEL 2 — Roterande cirkel av prickar med centrerad text:
-\`\`\`tsx
-function Scene({ width, height, scale }) {
-  const frame = useCurrentFrame();
-  const rotation = frame * 1.5;
-  const textOpacity = fadeIn(frame, 10, 20);
-  const dots = Array.from({ length: 12 }, (_, i) => {
-    const angle = (i / 12) * Math.PI * 2;
-    const r = 180 * scale;
-    return { x: Math.cos(angle) * r, y: Math.sin(angle) * r, delay: i * 2 };
-  });
-  return (
-    <AbsoluteFill style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ position: "relative", width: 400 * scale, height: 400 * scale, transform: \`rotate(\${rotation}deg)\` }}>
-        {dots.map((d, i) => (
-          <div key={i} style={{ position: "absolute", left: "50%", top: "50%", width: 16 * scale, height: 16 * scale, borderRadius: "50%", backgroundColor: colors.teal, transform: \`translate(\${d.x}px, \${d.y}px)\`, opacity: fadeIn(frame, d.delay, 10) }} />
-        ))}
-      </div>
-      <div style={{ position: "absolute", fontFamily: fonts.headline, fontSize: 52 * scale, fontWeight: 900, color: colors.white, opacity: textOpacity, textAlign: "center" }}>
-        Alltid i rörelse
-      </div>
-    </AbsoluteFill>
-  );
-}
-\`\`\`
-
-NÄR använda canvas-scen:
-- Användaren ber om något specifikt visuellt ("rita en linje", "cirklar som roterar", "en våg")
-- När ingen mall passar
-- För abstrakta/dekorativa bakgrundselement
-- För unika övergångar eller effekter
-
-NÄR INTE använda canvas-scen:
-- När en mall redan gör jobbet (title, counter, bars, cta, etc.) — mallarna ger bättre brand-konsekvens
-- För ikon-rutnät → använd "icon-grid"
-- För stapeldiagram → använd "bars"
+Scentyper, fält, fetstil, rubrikfärg, juridik och canvas-regler: se SCENKATALOG, TEXT, FÄRG OCH JURIDIK och ILLUSTRATIONER OCH FRI ANIMATION nedan.
 
 Format-alternativ: "story" (9:16), "feed" (1:1), "landscape" (16:9), "vertical" (4:5)
 
@@ -146,7 +59,8 @@ Regler:
 - Varje scen ska ha durationSeconds (1.5-4 sekunder)
 - Total video bör vara 5-12 sekunder
 - Texten ska vara kort och slagkraftig — det är rörlig grafik, inte en artikel
-- Avsluta alltid med en CTA-scen om det passar
+- Avsluta med ett textkort ("title") med URL eller mjuk uppmaning; "cta"-scen (knapp) bara om användaren ber om det
+- Ändrar användaren bara text eller färg i en canvas-scen: behåll tsxCode oförändrad
 - Använd svenska som standard om inte annat anges
 - Håll Nordeas professionella ton — korrekt men varm
 
@@ -200,14 +114,15 @@ export async function POST(req: NextRequest) {
     // Build the current user message with config context
     let userMessage = prompt;
     if (currentConfig) {
-      userMessage = `Nuvarande video-konfiguration:\n${JSON.stringify(currentConfig, null, 2)}\n\nAnvändarens instruktion: ${prompt}`;
+      userMessage = `Nuvarande video-konfiguration:\n${JSON.stringify(stripCompiledCanvas(currentConfig as VideoConfig), null, 2)}\n\nAnvändarens instruktion: ${prompt}`;
     }
     messages.push({ role: "user", content: userMessage });
 
     const response = await client.messages.create({
       model: CLAUDE_MODEL,
-      max_tokens: 8192,
-      system: withVisualGrammar(SYSTEM_PROMPT),
+      // Canvas-scener bär egen kod — ge plats för flera illustrationer.
+      max_tokens: 16000,
+      system: withVisualGrammar(withMotionCapabilities(SYSTEM_PROMPT)),
       messages,
     });
 
@@ -252,22 +167,8 @@ export async function POST(req: NextRequest) {
       0
     );
 
-    config.scenes = await Promise.all(
-      config.scenes.map(async (scene: Scene) => {
-        if (scene.type !== "canvas") return scene;
-        if (!scene.tsxCode) {
-          return { ...scene, compileError: "Ingen tsxCode angiven" };
-        }
-        const result = await compileCanvasTsx(scene.tsxCode);
-        if (result.ok) {
-          return { ...scene, compiledJs: result.compiledJs, compileError: undefined };
-        }
-        return { ...scene, compileError: result.error };
-      })
-    );
-
     return NextResponse.json({
-      config,
+      config: await compileCanvasScenes(config),
       message: assistantMessage,
       source: "claude",
     });

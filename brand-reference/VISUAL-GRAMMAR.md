@@ -24,6 +24,20 @@ Ingen av de 18 annonserna har en CTA-knapp eller använder turkos. CTA:n är en 
 text eller en mjuk uppmaning. Kreditprodukter avslutas med räkneexempel och
 Konsumentverkets varning i ett vitt band.
 
+**Ramar, inte mallar.** Grammatiken styr Motion Studio på två nivåer:
+
+- **Fasta ramar som alltid gäller:**
+  - färgpalett
+  - typografi
+  - stilla logga
+  - juridisk text
+  - tonalitet
+  - "gör inte"-listan
+- **Inspiration:** arketyper, rörelserecept och referensannonser. De är beprövade
+  utgångslägen som AI:n använder när användaren inte ber om något specifikt.
+  Användarens prompt går före, och nya kompositioner och fri animation
+  (canvas-scener) är välkomna inom ramarna.
+
 ## 2. Underlag
 
 18 videor (inga statiska annonser), jämnt fördelade på format: 6 × 4:5, 6 × 9:16,
@@ -57,13 +71,13 @@ Hela id:n: se `source_ad_ids` i `visual-grammar.json`. Varje analys finns i
 Enfärgad bakgrund, logga överst. En centrerad illustration tar 20–45 % av ytan,
 ibland på en klarare blå cirkel. Rubriken i 1–2 rader under den (ca 63–82 % av
 höjden). Eventuell disclaimer längst ned.
-*Scentyper:* `lottie`, `title`.
+*Scentyper:* `canvas` (illustrationsscen med `illustrationLayout: "illustration-top"`), `title`.
 *Belägg:* `f8d59013`, `94e1b8a6`, `9a635d11`, `7711d667`/`8a639c36`/`9035e2f3` (scen 2) — 4 kreativ.
 
 ### `rubrik-over-bild` — Rubrik överst, bild under
 Rubrik och underrubrik direkt under loggan, med produkten (kreditkort som solfjäder)
 eller en platt illustration (golfhål) under. Används som öppningsscen.
-*Scentyper:* `lottie`, `title`.
+*Scentyper:* `canvas` (`illustrationLayout: "illustration-bottom"`), `title`.
 *Belägg:* `7711d667`, `8a639c36`, `9035e2f3`, `7e8b34cf`, `e6f84a0f` — 2 kreativ.
 
 ### `typografisk-fraga-med-stapelmonster` — Typografisk fråga med stapelmönster
@@ -92,7 +106,7 @@ Villkor i liten vit text i mitten, med första raden i bold. För konsumentkredi
 dessutom ett vitt band över nedre 18–27 % med mörkröd varningstriangel och svart text
 ("Att låna kostar pengar! …"). I 9:16 står triangeln ovanför texten, i övriga format
 till vänster. Bandet kan ligga kvar över flera scener (`94e1b8a6`).
-*Scentyper:* `title` (närmast; se gap).
+*Scentyper:* `terms` + `legal.creditWarning` på videonivå.
 *Belägg:* `7711d667`, `8a639c36`, `9035e2f3`, `94e1b8a6`, samt `76b3ac7a` och `85b1de33` (räkneexempel utan band) — 4 kreativ.
 
 ## 4. Rörelserecept
@@ -109,9 +123,9 @@ Alla recept har samma rörelsespråk, eftersom annonserna har det. Det som skilj
 
 | Recept | Scenordning | Längd | Belägg |
 |---|---|---|---|
-| `illustration-fraga-svar` — illustration med fråga → svarskort | lottie → title | ~6 s | `f8d59013`, `94e1b8a6`, `9a635d11`, `7e8b34cf`, `e6f84a0f` |
-| `produktintro-till-forman-med-villkor` — kort som fläktar ut → isometrisk förmån → villkor | lottie → lottie → title | ~7 s | `7711d667`, `8a639c36`, `9035e2f3` (1 kreativ) |
-| `typografisk-fraga-till-rakneexempel` — fråga (+ ordmorf) → erbjudande/URL → räkneexempel | title → text-reveal → title | ~9 s | `76b3ac7a`, `85b1de33` |
+| `illustration-fraga-svar` — illustration med fråga → svarskort | canvas → title | ~6 s | `f8d59013`, `94e1b8a6`, `9a635d11`, `7e8b34cf`, `e6f84a0f` |
+| `produktintro-till-forman-med-villkor` — kort som fläktar ut → isometrisk förmån → villkor | canvas → canvas → terms | ~7 s | `7711d667`, `8a639c36`, `9035e2f3` (1 kreativ) |
+| `typografisk-fraga-till-rakneexempel` — fråga (+ ordmorf) → erbjudande/URL → räkneexempel | title → text-reveal → terms | ~9 s | `76b3ac7a`, `85b1de33` |
 | `foto-hook-bla-endcard` — film med rubrik och strålkrans → blått end card med knorr och URL | title → title | ~6 s | 6 × betalarmband (1 kreativ) |
 | `fargbyte-avslojar-svar` — pensel eller burk sprider persika som avslöjar frågan → persika svarskort | canvas → title | ~6 s | `a0ae388d`, `4a5f9fdc` |
 
@@ -263,53 +277,40 @@ utskurna produktbilder.
 
 ## 12. Gap mot renderaren (utvecklingsbacklogg)
 
-Ordnat efter hur mycket av materialet som berörs. Fetstil markerar det som påverkar
-det grafiska spåret, som ska prioriteras.
+Status 2026-09-23. ✅ = åtgärdat i renderaren, ◐ = delvis, ☐ = kvar.
 
-1. **Disclaimer och varningsband saknas.** Det finns inget element för villkorstext,
-   Konsumentverkets varning (vitt band, röd triangel, svart text) eller en rad med
-   riskupplysning. Inget kan heller ligga kvar över flera scener. Berör 7 av 18.
-   Villkoren läggs i dag i `title.subtitle`, vilket blir fel i storlek och vikt.
-2. **Blandade vikter i en rubrik går inte.** Rubriker har en enda vikt (900), och
-   `text-reveal`-markeringen färgar hela raden turkos. Annonserna har nästan alltid
-   regular + bold nyckelord. Förslag: `**bold**`-markup i rubriker. Berör 17 av 18.
-3. **Rubrikfärg kan inte väljas.** Textfärgen följer bara ljus/mörk bakgrund, så
-   persika- eller krämrubriker på blått och blå text på persika går inte att styra.
-   `colors.peach` finns i `styles.ts` men används inte.
-4. **Illustrationer kan inte vara huvudelement med egen rörelse.** Isometriska
-   illustrationer kan bara visas som stillastående overlay (`assets`) eller via Lottie.
-   Lottie-biblioteket har generiska animationer i fel stil. Det saknas:
-   - enskilda objekt som faller, glider längs isometriska axlar eller rullar och
-     försvinner i ett hål
-   - loopande mikroanimationer (mynt, grodd, fönster som tänds)
-   - ett bibliotek med isometriska Nordea-illustrationer i lager
-5. **Logopositionen är fast vid 15 % bredd, centrerat överst.** Positionen i 9:16
-   (ca 16–17 % ned) måste sättas manuellt med `logo.transform`. Loggan byter inte
-   färg när bakgrunden byts (vit → blå på persika eller ljusblå, `a0ae388d`,
-   `4a5f9fdc`, `85b1de33`).
-6. **Färgbyte och mask-reveal som övergång.** Penseldrag eller färg som rinner ut och
-   fyller bilden, och text som bara syns där färgen målats, går bara att göra i
-   `canvas`-scener med AI-genererad kod.
-7. **Ordmorf och rubrik som glider.** "Ränteoro?" → "Räntero." kräver korstoning mellan
-   ordformer och ett mellanrum som animeras. Rubriken som glider upp när underrubriken
-   kommer in (`76b3ac7a`) finns inte heller.
-8. **Stapelmönstret saknas som element.** Det behövs både som dekor (avskuret i kanten,
-   pulserande) och som övergång (uppskalade staplar som sveper upp över bilden,
-   `76b3ac7a`).
-9. **Övergångar.** `crossfade` tonar ut till bakgrunden och in igen, men blandar inte
-   två scener. För de lugna annonserna fungerar det. `slide` saknar utgång, så
-   "rubriken glider ut åt vänster" (`7711d667`, `9035e2f3`) går inte.
-10. **Foto och film (sekundärt spår):**
-    - Bakgrunden kan bara vara en stillbild (`background: url(...)`), inte film.
-    - Ingen långsam inzoomning (Ken Burns) på stillbilden.
-    - Ingen grafik som följer produkten (strålkransen).
-    - Utskurna produktbilder (kreditkorten som fläktar ut) kan bara ligga som
-      stillastående `assets` utan in-animation.
-    - `VideoConfig.backgroundColor` är en färg för hela filmen, så bytet film → blått
-      end card kräver att varje scen sätter `background`.
-11. **Ingen CTA utan knapp.** `cta`-scenen ritar alltid en turkos knapp. Annonsernas
-    mönster (URL i text, t.ex. "nordea.se/**FlyttaBolån**") måste i dag göras med
-    `title.subtitle`.
+1. ✅ **Disclaimer och varningsband.** Ny scentyp `terms` (villkor och räkneexempel,
+   första raden i bold) och `legal` på videonivå: `riskNote` (en rad genom hela
+   filmen) och `creditWarning` (Konsumentverkets vita band med röd triangel, texten
+   läggs in automatiskt). Scenerna hålls ovanför bandet. Berör 7 av 18.
+2. ✅ **Blandade vikter.** `**fet**` i rubriker, underrubriker, rader, bildtexter och
+   villkor: löptexten blir regular och det markerade bold. Berör 17 av 18.
+3. ✅ **Rubrikfärg.** `headlineColor` på video och scen. Den ignoreras automatiskt där
+   kontrasten är för låg, så att en persika rubrik på en persika scen blir blå.
+4. ✅ **Illustrationer som huvudelement med egen rörelse.** Canvas-scenen kan vara en
+   illustrationsscen (`headline` + `illustrationLayout`). Illustrationen är AI-skriven
+   SVG-kod med fri animation och ett Nordea-kit i scope: isometriska primitiver, hus,
+   mynt, palett, `fall`/`slideAlongIso`/`loop` m.fl.
+   Det som återstår är ett större bibliotek med färdiga motiv. Spargris, varukorg och
+   fordon byggs i dag av AI:n ur primitiverna, och kvaliteten beror på koden.
+5. ◐ **Logga.** Loggan följer nu aktuell scens bakgrund: vit på blått, blå på persika
+   och ljusblått. Det gäller bara den ritade reservloggan; en uppladdad logobild byter
+   inte färg. Positionen i 9:16 (ca 16–17 % ned) är fortfarande fast överst.
+6. ✅ **Färgbyte och mask-reveal** går att göra i canvas-scener (penseldrag som avslöjar
+   rubriken finns som exempel i AI-prompten).
+7. ◐ **Ordmorf och rubrik som glider** går att skriva fritt i canvas, men mallscenerna
+   har inget stöd.
+8. ◐ **Stapelmönstret** finns som `PillBars` i kitet (dekor, lugn puls). Det finns
+   ännu inte som scenövergång.
+9. ☐ **Övergångar.** `crossfade` tonar ut till bakgrunden och in igen, utan att blanda
+   två scener. `slide` saknar utgång.
+10. ◐ **Foto och film (sekundärt spår):**
+    - Canvas-koden har `Img` och kan göra långsam inzoomning (Ken Burns) på en bild.
+    - `Sparkle` (strålkransen) finns i kitet.
+    - Filmbakgrund saknas fortfarande.
+11. ✅ **CTA utan knapp.** Promptkatalogen styr mot en `title` med URL som underrubrik
+    ("nordea.se/**betalarmband**"). `cta`-scenen ritar fortfarande en knapp, men används
+    bara på begäran.
 
 ---
 

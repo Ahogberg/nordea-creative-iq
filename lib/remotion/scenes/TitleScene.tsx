@@ -8,6 +8,7 @@ import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
 import { AnimatedText } from "../animations/AnimatedText";
 import { useSceneTheme } from "../theme";
+import { RichText } from "../rich-text";
 
 const FPS = 30;
 
@@ -35,6 +36,8 @@ export const TitleSceneComponent: React.FC<{
   const lineOpacity = fadeIn(frame, 15, 20);
 
   const isCenter = scene.alignment !== "left";
+  // Den turkosa linjen är valfri: Nordeas annonser har ingen (visual-grammar).
+  const showLine = scene.accentLine === true;
 
   const lineNode = (
     <div
@@ -58,7 +61,7 @@ export const TitleSceneComponent: React.FC<{
       fontStyle={{
         fontSize: headlineSize,
         fontWeight: 900,
-        color: theme.text,
+        color: theme.headline,
         fontFamily: fonts.headline,
         textAlign: isCenter ? "center" : "left",
         lineHeight: 1.15,
@@ -71,7 +74,7 @@ export const TitleSceneComponent: React.FC<{
       endFrame={endFrame}
       fontSize={headlineSize}
       fontWeight={900}
-      color={theme.text}
+      color={theme.headline}
       mode={m.text.stagger}
       delayBetween={m.text.delayBetween}
       useSpring={m.text.useSpring}
@@ -82,7 +85,9 @@ export const TitleSceneComponent: React.FC<{
   );
 
   const subtitleNode = scene.subtitle ? (
-    <p
+    <RichText
+      as="p"
+      text={scene.subtitle}
       style={{
         fontFamily: fonts.body,
         fontSize: Math.round(32 * scale),
@@ -90,11 +95,10 @@ export const TitleSceneComponent: React.FC<{
         color: theme.textSecondary,
         marginTop: 20 * scale,
         textAlign: isCenter ? "center" : "left",
+        whiteSpace: "pre-line",
         ...subtitleAnim,
       }}
-    >
-      {scene.subtitle}
-    </p>
+    />
   ) : null;
 
   return (
@@ -109,11 +113,11 @@ export const TitleSceneComponent: React.FC<{
         position: "relative",
       }}
     >
-      {isInline(scene, "line") && lineNode}
+      {showLine && isInline(scene, "line") && lineNode}
       {isInline(scene, "headline") && headlineNode}
       {isInline(scene, "subtitle") && subtitleNode}
 
-      {positionedElement(scene, "line", lineNode)}
+      {showLine && positionedElement(scene, "line", lineNode)}
       {positionedElement(scene, "headline", headlineNode)}
       {subtitleNode && positionedElement(scene, "subtitle", subtitleNode)}
     </AbsoluteFill>

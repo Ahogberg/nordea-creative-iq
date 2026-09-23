@@ -5,6 +5,8 @@ import { z } from "zod";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 import type { VideoConfig } from "@/lib/remotion/types";
 import { withVisualGrammar } from "@/lib/brand/visual-grammar";
+import { withMotionCapabilities } from "@/lib/remotion/prompt-capabilities";
+import { compileCanvasScenes } from "@/lib/remotion/compile";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -17,6 +19,31 @@ const RequestSchema = z.object({
 const client = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
+
+// Canvas-kod skickas inte till AI:n (sparar tokens och kan inte förvanskas);
+// den läggs tillbaka per scenindex efter svaret.
+const KEEP_CODE = "[oförändrad kod]";
+
+function redactCanvasCode(config: VideoConfig): VideoConfig {
+  return {
+    ...config,
+    scenes: config.scenes.map((s) =>
+      s.type === "canvas" ? { ...s, tsxCode: KEEP_CODE, compiledJs: undefined, compileError: undefined } : s
+    ),
+  };
+}
+
+function restoreCanvasCode(variant: VideoConfig, original: VideoConfig): VideoConfig {
+  return {
+    ...variant,
+    scenes: variant.scenes.map((s, i) => {
+      const source = original.scenes[i];
+      if (s.type !== "canvas" || source?.type !== "canvas") return s;
+      if (s.tsxCode && s.tsxCode !== KEEP_CODE) return s;
+      return { ...s, tsxCode: source.tsxCode };
+    }),
+  };
+}
 
 const SYSTEM_PROMPT = `Du är en expert på Nordeas marknadsföringsannonser och Motion Design.
 
@@ -33,7 +60,10 @@ För varje variant:
 - Ändra Text-content (headlines, labels, CTA-texter) men behåll Nordea brand-tone (kreditkort, inte kort; ingen "fixar"; ej för säljpushig)
 - Justera scen-durations om relevant
 - Justera motion-fälten om relevant (energi/lugn)
-- Behåll exakt samma scen-strukturer (samma 'type' per index) och samma backgroundColor/accentColor
+- Behåll exakt samma scen-strukturer (samma 'type' per index) och samma backgroundColor/accentColor/headlineColor/legal
+- Behåll **fet**-markeringen på nyckelord (se TEXT, FÄRG OCH JURIDIK)
+- Canvas-scener: tsxCode är ersatt med "${KEEP_CODE}" — skriv exakt den strängen igen. Ändra bara headline/subtitle.
+- Terms-scener (villkor) ändras aldrig
 
 Returnera ENDAST giltig JSON, inga förklaringar eller markdown:
 {
@@ -67,12 +97,14 @@ export async function POST(request: Request) {
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 6000,
-      system: withVisualGrammar(SYSTEM_PROMPT.replace("${count}", String(count))),
+      system: withVisualGrammar(
+        withMotionCapabilities(SYSTEM_PROMPT.replace("${count}", String(count)))
+      ),
       messages: [
         {
           role: "user",
           content: `Här är min nuvarande VideoConfig:\n\n${JSON.stringify(
-            config,
+            redactCanvasCode(config as VideoConfig),
             null,
             2
           )}\n\nGenerera ${count} varianter.`,
@@ -106,16 +138,20 @@ export async function POST(request: Request) {
       status: "success",
     });
 
-    return NextResponse.json({
-      variants: parsed.variants.map((v, i) => ({
+    const variants = await Promise.all(
+      parsed.variants.map(async (v, i) => ({
         id: v.id || `variant_${Date.now()}_${i}`,
         config_diff: {
           description: v.description,
           changes: v.changes || [],
         },
-        full_config: v.full_config,
-      })),
-    });
+        full_config: await compileCanvasScenes(
+          restoreCanvasCode(v.full_config, config as VideoConfig)
+        ),
+      }))
+    );
+
+    return NextResponse.json({ variants });
   } catch (error) {
     console.error("[studio:variants] generation error:", error);
     return NextResponse.json(

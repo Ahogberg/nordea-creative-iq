@@ -8,6 +8,9 @@ import type {
   CtaScene,
   HighlightNumberScene,
   TextRevealScene,
+  TermsScene,
+  CanvasScene,
+  CanvasLayout,
 } from "@/lib/remotion/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -23,7 +26,10 @@ const TYPE_LABELS: Record<string, string> = {
   split: "Jämförelse",
   lottie: "Lottie-animation",
   canvas: "Canvas",
+  terms: "Villkor",
 };
+
+const BOLD_HINT = "Skriv **så här** för fetstil på nyckelord.";
 
 interface Props {
   scene: Scene;
@@ -76,9 +82,9 @@ export function ScenePropertyEditor({ scene, index }: Props) {
       {scene.type === "text-reveal" && (
         <TextRevealFields scene={scene} index={index} />
       )}
-      {["bars", "icon-grid", "split", "lottie", "canvas"].includes(
-        scene.type
-      ) && (
+      {scene.type === "terms" && <TermsFields scene={scene} index={index} />}
+      {scene.type === "canvas" && <CanvasFields scene={scene} index={index} />}
+      {["bars", "icon-grid", "split", "lottie"].includes(scene.type) && (
         <p className="text-xs text-nordea-text-tertiary py-2 italic">
           Egen editor för denna scen-typ kommer i 8b. Använd tidslinjen för att
           ta bort / byta typ tills vidare.
@@ -109,6 +115,7 @@ function TitleSceneFields({
           placeholder="Skriv rubrik..."
           className="mt-1.5"
         />
+        <p className="text-[11px] text-nordea-text-tertiary mt-1">{BOLD_HINT}</p>
       </div>
       <div>
         <Label className="text-xs">Underrubrik</Label>
@@ -336,6 +343,96 @@ function TextRevealFields({
           className="mt-1.5"
         />
       </div>
+    </>
+  );
+}
+
+function TermsFields({ scene, index }: { scene: TermsScene; index: number }) {
+  const updateScene = useStudioStore((s) => s.updateScene);
+
+  return (
+    <>
+      <div>
+        <Label className="text-xs">Rubrik (fet första rad)</Label>
+        <Input
+          value={scene.heading ?? ""}
+          onChange={(e) =>
+            updateScene(index, { heading: e.target.value } as Partial<Scene>)
+          }
+          placeholder="T.ex. 'Gäller Nordea Gold'"
+          className="mt-1.5"
+        />
+      </div>
+      <div>
+        <Label className="text-xs">Villkor / räkneexempel</Label>
+        <textarea
+          value={scene.body ?? ""}
+          onChange={(e) =>
+            updateScene(index, { body: e.target.value } as Partial<Scene>)
+          }
+          placeholder="Rörlig kreditränta … Årsränta per ÅÅÅÅ-MM-DD."
+          rows={6}
+          className="nordea-input w-full mt-1.5 py-2 resize-none"
+        />
+      </div>
+    </>
+  );
+}
+
+function CanvasFields({ scene, index }: { scene: CanvasScene; index: number }) {
+  const updateScene = useStudioStore((s) => s.updateScene);
+
+  return (
+    <>
+      <div>
+        <Label className="text-xs">Rubrik under/över illustrationen</Label>
+        <Input
+          value={scene.headline ?? ""}
+          onChange={(e) =>
+            updateScene(index, {
+              headline: e.target.value || undefined,
+            } as Partial<Scene>)
+          }
+          placeholder="Tom = illustrationen fyller hela bilden"
+          className="mt-1.5"
+        />
+        <p className="text-[11px] text-nordea-text-tertiary mt-1">{BOLD_HINT}</p>
+      </div>
+      {scene.headline && (
+        <>
+          <div>
+            <Label className="text-xs">Underrubrik</Label>
+            <Input
+              value={scene.subtitle ?? ""}
+              onChange={(e) =>
+                updateScene(index, {
+                  subtitle: e.target.value || undefined,
+                } as Partial<Scene>)
+              }
+              placeholder="Valfri..."
+              className="mt-1.5"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Placering</Label>
+            <select
+              value={scene.illustrationLayout ?? "illustration-top"}
+              onChange={(e) =>
+                updateScene(index, {
+                  illustrationLayout: e.target.value as CanvasLayout,
+                } as Partial<Scene>)
+              }
+              className="nordea-input w-full mt-1.5"
+            >
+              <option value="illustration-top">Illustration överst, rubrik under</option>
+              <option value="illustration-bottom">Rubrik överst, illustration under</option>
+            </select>
+          </div>
+        </>
+      )}
+      <p className="text-xs text-nordea-text-tertiary py-1 italic">
+        Illustrationen och dess animation ändras via chatten.
+      </p>
     </>
   );
 }

@@ -51,7 +51,7 @@ function collectElementIds(scene: Scene): string[] {
     case "title":
       ids.push("headline");
       if (scene.subtitle) ids.push("subtitle");
-      ids.push("line");
+      if (scene.accentLine) ids.push("line");
       break;
     case "counter":
       ids.push("label", "value");
@@ -74,6 +74,9 @@ function collectElementIds(scene: Scene): string[] {
     // that don't yet implement positionedElement — omit until supported.
     case "canvas":
       // canvas-scenes are user-coded; no standard ids to expose.
+      break;
+    case "terms":
+      // Villkor är ett centrerat textblock utan flyttbara delar.
       break;
   }
   return ids;

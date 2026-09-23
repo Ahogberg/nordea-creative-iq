@@ -28,6 +28,7 @@ export const SceneTypeSchema = z.enum([
   "highlight-number",
   "lottie",
   "canvas",
+  "terms",
 ]);
 
 export const MotionConfigSchema = z.object({

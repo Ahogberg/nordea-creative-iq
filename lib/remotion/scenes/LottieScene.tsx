@@ -7,6 +7,7 @@ import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import { getLottieUrl } from "../lottie-library";
 import type { LottieScene as LottieSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
+import { RichText } from "../rich-text";
 
 /**
  * Element IDs for per-element transforms: "headline", "caption"
@@ -70,25 +71,28 @@ export const LottieSceneComponent: React.FC<{
     position === "top" ? "flex-start" : position === "bottom" ? "flex-end" : "center";
 
   const headlineNode = scene.headline ? (
-    <h2
+    <RichText
+      as="h2"
+      text={scene.headline}
       style={{
         fontFamily: fonts.headline,
         fontSize: Math.round(56 * scale),
         fontWeight: 900,
-        color: theme.text,
+        color: theme.headline,
         lineHeight: 1.15,
         textAlign: "center",
         margin: 0,
         maxWidth: width * 0.82,
+        whiteSpace: "pre-line",
         ...headlineAnim,
       }}
-    >
-      {scene.headline}
-    </h2>
+    />
   ) : null;
 
   const captionNode = scene.caption ? (
-    <p
+    <RichText
+      as="p"
+      text={scene.caption}
       style={{
         fontFamily: fonts.body,
         fontSize: Math.round(26 * scale),
@@ -99,9 +103,7 @@ export const LottieSceneComponent: React.FC<{
         maxWidth: width * 0.8,
         opacity: captionOpacity,
       }}
-    >
-      {scene.caption}
-    </p>
+    />
   ) : null;
 
   return (

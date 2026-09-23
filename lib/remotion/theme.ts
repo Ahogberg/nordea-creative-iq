@@ -11,6 +11,8 @@ export interface SceneTheme {
   isLight: boolean;
   /** Rubriker, siffror, logotyp. */
   text: string;
+  /** Rubriker. Samma som `text` om ingen rubrikfärg är vald. */
+  headline: string;
   /** Underrubriker, etiketter. */
   textSecondary: string;
   /** Diskret text, platshållare. */
@@ -26,6 +28,7 @@ export interface SceneTheme {
 export const DARK_BG_THEME: SceneTheme = {
   isLight: false,
   text: colors.white,
+  headline: colors.white,
   textSecondary: "rgba(255,255,255,0.75)",
   textMuted: "rgba(255,255,255,0.5)",
   hairline: "rgba(255,255,255,0.22)",
@@ -36,6 +39,7 @@ export const DARK_BG_THEME: SceneTheme = {
 export const LIGHT_BG_THEME: SceneTheme = {
   isLight: true,
   text: colors.nordeaBlue,
+  headline: colors.nordeaBlue,
   textSecondary: "rgba(0,0,160,0.75)",
   textMuted: "rgba(0,0,160,0.55)",
   hairline: "rgba(0,0,160,0.18)",
@@ -55,11 +59,32 @@ function luminance(hex: string): number | null {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-/** Ljus bakgrund (vit m.fl.) → blå text; allt annat (inkl. bilder) → vit text. */
-export function themeFor(background?: string): SceneTheme {
-  if (!background) return DARK_BG_THEME;
-  const l = luminance(background);
-  return l !== null && l > 0.5 ? LIGHT_BG_THEME : DARK_BG_THEME;
+/** WCAG-kontrast mellan två hex-färger. Null om någon inte går att tolka. */
+export function contrastRatio(a: string, b: string): number | null {
+  const la = luminance(a);
+  const lb = luminance(b);
+  if (la === null || lb === null) return null;
+  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+// Stor rubriktext räcker med 3:1 (WCAG för stor text).
+const MIN_HEADLINE_CONTRAST = 3;
+
+/**
+ * Ljus bakgrund (vit m.fl.) → blå text; allt annat (inkl. bilder) → vit text.
+ * `headlineColor` (t.ex. persika på blått) används bara om kontrasten mot
+ * bakgrunden räcker — annars faller rubriken tillbaka på textfärgen, så att
+ * en persika rubrikfärg inte försvinner på en persika scen.
+ */
+export function themeFor(background?: string, headlineColor?: string): SceneTheme {
+  const l = background ? luminance(background) : null;
+  const base = l !== null && l > 0.5 ? LIGHT_BG_THEME : DARK_BG_THEME;
+  if (!headlineColor || luminance(headlineColor) === null) return base;
+  // Bild eller okänd bakgrund: lita på rubrikfärgen.
+  const ratio = background ? contrastRatio(headlineColor, background) : null;
+  if (ratio !== null && ratio < MIN_HEADLINE_CONTRAST) return base;
+  return { ...base, headline: headlineColor };
 }
 
 export const SceneThemeContext = createContext<SceneTheme>(DARK_BG_THEME);

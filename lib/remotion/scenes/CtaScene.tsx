@@ -9,6 +9,7 @@ import { StaggeredText } from "../animations/StaggeredText";
 import { CtaReveal } from "../animations/CtaReveal";
 import { AnimatedText } from "../animations/AnimatedText";
 import { useSceneTheme } from "../theme";
+import { RichText } from "../rich-text";
 
 const FPS = 30;
 
@@ -40,7 +41,7 @@ export const CtaSceneComponent: React.FC<{
       fontStyle={{
         fontSize: headlineSize,
         fontWeight: 900,
-        color: theme.text,
+        color: theme.headline,
         fontFamily: fonts.headline,
         textAlign: "center",
         lineHeight: 1.2,
@@ -53,7 +54,7 @@ export const CtaSceneComponent: React.FC<{
       endFrame={endFrame}
       fontSize={headlineSize}
       fontWeight={900}
-      color={theme.text}
+      color={theme.headline}
       mode={m.text.stagger}
       delayBetween={m.text.delayBetween}
       useSpring={m.text.useSpring}
@@ -64,7 +65,9 @@ export const CtaSceneComponent: React.FC<{
   );
 
   const subtitleNode = scene.subtitle ? (
-    <p
+    <RichText
+      as="p"
+      text={scene.subtitle}
       style={{
         fontFamily: fonts.body,
         fontSize: Math.round(28 * scale),
@@ -74,9 +77,7 @@ export const CtaSceneComponent: React.FC<{
         textAlign: "center",
         ...subtitleAnim,
       }}
-    >
-      {scene.subtitle}
-    </p>
+    />
   ) : null;
 
   // Button uses CtaReveal but threads the legacy pill-style colors/padding so
