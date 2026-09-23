@@ -1,11 +1,12 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { fadeSlideUp, fadeIn, s2f } from "../utils";
-import { colors, fonts } from "../styles";
+import { fonts } from "../styles";
 import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import type { CounterScene as CounterSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { CountingNumber } from "../animations/CountingNumber";
+import { useSceneTheme } from "../theme";
 
 const FPS = 30;
 
@@ -18,6 +19,7 @@ export const CounterSceneComponent: React.FC<{
   motion?: MotionConfig;
   durationFrames?: number;
 }> = ({ scene, width, motion }) => {
+  const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
   const m = motion ?? DEFAULT_MOTION_CONFIG;
@@ -33,7 +35,7 @@ export const CounterSceneComponent: React.FC<{
         fontFamily: fonts.body,
         fontSize: Math.round(38 * scale),
         fontWeight: 500,
-        color: "rgba(255,255,255,0.8)",
+        color: theme.textSecondary,
         letterSpacing: "0.1em",
         textTransform: "uppercase",
         ...labelAnim,
@@ -54,7 +56,7 @@ export const CounterSceneComponent: React.FC<{
         durationFrames={m.numbers.duration}
         fontSize={Math.round(120 * scale)}
         fontWeight={900}
-        color={colors.white}
+        color={theme.text}
         prefix={scene.prefix || ""}
         suffix={scene.suffix || ""}
         fontFamily={fonts.headline}
@@ -66,7 +68,7 @@ export const CounterSceneComponent: React.FC<{
         fontFamily: fonts.headline,
         fontSize: Math.round(120 * scale),
         fontWeight: 900,
-        color: colors.white,
+        color: theme.text,
         marginTop: 10 * scale,
         opacity: counterOpacity,
         whiteSpace: "nowrap",
@@ -82,7 +84,7 @@ export const CounterSceneComponent: React.FC<{
         fontFamily: fonts.body,
         fontSize: Math.round(32 * scale),
         fontWeight: 400,
-        color: "rgba(255,255,255,0.7)",
+        color: theme.textSecondary,
         marginTop: 20 * scale,
         textAlign: "center",
         lineHeight: 1.4,

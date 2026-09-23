@@ -29,6 +29,17 @@ export const fonts = {
   body: NORDEA_FONT_FAMILIES.small.cssFamily,
 } as const;
 
+/**
+ * Rubriker behöver mer tyngd i stående format: samma pixelstorlek som i
+ * 16:9 blir liten på en telefonskärm. 9:16 → ×1,35, 4:5 → ×1,2.
+ */
+export function headlineScale(width: number, height: number): number {
+  const ratio = height / width;
+  if (ratio >= 1.6) return 1.35;
+  if (ratio >= 1.2) return 1.2;
+  return 1;
+}
+
 // ── VIDEO DIMENSIONS ──
 export const VIDEO_FPS = 30;
 export const VIDEO_WIDTH = 1080;

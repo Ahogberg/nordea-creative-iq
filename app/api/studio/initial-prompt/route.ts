@@ -7,6 +7,7 @@ import {
   DEFAULT_MOTION_CONFIG,
   type VideoConfig,
 } from "@/lib/remotion/types";
+import { withVisualGrammar } from "@/lib/brand/visual-grammar";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -29,7 +30,7 @@ VideoConfig-schemat (alla fält obligatoriska där inget annat sägs):
   "id": "generated-{timestamp}",
   "title": "Kort namn på videon (svenska, max 50 tecken)",
   "format": "story" | "feed" | "landscape" | "vertical",  // välj baserat på briefens kanaler
-  "backgroundColor": "#0000A0",  // Nordea blue default — byt om briefen pekar på annat
+  "backgroundColor": "#0000A0",  // Nordea blue default. Ljus variant: "#FFFFFF" (text och logotyp blir då automatiskt Nordea Blue). Använd bara dessa två, #00005E eller #40BFA3
   "accentColor": "#40BFA3",  // Nordea teal default
   "scenes": [ ...3-5 scener... ],
   "showLogo": true,
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 4000,
-      system: SYSTEM_PROMPT,
+      system: withVisualGrammar(SYSTEM_PROMPT),
       messages: [
         {
           role: "user",

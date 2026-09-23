@@ -193,6 +193,8 @@
 
   /* Sprint 7: Light-theme palette exposed to Tailwind as bg-nordea-* etc */
   --color-nordea-bg: #F7F8FA;
+  --color-nordea-bg-hover: rgba(0, 0, 160, 0.03);
+  --color-nordea-bg-active: rgba(0, 0, 160, 0.06);
   --color-nordea-card: #FFFFFF;
   --color-nordea-text: #00005E;
   --color-nordea-text-secondary: #4B5563;
@@ -1642,194 +1644,199 @@ label, [data-slot="label"] { color: var(--text-primary); }
   --nordea-radius-2xl: 20px;
 }
 
-/* Typography utilities */
-.nordea-display {
-  font-family: 'Nordea Sans Large', 'Nordea Sans', 'Inter', system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
-}
+/* Komponentklasser ligger i @layer components så att Tailwind-utilities
+   (pl-9, w-full, h-10 …) kan justera dem. Utanför lager vann klasserna
+   över utilities — t.ex. .nordea-input:s padding åt upp sökfältens pl-9. */
+@layer components {
+  /* Typography utilities */
+  .nordea-display {
+    font-family: 'Nordea Sans Large', 'Nordea Sans', 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
 
-.nordea-eyebrow {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--nordea-text-tertiary);
-}
+  .nordea-eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--nordea-text-tertiary);
+  }
 
-/* Cards */
-.nordea-card {
-  background: var(--nordea-bg-card);
-  border: 1px solid var(--nordea-border);
-  border-radius: var(--nordea-radius-xl);
-  box-shadow: var(--nordea-shadow-card);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
-}
-.nordea-card:hover {
-  box-shadow: var(--nordea-shadow-card-hover);
-}
-.nordea-card-flat {
-  background: var(--nordea-bg-card);
-  border: 1px solid var(--nordea-border);
-  border-radius: var(--nordea-radius-lg);
-}
+  /* Cards */
+  .nordea-card {
+    background: var(--nordea-bg-card);
+    border: 1px solid var(--nordea-border);
+    border-radius: var(--nordea-radius-xl);
+    box-shadow: var(--nordea-shadow-card);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .nordea-card:hover {
+    box-shadow: var(--nordea-shadow-card-hover);
+  }
+  .nordea-card-flat {
+    background: var(--nordea-bg-card);
+    border: 1px solid var(--nordea-border);
+    border-radius: var(--nordea-radius-lg);
+  }
 
-/* Buttons */
-.nordea-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 14px;
-  font-family: 'Nordea Sans', 'Inter', system-ui, sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: var(--nordea-radius-md);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  white-space: nowrap;
-}
-.nordea-btn-primary {
-  background: var(--nordea-teal);
-  color: var(--nordea-deep);
-  font-weight: 600;
-}
-.nordea-btn-primary:hover { background: var(--nordea-teal-hover); }
-.nordea-btn-cobalt {
-  background: var(--nordea-blue);
-  color: white;
-}
-.nordea-btn-cobalt:hover { background: #1818B8; }
-.nordea-btn-secondary {
-  background: var(--nordea-bg-card);
-  border-color: var(--nordea-border);
-  color: var(--nordea-text);
-}
-.nordea-btn-secondary:hover {
-  background: var(--nordea-bg-hover);
-  border-color: var(--nordea-border-emphasis);
-}
-.nordea-btn-ghost {
-  background: transparent;
-  color: var(--nordea-text-secondary);
-}
-.nordea-btn-ghost:hover {
-  background: var(--nordea-bg-hover);
-  color: var(--nordea-text);
-}
-.nordea-btn-destructive {
-  background: var(--nordea-rose-soft);
-  color: var(--nordea-rose);
-}
-.nordea-btn-destructive:hover {
-  background: var(--nordea-rose);
-  color: white;
-}
-.nordea-btn-sm { height: 28px; padding: 0 10px; font-size: 11px; }
-.nordea-btn-lg { height: 44px; padding: 0 20px; font-size: 14px; }
-.nordea-btn-full { width: 100%; }
+  /* Buttons */
+  .nordea-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    font-family: 'Nordea Sans', 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--nordea-radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+  }
+  .nordea-btn-primary {
+    background: var(--nordea-teal);
+    color: var(--nordea-deep);
+    font-weight: 600;
+  }
+  .nordea-btn-primary:hover { background: var(--nordea-teal-hover); }
+  .nordea-btn-cobalt {
+    background: var(--nordea-blue);
+    color: white;
+  }
+  .nordea-btn-cobalt:hover { background: #1818B8; }
+  .nordea-btn-secondary {
+    background: var(--nordea-bg-card);
+    border-color: var(--nordea-border);
+    color: var(--nordea-text);
+  }
+  .nordea-btn-secondary:hover {
+    background: var(--nordea-bg-hover);
+    border-color: var(--nordea-border-emphasis);
+  }
+  .nordea-btn-ghost {
+    background: transparent;
+    color: var(--nordea-text-secondary);
+  }
+  .nordea-btn-ghost:hover {
+    background: var(--nordea-bg-hover);
+    color: var(--nordea-text);
+  }
+  .nordea-btn-destructive {
+    background: var(--nordea-rose-soft);
+    color: var(--nordea-rose);
+  }
+  .nordea-btn-destructive:hover {
+    background: var(--nordea-rose);
+    color: white;
+  }
+  .nordea-btn-sm { height: 28px; padding: 0 10px; font-size: 11px; }
+  .nordea-btn-lg { height: 44px; padding: 0 20px; font-size: 14px; }
+  .nordea-btn-full { width: 100%; }
 
-/* Badges */
-.nordea-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 22px;
-  padding: 0 8px;
-  font-size: 11px;
-  font-weight: 500;
-  border-radius: var(--nordea-radius-sm);
-}
-.nordea-badge-neutral { background: var(--nordea-bg-hover); color: var(--nordea-text-secondary); }
-.nordea-badge-teal    { background: var(--nordea-teal-soft); color: var(--nordea-green); }
-.nordea-badge-cobalt  { background: var(--nordea-blue-soft); color: var(--nordea-blue); }
-.nordea-badge-amber   { background: var(--nordea-amber-soft); color: var(--nordea-amber); }
-.nordea-badge-green   { background: var(--nordea-green-soft); color: var(--nordea-green); }
-.nordea-badge-rose    { background: var(--nordea-rose-soft); color: var(--nordea-rose); }
-.nordea-badge-solid   { background: var(--nordea-deep); color: white; }
-.nordea-badge-dot::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
+  /* Badges */
+  .nordea-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: var(--nordea-radius-sm);
+  }
+  .nordea-badge-neutral { background: var(--nordea-bg-hover); color: var(--nordea-text-secondary); }
+  .nordea-badge-teal    { background: var(--nordea-teal-soft); color: var(--nordea-green); }
+  .nordea-badge-cobalt  { background: var(--nordea-blue-soft); color: var(--nordea-blue); }
+  .nordea-badge-amber   { background: var(--nordea-amber-soft); color: var(--nordea-amber); }
+  .nordea-badge-green   { background: var(--nordea-green-soft); color: var(--nordea-green); }
+  .nordea-badge-rose    { background: var(--nordea-rose-soft); color: var(--nordea-rose); }
+  .nordea-badge-solid   { background: var(--nordea-deep); color: white; }
+  .nordea-badge-dot::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
 
-/* Inputs */
-.nordea-input {
-  height: 36px;
-  padding: 0 12px;
-  background: var(--nordea-bg-card);
-  border: 1px solid var(--nordea-border);
-  border-radius: var(--nordea-radius-md);
-  font-family: 'Nordea Sans', 'Inter', system-ui, sans-serif;
-  font-size: 13px;
-  color: var(--nordea-text);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.nordea-input:focus {
-  outline: none;
-  border-color: var(--nordea-blue);
-  box-shadow: 0 0 0 3px var(--nordea-blue-soft);
-}
-.nordea-input::placeholder { color: var(--nordea-text-tertiary); }
+  /* Inputs */
+  .nordea-input {
+    height: 36px;
+    padding: 0 12px;
+    background: var(--nordea-bg-card);
+    border: 1px solid var(--nordea-border);
+    border-radius: var(--nordea-radius-md);
+    font-family: 'Nordea Sans', 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    color: var(--nordea-text);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .nordea-input:focus {
+    outline: none;
+    border-color: var(--nordea-blue);
+    box-shadow: 0 0 0 3px var(--nordea-blue-soft);
+  }
+  .nordea-input::placeholder { color: var(--nordea-text-tertiary); }
 
-/* Format chip (9:16, 1:1 etc) */
-.nordea-format-chip {
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  padding: 0 6px;
-  font-family: 'JetBrains Mono', 'Geist Mono', monospace;
-  font-size: 10px;
-  font-weight: 500;
-  background: var(--nordea-bg-hover);
-  color: var(--nordea-text-secondary);
-  border: 1px solid var(--nordea-border);
-  border-radius: var(--nordea-radius-xs);
-}
-.nordea-format-chip-active {
-  background: var(--nordea-blue-soft);
-  color: var(--nordea-blue);
-  border-color: var(--nordea-blue-line);
-}
+  /* Format chip (9:16, 1:1 etc) */
+  .nordea-format-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 6px;
+    font-family: 'JetBrains Mono', 'Geist Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    background: var(--nordea-bg-hover);
+    color: var(--nordea-text-secondary);
+    border: 1px solid var(--nordea-border);
+    border-radius: var(--nordea-radius-xs);
+  }
+  .nordea-format-chip-active {
+    background: var(--nordea-blue-soft);
+    color: var(--nordea-blue);
+    border-color: var(--nordea-blue-line);
+  }
 
-/* Placeholder stripe for un-rendered thumbnails */
-.nordea-placeholder-stripe {
-  background: var(--nordea-bg-hover);
-  background-image: repeating-linear-gradient(
-    135deg,
-    rgba(0, 0, 94, 0.04) 0 8px,
-    rgba(0, 0, 94, 0.02) 8px 16px
-  );
-  border: 1px solid var(--nordea-border);
-  border-radius: var(--nordea-radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'JetBrains Mono', 'Geist Mono', monospace;
-  font-size: 10px;
-  color: var(--nordea-text-tertiary);
-}
+  /* Placeholder stripe for un-rendered thumbnails */
+  .nordea-placeholder-stripe {
+    background: var(--nordea-bg-hover);
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(0, 0, 94, 0.04) 0 8px,
+      rgba(0, 0, 94, 0.02) 8px 16px
+    );
+    border: 1px solid var(--nordea-border);
+    border-radius: var(--nordea-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--nordea-text-tertiary);
+  }
 
-/* Status pills (retained from Sprint 6.5) */
-.nordea-pill-pass { background: rgba(64, 191, 163, 0.15); color: #40BFA3; }
-.nordea-pill-warn { background: rgba(226, 189, 44, 0.15); color: #E2BD2C; }
-.nordea-pill-fail { background: rgba(200, 87, 92, 0.15); color: #C8575C; }
-.nordea-pill-pass,
-.nordea-pill-warn,
-.nordea-pill-fail {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.625rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  /* Status pills (retained from Sprint 6.5) */
+  .nordea-pill-pass { background: rgba(64, 191, 163, 0.15); color: #40BFA3; }
+  .nordea-pill-warn { background: rgba(226, 189, 44, 0.15); color: #E2BD2C; }
+  .nordea-pill-fail { background: rgba(200, 87, 92, 0.15); color: #C8575C; }
+  .nordea-pill-pass,
+  .nordea-pill-warn,
+  .nordea-pill-fail {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
 }
 
 /* ============================================================================
@@ -1879,3 +1886,28 @@ label, [data-slot="label"] { color: var(--text-primary); }
    earlier in this file (above the .nordea-dark block) are now canonical
    and resolve correctly inside .nordea-dark scope via CSS-variable
    redefinition. */
+
+/* Story-förloppsindikator i FeedMockup */
+@keyframes story-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* Svävande kort på login-vitrinen */
+@keyframes login-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+.login-float { animation: login-float 7s ease-in-out infinite; }
+
+/* Skanningslinje medan uppmärksamheten beräknas */
+@keyframes attention-scan {
+  0% { top: -6rem; }
+  100% { top: 100%; }
+}
+
+/* Skimmer i skelettkort */
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}

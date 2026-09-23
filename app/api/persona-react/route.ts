@@ -1,22 +1,23 @@
 import { NextResponse } from 'next/server';
 import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude';
 import { PRODUCT_LABELS, type ProductCategory } from '@/lib/product-detection';
+import { toImageBlocks } from '@/lib/ai/image-input';
+import {
+  buildPersonaProfileBlock,
+  buildVisualInstruction,
+  resolvePersonaIdentity,
+  type PersonaRequestFields,
+} from '@/lib/ai/prompts/persona-simulation';
 
-interface PersonaReactRequest {
-  personaName: string;
-  personaDescription?: string;
-  personaTraits: string[];
-  personaPainPoints: string[];
-  personaAge?: { min: number; max: number };
-  personaDigitalMaturity?: string;
-  personaSystemPrompt?: string;
-  responseStyle: string;
+interface PersonaReactRequest extends PersonaRequestFields {
   copy: {
     headline: string;
     body: string;
     cta: string;
   };
   channel: string;
+  /** Annonsen som bild, eller bildrutor ur en video: data-URL:er eller https-URL:er. */
+  images?: string[];
   imageDescription?: string;
   isVideo?: boolean;
   productCategory?: ProductCategory;
@@ -74,17 +75,35 @@ const mockReactions: Record<
     whatWorked: 'Ämnet pension är relevant för mig',
     suggestion: 'Erbjud möjlighet att boka ett personligt rådgivningsmöte',
   },
+  Företagaren: {
+    firstImpression:
+      'Det här pratar till privatpersoner, inte till mig som driver företag. Jag ser inte vad det sparar mig i tid eller pengar.',
+    wouldClick: 30,
+    objections: ['Gäller det här företagskunder?', 'Får jag en egen kontaktperson?', 'Hur snabbt får jag besked?'],
+    relevance: { score: 35 },
+    whatWorked: 'Lugn och saklig ton',
+    suggestion: 'Säg tydligt vad företaget vinner — tid, likviditet eller en kontaktperson',
+  },
+  Studenten: {
+    firstImpression:
+      'Ser snyggt ut och är lätt att förstå. Men jag vet inte om det här är för någon som mig med CSN och extrajobb.',
+    wouldClick: 58,
+    objections: ['Kostar det något?', 'Kan jag börja med små belopp?'],
+    relevance: { score: 60 },
+    whatWorked: 'Enkelt språk utan bankjargong',
+    suggestion: 'Visa att man kan börja med några hundralappar i månaden',
+  },
 };
 
 export async function POST(request: Request) {
   try {
     const body: PersonaReactRequest = await request.json();
 
-    const ageContext = body.personaAge
-      ? `${body.personaAge.min}-${body.personaAge.max} år gammal`
-      : '';
+    const identity = resolvePersonaIdentity(body);
+    const images = await toImageBlocks(body.images, body.isVideo ? 4 : 1);
+    const hasVisual = images.length > 0;
 
-    const visualContext = body.imageDescription
+    const visualContext = !hasVisual && body.imageDescription
       ? `\nVISUELLT MATERIAL: ${body.imageDescription}`
       : '';
 
@@ -95,17 +114,9 @@ export async function POST(request: Request) {
 Tänk på hur relevant denna produktkategori är för dig utifrån din livssituation och dina behov.`
       : '';
 
-    const systemPrompt = `Du är "${body.personaName}", en fiktiv persona som ska reagera på en bankannons från Nordea.
+    const systemPrompt = `${buildPersonaProfileBlock(identity)}
 
-DIN PROFIL:
-- Namn: ${body.personaName}
-${ageContext ? `- Ålder: ${ageContext}` : ''}
-${body.personaDescription ? `- Beskrivning: ${body.personaDescription}` : ''}
-${body.personaDigitalMaturity ? `- Digital mognad: ${body.personaDigitalMaturity}` : ''}
-- Karaktärsdrag: ${body.personaTraits?.join(', ') || 'N/A'}
-- Smärtpunkter/utmaningar: ${body.personaPainPoints?.join(', ') || 'N/A'}
-- Responsstil: ${body.responseStyle}
-${body.personaSystemPrompt ? `\nInstruktioner: ${body.personaSystemPrompt}` : ''}
+Du ska reagera på en bankannons från Nordea.
 ${productContext}
 
 INSTRUKTIONER:
@@ -128,7 +139,12 @@ Svara ENDAST i följande JSON-format:
     "score": 0-100,
     "explanation": "Hur trovärdig känns annonsen?"
   },
-  "whatWorked": "Vad i annonsen fungerade bra för dig? (1 mening)",
+  "whatWorked": "Vad i annonsen fungerade bra för dig? (1 mening)",${
+    hasVisual
+      ? `
+  "firstNoticed": "Vad du lade märke till först i bilden (max 10 ord)",`
+      : ''
+  }
   "missingInfo": "Vad saknar du för att ta nästa steg?"${
     body.isVideo
       ? `,
@@ -150,8 +166,8 @@ RUBRIK: ${body.copy.headline}
 BRÖDTEXT: ${body.copy.body}
 CTA: ${body.copy.cta}
 ${visualContext}
-
-Ge din ärliga reaktion som ${body.personaName}.`;
+${hasVisual ? `\n${buildVisualInstruction(body.isVideo ? 'frames' : 'image')}\n` : ''}
+Ge din ärliga reaktion som ${identity.speakerName}.`;
 
     const anthropic = getClaudeClient();
     if (anthropic) {
@@ -160,7 +176,7 @@ Ge din ärliga reaktion som ${body.personaName}.`;
         max_tokens: 1500,
         temperature: 0.8,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }],
+        messages: [{ role: 'user', content: [...images, { type: 'text', text: userMessage }] }],
       });
 
       const content = response.content[0];
@@ -176,6 +192,8 @@ Ge din ärliga reaktion som ${body.personaName}.`;
             relevance: parsed.relevance || null,
             trustLevel: parsed.trustLevel || null,
             whatWorked: parsed.whatWorked || null,
+            firstNoticed: hasVisual ? parsed.firstNoticed || null : null,
+            sawVisual: hasVisual,
             missingInfo: parsed.missingInfo || null,
             videoSpecific: parsed.videoSpecific || null,
             suggestion: parsed.suggestion || null,
@@ -187,7 +205,7 @@ Ge din ärliga reaktion som ${body.personaName}.`;
     // Fallback to mock
     console.log('[CreativeIQ] Persona-react fallback till mockdata');
     await new Promise((resolve) => setTimeout(resolve, 800));
-    const reaction = mockReactions[body.personaName] || mockReactions['Spararen'];
+    const reaction = mockReactions[identity.segmentName] || mockReactions['Spararen'];
 
     return NextResponse.json({
       firstImpression: reaction.firstImpression,

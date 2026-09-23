@@ -6,6 +6,7 @@ import type { HighlightNumberScene as HighlightNumberSceneProps, MotionConfig } 
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { CountingNumber } from "../animations/CountingNumber";
 import { resolveBackground } from "../scene-utils";
+import { useSceneTheme } from "../theme";
 
 export const HighlightNumberSceneComponent: React.FC<{
   scene: HighlightNumberSceneProps;
@@ -13,6 +14,7 @@ export const HighlightNumberSceneComponent: React.FC<{
   motion?: MotionConfig;
   durationFrames?: number;
 }> = ({ scene, width, motion }) => {
+  const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
   const m = motion ?? DEFAULT_MOTION_CONFIG;
@@ -48,7 +50,7 @@ export const HighlightNumberSceneComponent: React.FC<{
           fontFamily: fonts.body,
           fontSize: Math.round(30 * scale),
           fontWeight: 500,
-          color: "rgba(255,255,255,0.75)",
+          color: theme.textSecondary,
           letterSpacing: "0.08em",
           textTransform: "uppercase",
           marginBottom: 30 * scale,
@@ -123,7 +125,7 @@ export const HighlightNumberSceneComponent: React.FC<{
             fontFamily: fonts.body,
             fontSize: Math.round(30 * scale),
             fontWeight: 400,
-            color: "rgba(255,255,255,0.7)",
+            color: theme.textSecondary,
             marginTop: 40 * scale,
             textAlign: "center",
             lineHeight: 1.4,

@@ -59,6 +59,12 @@ Dessa 4 personas ska seedas i databasen (se spec för fullständig data):
    - 55-67 år, närmar sig pension
    - Trygghetsfokuserad, föredrar personlig kontakt
 
+**Källa:** `lib/persona-library.ts` är enda källan för standardpersonas (de 4 ovan + Företagaren och Studenten). Jury, Ad Studio och chatt läser därifrån. Efter ändring: `npm run personas:seed-sql` och kör `supabase/personas_seed.sql`.
+
+## 🎨 Visuell grammatik
+
+Nordeas befintliga annonser läggs i `brand-reference/` (se README där). Skillen `nordea-visual-grammar` analyserar dem till `lib/brand/visual-grammar/visual-grammar.json`, som Motion Studio genererar efter. Marknad: Sverige.
+
 ## 🏃 Arbetssätt
 
 ### Autonomt byggande

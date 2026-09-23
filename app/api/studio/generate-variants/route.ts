@@ -4,6 +4,7 @@ import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
 import { z } from "zod";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 import type { VideoConfig } from "@/lib/remotion/types";
+import { withVisualGrammar } from "@/lib/brand/visual-grammar";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 6000,
-      system: SYSTEM_PROMPT.replace("${count}", String(count)),
+      system: withVisualGrammar(SYSTEM_PROMPT.replace("${count}", String(count))),
       messages: [
         {
           role: "user",

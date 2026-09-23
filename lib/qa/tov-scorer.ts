@@ -5,7 +5,7 @@
 // neutral 5/10 across the board if Claude isn't reachable.
 
 import type { ToVScores, ToVExample } from "./types";
-import { getClaudeClient } from "../claude";
+import { getClaudeClient, CLAUDE_MODEL } from "../claude";
 
 interface ToVInput {
   headline?: string;
@@ -50,7 +50,7 @@ Sätt examples till tom array om copy:n är ren.`;
 
   try {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
+      model: CLAUDE_MODEL,
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
     });

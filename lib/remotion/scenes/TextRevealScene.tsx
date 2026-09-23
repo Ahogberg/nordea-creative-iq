@@ -5,6 +5,7 @@ import type { TextRevealScene as TextRevealSceneProps, MotionConfig, StaggerMode
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
 import { resolveBackground } from "../scene-utils";
+import { useSceneTheme } from "../theme";
 
 const FPS = 30;
 
@@ -14,6 +15,7 @@ export const TextRevealSceneComponent: React.FC<{
   motion?: MotionConfig;
   durationFrames?: number;
 }> = ({ scene, width, motion, durationFrames }) => {
+  const theme = useSceneTheme();
   const scale = width / 1080;
   const m = motion ?? DEFAULT_MOTION_CONFIG;
   const endFrame = durationFrames ?? Math.round(scene.durationSeconds * FPS);
@@ -49,7 +51,7 @@ export const TextRevealSceneComponent: React.FC<{
               endFrame={endFrame}
               fontSize={Math.round(56 * scale)}
               fontWeight={900}
-              color={isHighlighted ? colors.teal : colors.white}
+              color={isHighlighted ? colors.teal : theme.text}
               mode={innerMode}
               delayBetween={m.text.delayBetween}
               useSpring={m.text.useSpring}

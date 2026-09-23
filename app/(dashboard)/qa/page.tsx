@@ -4,6 +4,8 @@ import { Download, CheckCircle2, X, AlertCircle } from "lucide-react";
 import { Topbar } from "@/components/layout/topbar";
 import { SectionTitle } from "@/components/layout/section-title";
 import { NordeaBadge } from "@/components/ui/nordea-badge";
+import { PersonaImage } from "@/components/ui/persona-image";
+import { getPersonaById } from "@/lib/persona-library";
 
 // ── MOCK DATA — TODO Sprint 8+ ─────────────────────────────────────────────
 // This page renders a sample QA report so the design pattern is visible.
@@ -23,15 +25,16 @@ const MOCK_REPORT = {
     { label: "Heatmap focus", value: 79, color: "var(--nordea-amber)" },
   ],
   suggestions: [
-    { tone: "amber" as const, title: "Slow down headline by 0.4s", sub: "Lars (67) reports text reads too fast." },
-    { tone: "cobalt" as const, title: "Add amorteringsfrihet line", sub: "Erik (52) — missing detail." },
-    { tone: "green" as const, title: "Tone is on-brand", sub: "No changes needed." },
+    { tone: "amber" as const, title: "Håll rubriken 0,4 s längre", sub: "Birgitta (60) hinner inte läsa texten." },
+    { tone: "cobalt" as const, title: "Nämn amorteringskravet", sub: "Erik (38) saknar informationen." },
+    { tone: "green" as const, title: "Tonen är on-brand", sub: "Inga ändringar behövs." },
   ],
   personas: [
-    { name: "Anna, 34", role: "Förstagångsköpare bostad", score: 92, take: '"Känns ärlig och konkret. Räkneknappen är tydlig."', tone: "green" as const },
-    { name: "Erik, 52", role: "Befintlig bolånekund", score: 84, take: '"Visa något om amorteringsfrihet — saknas."', tone: "cobalt" as const },
-    { name: "Sofia, 28", role: "Hyresgäst, börjar fundera", score: 88, take: '"Snyggt, men jag vill veta vad ett ja kostar."', tone: "green" as const },
-    { name: "Lars, 67", role: "Pensionär, andrahandsboende", score: 71, take: '"Texten går för fort. Ge mig 1 sekund till."', tone: "amber" as const },
+    // Samma personas som i biblioteket (lib/persona-library.ts).
+    { id: "forstagangskopare", score: 92, take: '"Känns ärlig och konkret. Räkneknappen är tydlig."', tone: "green" as const },
+    { id: "familjeforaldern", score: 84, take: '"Visa något om amorteringskravet — det saknas."', tone: "cobalt" as const },
+    { id: "spararen", score: 88, take: '"Snyggt, men jag vill veta vad det kostar."', tone: "green" as const },
+    { id: "pensionsspararen", score: 71, take: '"Texten går för fort. Ge mig en sekund till."', tone: "amber" as const },
   ],
   tov: [
     { axis: "Personlig", value: 78, target: 70 },
@@ -160,19 +163,22 @@ export default function QAReportsPage() {
               hint="4 personas · viktat snitt 84"
             />
             <div className="grid grid-cols-4 gap-2.5">
-              {r.personas.map((p, i) => (
+              {r.personas.map((p, i) => {
+                const profile = getPersonaById(p.id);
+                if (!profile) return null;
+                return (
                 <div
                   key={i}
                   className="p-3 bg-nordea-bg-hover border border-nordea-hairline rounded-md"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-7 h-7 rounded-full bg-nordea-blue-soft text-nordea-blue flex items-center justify-center text-[10px] font-semibold">
-                      {p.name.split(" ")[0].charAt(0)}
-                    </div>
+                    <PersonaImage name={profile.name} color={profile.color} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-nordea-text">{p.name}</div>
+                      <div className="text-xs font-medium text-nordea-text">
+                        {profile.name.split(" ")[0]}, {profile.representativeAge}
+                      </div>
                       <div className="text-[10px] text-nordea-text-tertiary truncate">
-                        {p.role}
+                        {profile.shortName}
                       </div>
                     </div>
                     <span
@@ -193,7 +199,8 @@ export default function QAReportsPage() {
                     {p.take}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

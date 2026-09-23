@@ -38,8 +38,9 @@ export function calculateCampaignForecast(input: CampaignInput): CampaignForecas
     })
     .filter((r): r is ChannelResult => r !== null);
 
-  const rawTotalReach = channelResults.reduce((sum, c) => sum + c.reach, 0);
-  const uniqueReach = Math.round(rawTotalReach * 0.75);
+  const uniqueReach = Math.round(
+    combineReach(channelResults.map((c) => c.reach), input.audience.size)
+  );
   const totalImpressions = channelResults.reduce((sum, c) => sum + c.impressions, 0);
   const totalClicks = channelResults.reduce((sum, c) => sum + c.clicks, 0);
 
@@ -82,4 +83,18 @@ export function formatNumber(num: number): string {
 
 export function formatCurrency(amount: number, currency = 'SEK'): string {
   return `${amount.toLocaleString('sv-SE')} ${currency}`;
+}
+
+/**
+ * Unik räckvidd över flera kanaler. Kanalerna antas nå målgruppen oberoende
+ * av varandra, så överlappet växer med räckvidden: 1 − Π(1 − rᵢ/N).
+ * Kan aldrig bli större än målgruppen (till skillnad från summa × faktor).
+ */
+export function combineReach(channelReach: number[], audienceSize: number): number {
+  if (audienceSize <= 0) return 0;
+  const notReached = channelReach.reduce(
+    (p, r) => p * (1 - Math.min(1, Math.max(0, r / audienceSize))),
+    1
+  );
+  return audienceSize * (1 - notReached);
 }

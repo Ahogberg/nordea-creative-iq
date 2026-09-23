@@ -1,15 +1,16 @@
+import type Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude';
-import { defaultPersonas } from '@/lib/constants/personas';
 import { PRODUCT_LABELS, type ProductCategory } from '@/lib/product-detection';
+import { toImageBlocks } from '@/lib/ai/image-input';
+import {
+  buildPersonaProfileBlock,
+  buildVisualInstruction,
+  resolvePersonaIdentity,
+  type PersonaRequestFields,
+} from '@/lib/ai/prompts/persona-simulation';
 
-interface PersonaChatRequest {
-  personaName: string;
-  personaDescription?: string;
-  personaTraits?: string[];
-  personaPainPoints?: string[];
-  personaAge?: { min: number; max: number };
-  responseStyle?: string;
+interface PersonaChatRequest extends PersonaRequestFields {
   adContext?: {
     headline: string;
     body: string;
@@ -23,6 +24,9 @@ interface PersonaChatRequest {
   adContent?: string;
   newMessage?: string;
   productCategory?: ProductCategory;
+  /** Annonsen som bild, eller bildrutor ur en video: data-URL:er eller https-URL:er. */
+  images?: string[];
+  isVideo?: boolean;
 }
 
 const mockResponses: Record<string, string[]> = {
@@ -55,21 +59,11 @@ const mockResponses: Record<string, string[]> = {
 export async function POST(request: Request) {
   try {
     const body: PersonaChatRequest = await request.json();
-    const { personaName, messages, adContent, adContext, newMessage } = body;
+    const { messages, adContent, adContext, newMessage } = body;
 
-    // Find persona data
-    const persona = defaultPersonas.find((p) => p.name === personaName);
-    const traits = body.personaTraits || persona?.traits || [];
-    const painPoints = body.personaPainPoints || persona?.pain_points || [];
-    const ageContext = body.personaAge
-      ? `${body.personaAge.min}-${body.personaAge.max} år`
-      : persona
-        ? `${persona.age_min}-${persona.age_max} år`
-        : '';
-    const responseStyle = body.responseStyle || persona?.response_style || 'neutral';
-    const description = body.personaDescription || persona?.description || '';
-    const goals = persona?.goals || [];
-    const systemPromptExtra = persona?.system_prompt || '';
+    const identity = resolvePersonaIdentity(body);
+    const responseStyle = identity.responseStyle;
+    const images = await toImageBlocks(body.images, body.isVideo ? 4 : 1);
 
     const adInfo = adContext
       ? `ANNONS SOM DISKUTERAS:\n- Rubrik: ${adContext.headline}\n- Brödtext: ${adContext.body}\n- CTA: ${adContext.cta}\n- Kanal: ${adContext.channel}`
@@ -81,27 +75,15 @@ export async function POST(request: Request) {
       ? `\nPRODUKTKATEGORI: ${PRODUCT_LABELS[body.productCategory]}\nTänk på hur denna produkt relaterar till dina mål och behov.`
       : '';
 
-    const goalsContext = goals.length > 0
-      ? `- Mål: ${goals.join(', ')}`
-      : '';
+    const systemPrompt = `${buildPersonaProfileBlock(identity)}
 
-    const systemPrompt = `Du är "${personaName}", en fiktiv persona som diskuterar en bankannons från Nordea.
-
-DIN PROFIL:
-${ageContext ? `- Ålder: ${ageContext}` : ''}
-- Beskrivning: ${description}
-- Karaktärsdrag: ${traits.join(', ')}
-- Smärtpunkter: ${painPoints.join(', ')}
-${goalsContext}
-- Responsstil: ${responseStyle}
+Du pratar med någon från Nordeas marknadsteam${adInfo ? ' om en av deras annonser' : ''}.
 ${productContext}
 
 ${adInfo}
-
-${systemPromptExtra}
-
+${images.length > 0 ? `\n${buildVisualInstruction(body.isVideo ? 'frames' : 'image')}\n` : ''}
 INSTRUKTIONER:
-- Svara som ${personaName} skulle svara
+- Svara som ${identity.speakerName} skulle svara
 - Håll dig i karaktär hela tiden
 - Ge korta, naturliga svar (1-3 meningar)
 - Var ärlig och autentisk
@@ -124,12 +106,27 @@ INSTRUKTIONER:
       chatMessages.push({ role: 'user', content: newMessage });
     }
 
+    // Klientens hälsningsfras ("Hej! Jag är …") ligger först — API:t vill att
+    // konversationen börjar med användaren.
+    while (chatMessages.length > 0 && chatMessages[0].role === 'assistant') {
+      chatMessages.shift();
+    }
+
     if (chatMessages.length === 0) {
       chatMessages.push({
         role: 'user',
         content: 'Hej! Vad tycker du om den här annonsen?',
       });
     }
+
+    // Bilden följer med i första användarmeddelandet så att hela samtalet kan
+    // referera till den.
+    const firstUserIndex = chatMessages.findIndex((m) => m.role === 'user');
+    const apiMessages: Anthropic.MessageParam[] = chatMessages.map((m, i) =>
+      i === firstUserIndex && images.length > 0
+        ? { role: m.role, content: [...images, { type: 'text', text: m.content }] }
+        : m
+    );
 
     const anthropic = getClaudeClient();
     if (anthropic) {
@@ -138,7 +135,7 @@ INSTRUKTIONER:
         max_tokens: 500,
         temperature: 0.9,
         system: systemPrompt,
-        messages: chatMessages,
+        messages: apiMessages,
       });
 
       const content = response.content[0];
@@ -156,11 +153,11 @@ INSTRUKTIONER:
     // Fallback to mock
     console.log('[CreativeIQ] Persona-chat fallback till mockdata');
     await new Promise((resolve) => setTimeout(resolve, 800));
-    const responses = mockResponses[personaName] || mockResponses['Spararen'];
+    const responses = mockResponses[identity.segmentName] || mockResponses['Spararen'];
     const messageIndex = (messages?.length || 0) % responses.length;
     return NextResponse.json({
       reply: responses[messageIndex],
-      sentiment: personaName === 'Pensionsspararen' ? 'skeptical' : 'neutral',
+      sentiment: identity.segmentName === 'Pensionsspararen' ? 'skeptical' : 'neutral',
     });
   } catch (error) {
     console.error('[CreativeIQ] Persona-chat error:', error);

@@ -1,12 +1,13 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { fadeSlideUp, fadeIn } from "../utils";
-import { colors, fonts } from "../styles";
+import { colors, fonts, headlineScale } from "../styles";
 import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import type { TitleScene as TitleSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
 import { AnimatedText } from "../animations/AnimatedText";
+import { useSceneTheme } from "../theme";
 
 const FPS = 30;
 
@@ -22,8 +23,11 @@ export const TitleSceneComponent: React.FC<{
   motion?: MotionConfig;
   durationFrames?: number;
 }> = ({ scene, width, motion, durationFrames }) => {
+  const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  const { height } = useVideoConfig();
+  const headlineSize = Math.round(68 * scale * headlineScale(width, height));
   const m = motion ?? DEFAULT_MOTION_CONFIG;
   const endFrame = durationFrames ?? Math.round(scene.durationSeconds * FPS);
 
@@ -52,9 +56,9 @@ export const TitleSceneComponent: React.FC<{
       startFrame={8}
       durationFrames={scene.textAnimation.durationFrames ?? 30}
       fontStyle={{
-        fontSize: Math.round(68 * scale),
+        fontSize: headlineSize,
         fontWeight: 900,
-        color: colors.white,
+        color: theme.text,
         fontFamily: fonts.headline,
         textAlign: isCenter ? "center" : "left",
         lineHeight: 1.15,
@@ -65,9 +69,9 @@ export const TitleSceneComponent: React.FC<{
       text={scene.headline}
       startFrame={8}
       endFrame={endFrame}
-      fontSize={Math.round(68 * scale)}
+      fontSize={headlineSize}
       fontWeight={900}
-      color={colors.white}
+      color={theme.text}
       mode={m.text.stagger}
       delayBetween={m.text.delayBetween}
       useSpring={m.text.useSpring}
@@ -83,7 +87,7 @@ export const TitleSceneComponent: React.FC<{
         fontFamily: fonts.body,
         fontSize: Math.round(32 * scale),
         fontWeight: 400,
-        color: "rgba(255,255,255,0.75)",
+        color: theme.textSecondary,
         marginTop: 20 * scale,
         textAlign: isCenter ? "center" : "left",
         ...subtitleAnim,

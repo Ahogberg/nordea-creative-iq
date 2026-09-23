@@ -43,7 +43,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# claude code local
-/.claude/
+# claude code local (projekt-skills committas)
+/.claude/*
+!/.claude/skills/
+
+# brand-reference: originalen är ofta för stora att ladda upp och stannar
+# lokalt. `npm run brand:prepare` gör små kopior (stills/, frames/) som committas.
+/brand-reference/ads/*
+!/brand-reference/ads/.gitkeep
 
 .vercel

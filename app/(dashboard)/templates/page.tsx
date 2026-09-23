@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { Template } from '@/lib/video-types';
 import { Topbar } from '@/components/layout/topbar';
+import { CreativeThumbnail } from '@/components/preview/creative-thumbnail';
 import { SectionTitle } from '@/components/layout/section-title';
 import { NordeaBadge } from '@/components/ui/nordea-badge';
 import { FormatChip } from '@/components/ui/format-chip';
@@ -314,9 +315,16 @@ function TemplateCard({
     <div className="nordea-card overflow-hidden flex flex-col">
       <div className="relative">
         <div
-          className="aspect-[16/10]"
-          style={{ backgroundColor: template.config.backgroundColor || '#00005E' }}
-        />
+          className="aspect-[16/10] flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,94,0.08)_1px,transparent_0)] [background-size:16px_16px] bg-nordea-bg"
+        >
+          <CreativeThumbnail
+            config={template.config}
+            rounded="rounded-md"
+            className={`shadow-[0_6px_18px_-6px_rgba(0,0,94,0.35)] ${
+              template.config.format === 'landscape' ? 'w-[78%]' : 'h-[82%]'
+            }`}
+          />
+        </div>
         {isFavorite && (
           <div className="absolute top-2 left-2">
             <NordeaBadge tone="solid">
