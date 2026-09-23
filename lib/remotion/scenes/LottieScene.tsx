@@ -8,6 +8,7 @@ import { getLottieUrl } from "../lottie-library";
 import type { LottieScene as LottieSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
 import { RichText } from "../rich-text";
+import { useSafeArea } from "../safe-area";
 
 /**
  * Element IDs for per-element transforms: "headline", "caption"
@@ -20,6 +21,7 @@ export const LottieSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  const safe = useSafeArea();
 
   const url = scene.animationUrl || getLottieUrl(scene.animationId);
   const sizePercent = scene.sizePercent ?? 60;
@@ -114,7 +116,8 @@ export const LottieSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent,
         alignItems: "center",
-        padding: `${140 * scale}px ${90 * scale}px`,
+        // Säker yta: under loggan, ovanför nedre marginalen.
+        padding: `${safe.top}px ${90 * scale}px ${safe.bottom}px`,
         gap: 40 * scale,
         position: "relative",
       }}

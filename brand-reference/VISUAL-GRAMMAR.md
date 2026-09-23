@@ -307,6 +307,12 @@ Status 2026-09-23. ✅ = åtgärdat i renderaren, ◐ = delvis, ☐ = kvar.
    ur 1:1. Standardloggan är Nordeas ordmärke (`public/images/nordea-logo-neg.png`),
    färgat efter aktuell scen: vit på blått, blå på persika och ljusblått. En uppladdad
    logobild får samma storlek och läge men byter inte färg.
+   **Säker yta:** allt innehåll hålls under loggan (loggans underkant + 3 % luft) och
+   ovanför nedre marginalen. Marginalen är 20 % i 9:16 och 6 % i övriga format, eller
+   högre upp om varningsband eller riskrad ligger där. Mallscenerna följer ytan
+   automatiskt. Illustrationsytan klipps vid kanterna, så att inget som faller in
+   hamnar vid loggan. Fri canvas-kod får ytan som `props.safe`. Bakgrunder går
+   fortfarande ut i kanten.
 6. ✅ **Färgbyte och mask-reveal** går att göra i canvas-scener (penseldrag som avslöjar
    rubriken finns som exempel i AI-prompten).
 7. ◐ **Ordmorf och rubrik som glider** går att skriva fritt i canvas, men mallscenerna

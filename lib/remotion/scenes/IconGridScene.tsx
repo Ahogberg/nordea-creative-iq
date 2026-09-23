@@ -1,5 +1,6 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, s2f } from "../utils";
 import { colors, fonts } from "../styles";
 import { positionedElement, isInline, resolveBackground } from "../scene-utils";
@@ -17,6 +18,8 @@ export const IconGridSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
 
   const titleAnim = fadeSlideUp(frame, 5, 15, 30);
   const cols = scene.items.length <= 4 ? 2 : 3;
@@ -45,7 +48,7 @@ export const IconGridSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        padding: `0 ${80 * scale}px`,
+        padding: `${safe.top}px ${80 * scale}px ${safe.bottom}px`,
         position: "relative",
       }}
     >

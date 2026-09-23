@@ -1,5 +1,6 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, fadeIn } from "../utils";
 import { colors, fonts, headlineScale } from "../styles";
 import { positionedElement, isInline, resolveBackground } from "../scene-utils";
@@ -27,6 +28,8 @@ export const TitleSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
   const { height } = useVideoConfig();
   const headlineSize = Math.round(68 * scale * headlineScale(width, height));
   const m = motion ?? DEFAULT_MOTION_CONFIG;
@@ -109,7 +112,7 @@ export const TitleSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: isCenter ? "center" : "flex-start",
-        padding: `0 ${110 * scale}px`,
+        padding: `${safe.top}px ${110 * scale}px ${safe.bottom}px`,
         position: "relative",
       }}
     >

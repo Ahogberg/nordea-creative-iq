@@ -1,5 +1,6 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, fadeIn, s2f } from "../utils";
 import { colors, fonts } from "../styles";
 import { resolveBackground } from "../scene-utils";
@@ -13,6 +14,8 @@ export const SplitSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
 
   const leftAnim = fadeSlideUp(frame, 8, 18, 40);
   const vsAnim = fadeIn(frame, s2f(0.6), 12);
@@ -27,7 +30,7 @@ export const SplitSceneComponent: React.FC<{
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        padding: `0 ${80 * scale}px`,
+        padding: `${safe.top}px ${80 * scale}px ${safe.bottom}px`,
         gap: 40 * scale,
       }}
     >

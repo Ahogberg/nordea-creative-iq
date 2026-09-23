@@ -102,6 +102,38 @@ export function contentTop(width: number, height: number): number {
   return logoBox(width, height).bottom + height * 0.03;
 }
 
+// Fri marginal nertill, i andel av bildhöjden. 9:16: annonserna håller nedre
+// ca 20 % tomt (där ligger appens gränssnitt i stories/reels). Övriga format:
+// annonsernas lägsta text ligger runt 92 % av höjden.
+const BOTTOM_SAFE: Record<keyof typeof FORMAT_PRESETS, number> = {
+  story: 0.2,
+  vertical: 0.06,
+  feed: 0.06,
+  landscape: 0.06,
+};
+
+export interface SafeInsets {
+  /** Fri yta överst (px) — loggan plus luft. */
+  top: number;
+  /** Fri yta nertill (px) — formatets marginal eller juridisk text. */
+  bottom: number;
+}
+
+/**
+ * Säker yta för scenernas innehåll: under loggan och ovanför formatets
+ * nedre marginal eller den juridiska texten (det som ligger högst).
+ */
+export function safeInsets(
+  width: number,
+  height: number,
+  opts: { showLogo?: boolean; legalReserve?: number } = {}
+): SafeInsets {
+  const top = opts.showLogo === false ? height * 0.06 : contentTop(width, height);
+  const legal = opts.legalReserve ? opts.legalReserve + height * 0.02 : 0;
+  const bottom = Math.max(BOTTOM_SAFE[formatFor(width, height)] * height, legal);
+  return { top: Math.round(top), bottom: Math.round(bottom) };
+}
+
 // ── SAFE AREA ──
 export const safeArea = {
   top: 300,

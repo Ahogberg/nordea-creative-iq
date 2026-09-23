@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from "remotion";
-import { fonts, contentTop } from "../styles";
+import { fonts } from "../styles";
+import { useSafeArea } from "../safe-area";
 import { resolveBackground } from "../scene-utils";
 import type { TermsScene as TermsSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
@@ -21,6 +22,7 @@ export const TermsSceneComponent: React.FC<{
   const frame = useCurrentFrame();
   const { height } = useVideoConfig();
   const scale = width / 1080;
+  const safe = useSafeArea();
   const endFrame = durationFrames ?? Math.round(scene.durationSeconds * FPS);
 
   // Räkneexempel är långa (upp till ~900 tecken) — krymp stegvis.
@@ -42,7 +44,7 @@ export const TermsSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        padding: `${contentTop(width, height)}px ${120 * scale}px ${40 * scale}px`,
+        padding: `${safe.top}px ${120 * scale}px ${safe.bottom}px`,
         opacity,
       }}
     >

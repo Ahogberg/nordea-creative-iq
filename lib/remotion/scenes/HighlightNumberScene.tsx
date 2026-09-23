@@ -1,5 +1,6 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, fadeIn, scalePop, s2f } from "../utils";
 import { colors, fonts } from "../styles";
 import type { HighlightNumberScene as HighlightNumberSceneProps, MotionConfig } from "../types";
@@ -17,6 +18,8 @@ export const HighlightNumberSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
   const m = motion ?? DEFAULT_MOTION_CONFIG;
 
   const labelAnim = fadeSlideUp(frame, 5, 15, 30);
@@ -41,7 +44,7 @@ export const HighlightNumberSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        padding: `0 ${110 * scale}px`,
+        padding: `${safe.top}px ${110 * scale}px ${safe.bottom}px`,
       }}
     >
       {/* Label */}

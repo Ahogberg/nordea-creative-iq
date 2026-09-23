@@ -1,5 +1,6 @@
 import React from "react";
 import { AbsoluteFill } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { colors, fonts } from "../styles";
 import type { TextRevealScene as TextRevealSceneProps, MotionConfig, StaggerMode } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
@@ -17,6 +18,8 @@ export const TextRevealSceneComponent: React.FC<{
 }> = ({ scene, width, motion, durationFrames }) => {
   const theme = useSceneTheme();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
   const m = motion ?? DEFAULT_MOTION_CONFIG;
   const endFrame = durationFrames ?? Math.round(scene.durationSeconds * FPS);
 
@@ -36,7 +39,7 @@ export const TextRevealSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "flex-start",
-        padding: `0 ${110 * scale}px`,
+        padding: `${safe.top}px ${110 * scale}px ${safe.bottom}px`,
       }}
     >
       {scene.lines.map((line, i) => {

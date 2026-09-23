@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { AbsoluteFill, Sequence, useCurrentFrame } from "remotion";
-import { colors, FORMAT_PRESETS, logoBox } from "./styles";
+import { colors, FORMAT_PRESETS, logoBox, safeInsets } from "./styles";
+import { SafeAreaContext } from "./safe-area";
 import type { VideoConfig, Scene, MotionConfig } from "./types";
 import { DEFAULT_MOTION_CONFIG } from "./types";
 
@@ -134,10 +135,19 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
 
   const logo = logoBox(width, height);
 
-  // Juridisk text nertill: scenerna ritas ovanför den.
-  const reserve = legalReserve(config.legal, config.format, height);
+  // Säker yta: scenerna lägger innehållet under loggan och ovanför formatets
+  // nedre marginal eller den juridiska texten. Bakgrunder går ut i kanten.
+  const safe = useMemo(
+    () =>
+      safeInsets(width, height, {
+        showLogo: config.showLogo,
+        legalReserve: legalReserve(config.legal, config.format, height),
+      }),
+    [width, height, config.showLogo, config.legal, config.format]
+  );
 
   return (
+    <SafeAreaContext.Provider value={safe}>
     <SceneThemeContext.Provider value={rootTheme}>
     <AbsoluteFill
       style={{
@@ -150,7 +160,6 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
         return (
           <Sequence key={i} from={startFrame} durationInFrames={durationFrames}>
             <SceneThemeContext.Provider value={sceneTheme(scene)}>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: reserve }}>
             <SceneTransition
               startFrame={0}
               endFrame={durationFrames}
@@ -161,7 +170,6 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
               {renderScene(scene, width, motion, durationFrames)}
               {renderSceneAssets(scene, width / 1080)}
             </SceneTransition>
-            </div>
             </SceneThemeContext.Provider>
           </Sequence>
         );
@@ -195,5 +203,6 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
       )}
     </AbsoluteFill>
     </SceneThemeContext.Provider>
+    </SafeAreaContext.Provider>
   );
 };

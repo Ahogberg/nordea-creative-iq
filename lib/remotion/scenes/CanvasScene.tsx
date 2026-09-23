@@ -11,7 +11,8 @@ import {
   random,
   Easing,
 } from "remotion";
-import { colors, fonts, headlineScale, contentTop } from "../styles";
+import { colors, fonts, headlineScale, type SafeInsets } from "../styles";
+import { useSafeArea } from "../safe-area";
 import * as animUtils from "../utils";
 import * as kit from "../illustration/toolkit";
 import type { CanvasScene as CanvasSceneProps, MotionConfig } from "../types";
@@ -81,7 +82,11 @@ const buildScope = () => ({
 });
 
 type ScopeRecord = ReturnType<typeof buildScope>;
-type SceneComponent = React.FC<{ width: number; height: number; scale: number }>;
+// `safe` = fri yta överst/nertill (px) som text och viktiga objekt ska hålla
+// sig innanför. I illustrationsscener är hela ytan redan säker (0/0).
+type SceneComponent = React.FC<{ width: number; height: number; scale: number; safe: SafeInsets }>;
+
+const NO_INSETS: SafeInsets = { top: 0, bottom: 0 };
 
 function compileComponent(compiledJs: string, scope: ScopeRecord): SceneComponent | null {
   try {
@@ -110,6 +115,7 @@ export const CanvasSceneComponent: React.FC<{
 }> = ({ scene, width, motion, durationFrames }) => {
   const { height } = useVideoConfig();
   const scale = width / 1080;
+  const safe = useSafeArea();
 
   const SceneComponent = useMemo(() => {
     if (!scene.compiledJs) return null;
@@ -133,16 +139,21 @@ export const CanvasSceneComponent: React.FC<{
     return (
       drawing ?? (
         <CanvasErrorBoundary scale={scale}>
-          {SceneComponent && <SceneComponent width={width} height={height} scale={scale} />}
+          {SceneComponent && <SceneComponent width={width} height={height} scale={scale} safe={safe} />}
         </CanvasErrorBoundary>
       )
     );
   }
 
   // Illustrationsscen: koden ritar bara i illustrationsytan, rubriken
-  // renderas här — så att typografin följer Nordeas regler.
+  // renderas här — så att typografin följer Nordeas regler. Ytan ryms alltid
+  // inom den säkra ytan med plats kvar för rubriken.
+  const available = height - safe.top - safe.bottom;
   const illustrationHeight = Math.round(
-    (height * Math.min(70, Math.max(20, scene.illustrationHeightPercent ?? 48))) / 100
+    Math.min(
+      (height * Math.min(70, Math.max(20, scene.illustrationHeightPercent ?? 48))) / 100,
+      available * 0.62
+    )
   );
   return (
     <IllustrationLayout
@@ -154,7 +165,9 @@ export const CanvasSceneComponent: React.FC<{
       illustration={
         drawing ?? (
           <CanvasErrorBoundary scale={scale}>
-            {SceneComponent && <SceneComponent width={width} height={illustrationHeight} scale={scale} />}
+            {SceneComponent && (
+              <SceneComponent width={width} height={illustrationHeight} scale={scale} safe={NO_INSETS} />
+            )}
           </CanvasErrorBoundary>
         )
       }
@@ -178,6 +191,7 @@ const IllustrationLayout: React.FC<{
   const frame = useCurrentFrame();
   const { height } = useVideoConfig();
   const scale = width / 1080;
+  const safe = useSafeArea();
   const m = motion ?? DEFAULT_MOTION_CONFIG;
   const endFrame = durationFrames ?? Math.round(scene.durationSeconds * FPS);
   const headlineSize = Math.round(58 * scale * headlineScale(width, height));
@@ -221,8 +235,12 @@ const IllustrationLayout: React.FC<{
     </div>
   );
 
+  // overflow: hidden — ingenting från illustrationen (t.ex. mynt som faller
+  // in uppifrån) kan hamna nära loggan eller i nedre marginalen.
   const drawing = (
-    <div style={{ position: "relative", width, height: illustrationHeight, flexShrink: 0 }}>{illustration}</div>
+    <div style={{ position: "relative", width, height: illustrationHeight, flexShrink: 0, overflow: "hidden" }}>
+      {illustration}
+    </div>
   );
 
   return (
@@ -233,9 +251,9 @@ const IllustrationLayout: React.FC<{
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        // Plats för loggan överst (dess läge varierar per format).
-        paddingTop: contentTop(width, height),
-        paddingBottom: height * 0.04,
+        // Säker yta: under loggan, ovanför nedre marginalen / juridisk text.
+        paddingTop: safe.top,
+        paddingBottom: safe.bottom,
         gap: 36 * scale,
       }}
     >

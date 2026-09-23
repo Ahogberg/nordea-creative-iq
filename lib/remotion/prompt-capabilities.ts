@@ -43,10 +43,12 @@ Två lägen:
 1) Illustrationsscen (vanligast): sätt headline (+ subtitle) och illustrationLayout. Scenen renderar rubriken med Nordeas typografi; din kod ritar BARA illustrationen i sin yta (width × height du får som props, höjd = illustrationHeightPercent av bilden). Rita INTE rubriken i koden.
    - "illustration-top": illustration i mitten, rubrik under (arketyp "illustration-mitt-rubrik-under")
    - "illustration-bottom": rubrik överst, illustration under (arketyp "rubrik-over-bild")
-2) Helbild: utan headline ritar koden hela bilden (egen text, masker, övergångar). Loggan ritas ändå av renderaren överst i mitten — lämna fritt ovanför ca 12 % av höjden i 1:1 och 4:5, ca 22 % i 9:16 (där sitter loggan lägre, som i Nordeas annonser).
+2) Helbild: utan headline ritar koden hela bilden (egen text, masker, övergångar).
+
+SÄKER YTA (gäller alla scener): loggan ritas av renderaren överst i mitten och nedre delen av bilden hålls fri (plattformarnas gränssnitt, juridisk text). Mallscenerna och illustrationsytan håller sig automatiskt innanför. I helbild får du props.safe = { top, bottom } i px: all text och alla viktiga objekt — även under animation, t.ex. något som faller in eller glider förbi — ska ligga mellan y = safe.top och y = height - safe.bottom. Bara bakgrundsformer och färgytor får gå ut i kanterna. I illustrationsläget är safe = { top: 0, bottom: 0 } och allt som ritas utanför ytan klipps bort.
 
 Kodregler:
-- Definiera \`function Scene({ width, height, scale }) { ... }\` och returnera en <AbsoluteFill>-rot. Inga import-satser, inga fetch/eval.
+- Definiera \`function Scene({ width, height, scale, safe }) { ... }\` och returnera en <AbsoluteFill>-rot. Inga import-satser, inga fetch/eval.
 - Tid: const frame = useCurrentFrame(); 30 fps. Skala pixelmått med scale.
 - I scope: React, AbsoluteFill, Sequence, Img, useCurrentFrame, useVideoConfig, interpolate, interpolateColors, spring, Easing, random, colors, fonts, RichText (<RichText text="Spara **tid**" style={{...}} />).
 - Illustrationskit (valfritt att använda, fritt att kombinera med egen SVG):
