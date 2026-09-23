@@ -13,7 +13,7 @@
 // glesare i mitten och tätt i slutet (CTA + end card).
 //
 // Använder ffmpeg från PATH om det finns, annars Remotions medföljande
-// (`npx remotion ffmpeg`).
+// (binären i node_modules/@remotion/compositor-*, sist `npx remotion ffmpeg`).
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -31,13 +31,25 @@ function findTool(name: 'ffmpeg' | 'ffprobe'): Tool {
   if (spawnSync(name, ['-version'], { stdio: 'ignore' }).status === 0) {
     return { cmd: name, prefix: [] };
   }
+  // Remotions binärer direkt ur node_modules. `npx` går inte att starta utan
+  // shell på Windows (npx.cmd), och med shell bryts sökvägar med mellanslag.
+  const remotionDir = path.join(process.cwd(), 'node_modules', '@remotion');
+  const exe = process.platform === 'win32' ? `${name}.exe` : name;
+  if (existsSync(remotionDir)) {
+    for (const dir of readdirSync(remotionDir)) {
+      if (!dir.startsWith(`compositor-${process.platform}-${process.arch}`)) continue;
+      const bin = path.join(remotionDir, dir, exe);
+      if (existsSync(bin)) return { cmd: bin, prefix: [] };
+    }
+  }
   return { cmd: 'npx', prefix: ['--no-install', 'remotion', name] };
 }
 
 function run(tool: Tool, args: string[]) {
   const res = spawnSync(tool.cmd, [...tool.prefix, ...args], { encoding: 'utf8' });
   if (res.status !== 0) {
-    throw new Error(`${tool.prefix.join(' ') || tool.cmd} misslyckades: ${res.stderr?.slice(-500)}`);
+    const detail = res.error?.message ?? res.stderr?.slice(-500);
+    throw new Error(`${tool.prefix.join(' ') || tool.cmd} misslyckades: ${detail}`);
   }
   return res.stdout;
 }

@@ -1,0 +1,93 @@
+{
+  "ad_id": "85b1de33-1ee6-4150-8b55-3c29f8c14bd9",
+  "source": "85b1de33-1ee6-4150-8b55-3c29f8c14bd9.mp4",
+  "duration": 11.066667,
+  "width": 1080,
+  "height": 1350,
+  "frames": [
+    {
+      "file": "t000000ms.jpg",
+      "t": 0
+    },
+    {
+      "file": "t000250ms.jpg",
+      "t": 0.25
+    },
+    {
+      "file": "t000500ms.jpg",
+      "t": 0.5
+    },
+    {
+      "file": "t000750ms.jpg",
+      "t": 0.75
+    },
+    {
+      "file": "t001000ms.jpg",
+      "t": 1
+    },
+    {
+      "file": "t001250ms.jpg",
+      "t": 1.25
+    },
+    {
+      "file": "t001500ms.jpg",
+      "t": 1.5
+    },
+    {
+      "file": "t001750ms.jpg",
+      "t": 1.75
+    },
+    {
+      "file": "t002000ms.jpg",
+      "t": 2
+    },
+    {
+      "file": "t003000ms.jpg",
+      "t": 3
+    },
+    {
+      "file": "t004000ms.jpg",
+      "t": 4
+    },
+    {
+      "file": "t005000ms.jpg",
+      "t": 5
+    },
+    {
+      "file": "t006000ms.jpg",
+      "t": 6
+    },
+    {
+      "file": "t007000ms.jpg",
+      "t": 7
+    },
+    {
+      "file": "t008000ms.jpg",
+      "t": 8
+    },
+    {
+      "file": "t009000ms.jpg",
+      "t": 9
+    },
+    {
+      "file": "t009070ms.jpg",
+      "t": 9.07
+    },
+    {
+      "file": "t009570ms.jpg",
+      "t": 9.57
+    },
+    {
+      "file": "t010070ms.jpg",
+      "t": 10.07
+    },
+    {
+      "file": "t010570ms.jpg",
+      "t": 10.57
+    },
+    {
+      "file": "t011020ms.jpg",
+      "t": 11.02
+    }
+  ]
+}
