@@ -1,6 +1,4 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { createClient } from '@/lib/supabase/server';
+import { requireSessionUser } from '@/lib/auth/session-user';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 
@@ -9,37 +7,14 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true';
-  const isDemo =
-    demoEnabled && cookieStore.get('demo-session')?.value === 'true';
-
-  let user = null;
-
-  if (!isDemo) {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  }
-
-  if (!user && !isDemo) {
-    redirect('/login');
-  }
-
-  const displayUser = user ?? {
-    id: 'demo',
-    email: 'demo@nordea.com',
-    app_metadata: {},
-    user_metadata: {},
-    aud: 'authenticated',
-    created_at: '',
-  };
+  const user = await requireSessionUser();
 
   return (
     <div className="min-h-screen">
       <Sidebar />
       <div className="lg:pl-[240px]">
-        <Header user={displayUser as any} />
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <Header user={user as any} />
         <main className="p-4 lg:p-8">
           {children}
         </main>

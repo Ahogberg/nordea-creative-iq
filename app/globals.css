@@ -571,6 +571,8 @@
   border-radius: 8px;
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+/* Motion Studio-chatten: obestämd förloppsindikator medan AI:n arbetar. */
+@keyframes chat-progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
 
 .spinner {
   width: 20px; height: 20px;

@@ -12,6 +12,8 @@ import {
 import { withVisualGrammar } from "@/lib/brand/visual-grammar";
 
 export const runtime = "nodejs";
+// Chatten i Motion Studio går hit; svar med canvas-kod kan ta en stund.
+export const maxDuration = 120;
 
 const SYSTEM_PROMPT = `Du är en kreativ motion graphics-designer på Nordea. Du hjälper användare skapa animerade videos genom konversation.
 
@@ -60,7 +62,7 @@ Regler:
 - Total video bör vara 5-12 sekunder
 - Texten ska vara kort och slagkraftig — det är rörlig grafik, inte en artikel
 - Avsluta med ett textkort ("title") med URL eller mjuk uppmaning; "cta"-scen (knapp) bara om användaren ber om det
-- Ändrar användaren bara text eller färg i en canvas-scen: behåll tsxCode oförändrad
+- Canvas-scener vars kod du INTE ändrar: sätt tsxCode till exakt "[oförändrad kod: scen N]" där N är scenens nummer (1, 2, 3 …) i den nuvarande konfigurationen — skriv inte om koden. Gäller även när du bara ändrar rubrik, färg eller längd, eller flyttar scenen.
 - Använd svenska som standard om inte annat anges
 - Håll Nordeas professionella ton — korrekt men varm
 
@@ -168,7 +170,7 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json({
-      config: await compileCanvasScenes(config),
+      config: await compileCanvasScenes(restoreUnchangedCode(config, currentConfig as VideoConfig | undefined)),
       message: assistantMessage,
       source: "claude",
     });
@@ -179,6 +181,22 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// "[oförändrad kod: scen N]" → koden från scen N i den nuvarande configen.
+const KEEP_CODE = /^\s*\[oförändrad kod: scen (\d+)\]\s*$/;
+
+function restoreUnchangedCode(config: VideoConfig, current: VideoConfig | undefined): VideoConfig {
+  return {
+    ...config,
+    scenes: config.scenes.map((scene) => {
+      if (scene.type !== "canvas") return scene;
+      const match = scene.tsxCode?.match(KEEP_CODE);
+      if (!match) return scene;
+      const source = current?.scenes?.[Number(match[1]) - 1];
+      return source?.type === "canvas" ? { ...scene, tsxCode: source.tsxCode } : scene;
+    }),
+  };
 }
 
 function generateMockConfig(prompt: string): VideoConfig {

@@ -24,6 +24,7 @@ import {
   DEFAULT_MOTION_CONFIG,
   DEFAULT_ELEMENT_TRANSFORM,
 } from "@/lib/remotion/types";
+import { describeChanges } from "./describe-changes";
 
 export type AspectRatio = VideoConfig["format"]; // 'story' | 'feed' | 'landscape' | 'vertical'
 
@@ -57,8 +58,42 @@ export interface Variant {
   full_config: VideoConfig;
 }
 
+// ── Chatt ──
+// Varje AI-svar sparar configen före ändringen så att det senaste svaret
+// kan ångras.
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  status: "pending" | "done" | "error";
+  /** Korta etiketter för vad som ändrades (describeChanges). */
+  changes?: string[];
+  /** Configen innan svaret tillämpades — för Ångra. */
+  before?: VideoConfig;
+  undone?: boolean;
+  /** Användarens text som svaret gäller — för Försök igen. */
+  retryText?: string;
+  startedAt?: number;
+}
+
+export type InspectorTab = "scene" | "style" | "motion" | "assets" | "variants";
+
 interface StudioState {
   config: VideoConfig;
+
+  // Chatt (Motion Studio-layouten)
+  messages: ChatMessage[];
+  isChatBusy: boolean;
+  /** Första utkastet genereras (från ?prompt) — scenen visar ett vänteläge. */
+  isDrafting: boolean;
+  inspectorTab: InspectorTab | null;
+  setInspectorTab: (tab: InspectorTab | null) => void;
+  startFromPrompt: (prompt: string) => Promise<void>;
+  sendChatMessage: (text: string) => Promise<void>;
+  undoMessage: (id: string) => void;
+  retryMessage: (id: string) => Promise<void>;
+  clearChat: () => void;
+
   selectedSceneIndex: number | null;
   previewKey: number;
   isRendering: boolean;
@@ -113,6 +148,51 @@ interface StudioState {
 export const useStudioStore = create<StudioState>()(
   subscribeWithSelector((set, get) => ({
     config: DEFAULT_VIDEO_CONFIG,
+
+    messages: [],
+    isChatBusy: false,
+    isDrafting: false,
+    inspectorTab: null,
+
+    setInspectorTab: (tab) => set({ inspectorTab: tab }),
+
+    startFromPrompt: async (prompt) => {
+      if (get().isChatBusy) return;
+      set({ isDrafting: true });
+      await runChatTurn(prompt, "/api/studio/initial-prompt");
+      set({ isDrafting: false });
+    },
+
+    sendChatMessage: async (text) => {
+      if (get().isChatBusy || !text.trim()) return;
+      await runChatTurn(text.trim(), "/api/motion-generate");
+    },
+
+    retryMessage: async (id) => {
+      const msg = get().messages.find((m) => m.id === id);
+      if (!msg?.retryText || get().isChatBusy) return;
+      // Ta bort det misslyckade svaret och frågan, skicka om.
+      set((s) => ({
+        messages: s.messages.filter(
+          (m, i, all) => m.id !== id && !(m.role === "user" && all[i + 1]?.id === id)
+        ),
+      }));
+      await runChatTurn(msg.retryText, "/api/motion-generate");
+    },
+
+    undoMessage: (id) =>
+      set((state) => {
+        const msg = state.messages.find((m) => m.id === id);
+        if (!msg?.before || msg.undone) return state;
+        return {
+          config: msg.before,
+          selectedSceneIndex: clampScene(state.selectedSceneIndex, msg.before),
+          selectedElementId: null,
+          messages: state.messages.map((m) => (m.id === id ? { ...m, undone: true } : m)),
+        };
+      }),
+
+    clearChat: () => set({ messages: [] }),
     selectedSceneIndex: 0,
     previewKey: 0,
     isRendering: false,
@@ -293,6 +373,111 @@ export const useStudioStore = create<StudioState>()(
       }),
   }))
 );
+
+// ── Chatt: en tur mot AI:n ──
+
+function clampScene(index: number | null, config: VideoConfig): number | null {
+  if (config.scenes.length === 0) return null;
+  if (index === null) return 0;
+  return Math.min(index, config.scenes.length - 1);
+}
+
+let messageSeq = 0;
+const newId = () => `msg-${Date.now()}-${++messageSeq}`;
+
+/**
+ * Skickar en fråga till AI:n och tillämpar svaret.
+ *  - /api/studio/initial-prompt: första utkastet från en brief ({ config })
+ *  - /api/motion-generate: ändringar i en befintlig video ({ config, message })
+ * Tidigare lyckade fråga/svar-par skickas som historik.
+ */
+async function runChatTurn(text: string, endpoint: string) {
+  const { getState, setState } = useStudioStore;
+  const before = getState().config;
+  const selected = getState().selectedSceneIndex;
+
+  const userMsg: ChatMessage = { id: newId(), role: "user", content: text, status: "done" };
+  const reply: ChatMessage = {
+    id: newId(),
+    role: "assistant",
+    content: "",
+    status: "pending",
+    retryText: text,
+    startedAt: Date.now(),
+  };
+  setState((s) => ({ messages: [...s.messages, userMsg, reply], isChatBusy: true }));
+
+  const patchReply = (patch: Partial<ChatMessage>) =>
+    setState((s) => ({
+      messages: s.messages.map((m) => (m.id === reply.id ? { ...m, ...patch } : m)),
+    }));
+
+  try {
+    const isInitial = endpoint.endsWith("initial-prompt");
+    const history = completedTurns(getState().messages);
+    // Vald scen följer med så att "gör den här scenen …" fungerar.
+    const prompt =
+      !isInitial && selected !== null && before.scenes.length > 1
+        ? `${text}\n\n(Användaren har scen ${selected + 1} markerad i editorn.)`
+        : text;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        isInitial ? { prompt } : { prompt, currentConfig: before, history }
+      ),
+    });
+    const data = (await res.json().catch(() => null)) as {
+      config?: VideoConfig | null;
+      message?: string;
+      error?: string;
+    } | null;
+    if (!res.ok || !data) throw new Error(data?.error || data?.message || "AI:n svarade med ett fel");
+
+    if (data.config) {
+      const next = { ...data.config, motion: data.config.motion ?? DEFAULT_MOTION_CONFIG };
+      const changes = describeChanges(before, next);
+      setState((s) => ({
+        config: next,
+        selectedSceneIndex: clampScene(s.selectedSceneIndex, next),
+        selectedElementId: null,
+      }));
+      patchReply({
+        status: "done",
+        content:
+          (isInitial ? undefined : data.message) ??
+          `Här är ett första utkast med ${next.scenes.length} scener. Beskriv vad du vill ändra.`,
+        changes: isInitial ? undefined : changes,
+        before,
+      });
+    } else {
+      // Bara ett svar, ingen ändring (t.ex. en fråga).
+      patchReply({ status: "done", content: data.message ?? "Klart." });
+    }
+  } catch (err) {
+    patchReply({
+      status: "error",
+      content: err instanceof Error ? err.message : "Något gick fel",
+    });
+  } finally {
+    setState({ isChatBusy: false });
+  }
+}
+
+/** Lyckade fråga/svar-par som historik till AI:n (senaste tio meddelandena). */
+function completedTurns(messages: ChatMessage[]) {
+  const turns: Array<{ role: "user" | "assistant"; content: string }> = [];
+  for (let i = 0; i < messages.length - 1; i++) {
+    const q = messages[i];
+    const a = messages[i + 1];
+    if (q.role === "user" && a.role === "assistant" && a.status === "done" && !a.undone) {
+      turns.push({ role: "user", content: q.content }, { role: "assistant", content: a.content });
+      i++;
+    }
+  }
+  return turns.slice(-10);
+}
 
 // ── Debounced preview re-render ──
 // 1.5s after the last config mutation, bump previewKey so the Remotion

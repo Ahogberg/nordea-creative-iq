@@ -326,20 +326,6 @@ export function CanvasOverlay({ frameWidth, frameHeight }: CanvasOverlayProps) {
         ))}
 
       <AlignmentGuides guides={activeGuides} />
-
-      {scene && elements.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div
-            className="text-center text-sm px-3 py-2 rounded-md"
-            style={{
-              background: "rgba(0,0,0,0.45)",
-              color: "rgba(255,255,255,0.85)",
-            }}
-          >
-            Lägg till text eller assets via höger panel
-          </div>
-        </div>
-      )}
     </div>
   );
 }
