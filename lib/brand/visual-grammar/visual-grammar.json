@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "status": "empty",
+  "market": "SE",
+  "generated_at": null,
+  "reviewed_by": null,
+  "source_ad_ids": [],
+  "summary": "",
+  "layout_archetypes": [],
+  "color_rules": [],
+  "typography_rules": [],
+  "illustration_style": null,
+  "photography_style": null,
+  "motion_recipes": [],
+  "copy_patterns": [],
+  "do": [],
+  "dont": [],
+  "golden_examples": []
+}

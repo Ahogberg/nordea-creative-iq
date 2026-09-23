@@ -7,6 +7,7 @@ import {
   DEFAULT_MOTION_CONFIG,
   type VideoConfig,
 } from "@/lib/remotion/types";
+import { withVisualGrammar } from "@/lib/brand/visual-grammar";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -82,7 +83,7 @@ export async function POST(
       const response = await client.messages.create({
         model: CLAUDE_MODEL,
         max_tokens: 4000,
-        system: CONFIG_PROMPT,
+        system: withVisualGrammar(CONFIG_PROMPT),
         messages: [
           {
             role: "user",

@@ -43,7 +43,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# claude code local
-/.claude/
+# claude code local (projekt-skills committas)
+/.claude/*
+!/.claude/skills/
+
+# brand-reference: videor är stora — bildrutorna (frames/) committas i stället
+/brand-reference/ads/**/*.mp4
+/brand-reference/ads/**/*.mov
+/brand-reference/ads/**/*.webm
+/brand-reference/ads/**/*.m4v
 
 .vercel

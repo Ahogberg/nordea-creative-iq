@@ -9,6 +9,7 @@ import {
   NORDEA_AD_COPY_RULES,
   NORDEA_TONE_OF_VOICE,
 } from "@/lib/nordea-brand-guidelines";
+import { withVisualGrammar } from "@/lib/brand/visual-grammar";
 
 export const runtime = "nodejs";
 
@@ -206,7 +207,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 8192,
-      system: SYSTEM_PROMPT,
+      system: withVisualGrammar(SYSTEM_PROMPT),
       messages,
     });
 
