@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import { FORMATS, type FormatId } from "@/lib/brand/safe-zones";
 import type { VideoConfig } from "@/lib/remotion/types";
+import { CreativeThumbnail } from "@/components/preview/creative-thumbnail";
 
 const MotionPlayer = dynamic(
   () =>
@@ -37,16 +38,20 @@ export function VariantPreviewCard({
   const dimensions = FORMATS[variant.format];
 
   if (size === "thumbnail") {
+    // Stillbild som spelas vid hover — fyra samtidiga Players i rutnätet
+    // var tunga och gjorde det svårt att jämföra formaten.
     return (
       <div
-        className="bg-nordea-deep rounded-md overflow-hidden mx-auto"
+        className="mx-auto"
         style={{
           aspectRatio: `${dimensions.width} / ${dimensions.height}`,
+          height: dimensions.height >= dimensions.width ? "140px" : undefined,
+          width: dimensions.height < dimensions.width ? "100%" : undefined,
           maxHeight: "140px",
           maxWidth: "100%",
         }}
       >
-        <MotionPlayer config={variant.config} loop className="w-full h-full" />
+        <CreativeThumbnail config={variant.config} rounded="rounded-md" className="w-full h-full" />
       </div>
     );
   }

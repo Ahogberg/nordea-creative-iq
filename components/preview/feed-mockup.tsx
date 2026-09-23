@@ -17,8 +17,10 @@ interface FeedMockupProps {
   headline?: string;
   body?: string;
   cta?: string;
-  /** Bredd på telefonen i px. */
+  /** Bredd på telefonen i px. Ignoreras om `height` anges. */
   width?: number;
+  /** Höjd (t.ex. "100%") — telefonen anpassar bredden efter höjden. */
+  height?: number | string;
   /** Mediaytans proportioner i flödet (story är alltid 9:16). */
   feedAspect?: "1:1" | "4:5";
   className?: string;
@@ -35,18 +37,19 @@ export function FeedMockup({
   body,
   cta = "Läs mer",
   width = 300,
+  height,
   feedAspect = "4:5",
   className = "",
 }: FeedMockupProps) {
   return (
     <div
       className={`relative rounded-[44px] bg-[#0B0B1A] p-[10px] shadow-[0_24px_60px_-12px_rgba(0,0,94,0.35),0_0_0_1px_rgba(255,255,255,0.06)_inset] ${className}`}
-      style={{ width }}
+      style={height !== undefined ? { height, aspectRatio: "9.9 / 20.4" } : { width, aspectRatio: "9.9 / 20.4" }}
     >
       {/* Dynamic island */}
       <div className="absolute top-[18px] left-1/2 -translate-x-1/2 w-[34%] h-[22px] rounded-full bg-black z-30" />
 
-      <div className="relative overflow-hidden rounded-[34px] bg-white" style={{ aspectRatio: "9 / 19.5" }}>
+      <div className="absolute inset-[10px] overflow-hidden rounded-[34px] bg-white">
         {placement === "story" ? (
           <StoryScreen cta={cta}>{children}</StoryScreen>
         ) : (

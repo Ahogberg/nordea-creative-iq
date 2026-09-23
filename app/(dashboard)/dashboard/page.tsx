@@ -15,6 +15,8 @@ import { SectionTitle } from "@/components/layout/section-title";
 import { StatCard } from "@/components/ui/stat-card";
 import { NordeaBadge } from "@/components/ui/nordea-badge";
 import { FormatChip } from "@/components/ui/format-chip";
+import { CreativeThumbnail } from "@/components/preview/creative-thumbnail";
+import { SAMPLE_CREATIVES } from "@/lib/demo/sample-creatives";
 
 // ── MOCK DATA — TODO Sprint 8+ ─────────────────────────────────────────────
 // Replace with real queries when corresponding tables/jobs ship:
@@ -22,14 +24,6 @@ import { FormatChip } from "@/components/ui/format-chip";
 // - production queue → production_jobs WHERE status IN ('pending','processing')
 // - kpi values → aggregate from ai_generations + qa_runs + production_jobs
 // The shape of these mock objects matches what the real query should return.
-
-const MOCK_RECENT_PROJECTS = [
-  { name: "Bolån — Q2-lansering · hjältefilm", updated: "2h sedan", formats: ["16:9", "9:16", "1:1"], status: "Under granskning", tone: "amber" as const, score: 87 },
-  { name: "Privatlån sommar — variantset", updated: "Igår", formats: ["9:16", "1:1"], status: "Godkänd", tone: "green" as const, score: 94 },
-  { name: "Spara & Investera — förklarande", updated: "2 dagar sedan", formats: ["16:9"], status: "Producerar", tone: "cobalt" as const, score: null },
-  { name: "Kort & Betalningar — introduktion", updated: "4 dagar sedan", formats: ["9:16", "4:5"], status: "Utkast", tone: "neutral" as const, score: null },
-  { name: "Hållbarhetsrapport 2026", updated: "1 vecka sedan", formats: ["16:9", "1:1"], status: "Godkänd", tone: "green" as const, score: 91 },
-];
 
 const MOCK_PRODUCTION_QUEUE = [
   { title: "Spara & Investera — 12 varianter", progress: 74, sub: "9 av 12 renderade · ETA 2 min", color: "var(--nordea-teal)" },
@@ -82,6 +76,43 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Senaste annonser — det plattformen faktiskt producerar */}
+        <div className="nordea-card p-5 mb-8">
+          <SectionTitle
+            title="Senaste annonserna"
+            hint="Håll musen över för att spela"
+            right={
+              <Link href="/templates" className="text-xs font-medium text-nordea-blue inline-flex items-center gap-1 hover:underline">
+                Alla annonser <ArrowRight className="w-3 h-3" />
+              </Link>
+            }
+          />
+          <div className="flex gap-4 overflow-x-auto pb-1 -mx-1 px-1 [mask-image:linear-gradient(to_right,black_92%,transparent)]">
+            {SAMPLE_CREATIVES.map((c) => (
+              <div key={c.id} className="shrink-0 group/card">
+                <div className="h-[230px] flex items-end">
+                  <CreativeThumbnail
+                    config={c.config}
+                    className="h-full shadow-[0_8px_24px_-8px_rgba(0,0,94,0.35)] transition-transform duration-300 group-hover/card:-translate-y-1"
+                    rounded="rounded-xl"
+                  />
+                </div>
+                <div className="mt-3 max-w-[210px]">
+                  <div className="text-[13px] font-medium text-nordea-text truncate">{c.name}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <NordeaBadge tone={c.tone} dot>{c.status}</NordeaBadge>
+                    {c.score !== null && (
+                      <span className={`text-[11px] font-semibold tabular-nums ${c.score >= 90 ? "text-nordea-green" : "text-nordea-amber"}`}>
+                        QA {c.score}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* KPI:er */}
         <div className="grid grid-cols-4 gap-4 mb-8">
           <StatCard label="Videor detta kvartal" value="284" delta="+38%" sub="jmf Q1" icon={Video} />
@@ -101,15 +132,15 @@ export default function DashboardPage() {
               </button>
             </div>
             <div>
-              {MOCK_RECENT_PROJECTS.map((p, i) => (
+              {SAMPLE_CREATIVES.map((p, i) => (
                 <div
                   key={i}
                   className={`grid grid-cols-[52px_1fr_auto_auto_auto] items-center gap-3 px-5 py-3 ${
-                    i < MOCK_RECENT_PROJECTS.length - 1 ? "border-b border-nordea-hairline" : ""
+                    i < SAMPLE_CREATIVES.length - 1 ? "border-b border-nordea-hairline" : ""
                   }`}
                 >
-                  <div className="nordea-placeholder-stripe w-[52px] h-8">
-                    {p.formats[0]}
+                  <div className="w-[52px] h-10 rounded-md overflow-hidden flex items-center justify-center" style={{ backgroundColor: p.config.backgroundColor }}>
+                    <CreativeThumbnail config={p.config} playOnHover={false} rounded="rounded-none" className="w-full shrink-0" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-nordea-text truncate">{p.name}</div>

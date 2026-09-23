@@ -1,7 +1,7 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { fadeSlideUp } from "../utils";
-import { colors, fonts } from "../styles";
+import { colors, fonts, headlineScale } from "../styles";
 import { positionedElement, isInline, resolveBackground } from "../scene-utils";
 import type { CtaScene as CtaSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
@@ -22,6 +22,8 @@ export const CtaSceneComponent: React.FC<{
 }> = ({ scene, width, motion, durationFrames }) => {
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  const { height } = useVideoConfig();
+  const headlineSize = Math.round(60 * scale * headlineScale(width, height));
   const m = motion ?? DEFAULT_MOTION_CONFIG;
   const endFrame = durationFrames ?? Math.round(scene.durationSeconds * FPS);
 
@@ -34,7 +36,7 @@ export const CtaSceneComponent: React.FC<{
       startFrame={8}
       durationFrames={scene.textAnimation.durationFrames ?? 30}
       fontStyle={{
-        fontSize: Math.round(60 * scale),
+        fontSize: headlineSize,
         fontWeight: 900,
         color: colors.white,
         fontFamily: fonts.headline,
@@ -47,7 +49,7 @@ export const CtaSceneComponent: React.FC<{
       text={scene.headline}
       startFrame={8}
       endFrame={endFrame}
-      fontSize={Math.round(60 * scale)}
+      fontSize={headlineSize}
       fontWeight={900}
       color={colors.white}
       mode={m.text.stagger}
