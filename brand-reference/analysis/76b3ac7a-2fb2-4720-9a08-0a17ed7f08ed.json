@@ -1,0 +1,73 @@
+{
+  "ad_id": "76b3ac7a-2fb2-4720-9a08-0a17ed7f08ed",
+  "source_files": ["76b3ac7a-2fb2-4720-9a08-0a17ed7f08ed.mp4"],
+  "kind": "video",
+  "aspect_ratio": "1:1",
+  "product": "mortgage",
+  "year": 2026,
+  "layout": {
+    "archetype_hint": "typografisk-fraga-centrerad-med-stapelmonster + disclaimer-end-card",
+    "description": "Rent typografisk annons på enfärgad Nordea-blå bakgrund, inga bilder. Logga top-center (ca 11 % ned). Rubrik i två rader centrerad; när underrubriken kommer in trycks rubriken uppåt så att rubrik + underrubrik tillsammans blir centrerade (rubrik ca 32–46 %, underrubrik ca 53–61 %). Nordeas stapelmönster (fyra rundade vertikala staplar) i klarare blått nere till vänster, beskuret av vänster- och nederkanten (ca 48–97 % höjd, x 0–30 %). Sista scenen är en centrerad disclaimer-textplatta med räkneexempel.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 2, "notes": "Vit ordmärke ca 20 % av bredden, ca 11 % ned. Statisk hela filmen." },
+      { "element": "headline", "position": "center", "approx_area_pct": 14, "notes": "Två rader centrerade; flyttas uppåt när underrubriken kommer in." },
+      { "element": "subline", "position": "center", "approx_area_pct": 7, "notes": "Två rader under rubriken, ca 53–61 % höjd." },
+      { "element": "pattern", "position": "bottom-left", "approx_area_pct": 10, "notes": "Fyra pills i klarblått #0200ED, avtagande höjd åt höger, beskurna av vänster- och nederkant." },
+      { "element": "disclaimer", "position": "center", "approx_area_pct": 45, "notes": "Scen 2: fet rubrik + två stycken brödtext, centrerat, ca 23–84 % höjd." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0"],
+    "text": ["#FBEDE8", "#FFFFFF"],
+    "accents": ["#0200ED"],
+    "notes": "Bakgrund Nordea-blå (mäts #010094–#010098 i JPEG, tolkad som #0000A0). Rubriken 'Kan du få ett / bättre bolån?' är INTE rent vit utan ljust persika/krämfärgad (glyfkärnor ca #FBEDE8, tydligt varmare än den vita loggan bredvid). Underrubriken och disclaimern är vita (#FFFFFF, underrubriken möjligen med lätt blåton p.g.a. kantutjämning). Stapelmönstret är ett klarare, mer elektriskt blått #0200ED — tydligt ljusare än bakgrunden och utanför dokumenterad palett. I övergången (ca 4 s) syns stora halvtransparenta staplar i samma klarblå ton; disclaimer-bakgrunden har en mycket svag rest av dessa (lätt vertikal ljusvariation)."
+  },
+  "typography": {
+    "headline": { "font": "NordeaSansLarge", "weight": "bold", "case": "sentence", "approx_size_pct_of_height": 7, "max_lines": 2, "color": "#FBEDE8" },
+    "body": { "font": "NordeaSansSmall", "weight": "regular", "case": "sentence", "approx_size_pct_of_height": 3.3, "max_lines": 2, "color": "#FFFFFF" },
+    "notes": "Blandade vikter i rubriken: rad 1 'Kan du få ett' i regular (ev. light-aktig regular), rad 2 'bättre bolån?' i bold, samma storlek — nyckelorden i fetstil. Underrubriken regular, ca halva rubrikstorleken. Disclaimern: rubrik 'Räkneexempel - 3 mån bunden bolåneränta' i bold, brödtext regular, ca 2,6 % av höjden, centrerad. Ingen CTA-typografi."
+  },
+  "imagery": {
+    "type": "typographic"
+  },
+  "motion": {
+    "duration_s": 8.1,
+    "hook_first_2s": "Blå platta med bara loggan i första rutan; frågan 'Kan du få ett bättre bolån?' och stapelmönstret tonar in samtidigt 0,25–0,5 s. Vid ca 1,5 s glider rubriken uppåt och underrubriken tonar in under den (full vid 1,75 s).",
+    "sequence": [
+      { "t_start": 0, "element": "logo", "animation": "Statisk vit logga top-center från första rutan till sista." },
+      { "t_start": 0.25, "t_end": 0.5, "element": "headline", "animation": "Tonar in på plats som block (halvtransparent vid 0,25 s, full vid 0,5 s), vertikalt centrerad (ca 44–58 %)." },
+      { "t_start": 0.25, "t_end": 0.5, "element": "pattern", "animation": "Fyra klarblå pills nere till vänster tonar in samtidigt med rubriken; statiska därefter." },
+      { "t_start": 1.25, "t_end": 1.75, "element": "headline", "animation": "Rubriken glider uppåt (från ca 44 % till ca 32 % topp) för att ge plats åt underrubriken — ett layout-'push up'." },
+      { "t_start": 1.25, "t_end": 1.75, "element": "subline", "animation": "'Flytta ditt bolån till oss och få en rådgivare för hela din privatekonomi' tonar in under rubriken (halvtransparent vid 1,5 s, full vid 1,75 s), möjligen med lätt uppglidning." },
+      { "t_start": 1.75, "t_end": 3.5, "element": "subline", "animation": "Allt står stilla ca 1,5–2 s." },
+      { "t_start": 3.5, "t_end": 4.5, "element": "pattern", "animation": "Övergång: stora, halvtransparenta klarblå pills (uppskalat stapelmönster) reser sig nerifrån över hela bilden medan rubrik och underrubrik tonar ut (vid 4,0 s är texten halvt uttonad och staplarna täcker nedre 2/3)." },
+      { "t_start": 4.5, "t_end": 7.6, "element": "disclaimer", "animation": "Disclaimer-textplattan står på plats vid 5,0 s och hålls stilla ca 3 s." },
+      { "t_start": 7.6, "t_end": 8.1, "element": "disclaimer", "animation": "Disclaimern tonar ut; vid 8,05 s nästan borta, loggan kvar." }
+    ],
+    "logo_reveal": "Ingen reveal; loggan står stilla top-center hela filmen och ligger kvar genom övergången.",
+    "text_animation": "Block-fade in av rubriken, sedan fade in av underrubrik samtidigt som rubriken glider uppåt för att hålla textblocket centrerat. Fade out av text i övergången och i slutet.",
+    "cta_reveal": "Ingen CTA eller URL.",
+    "transitions": "Mönster-wipe: stapelmönstret skalas upp till stora halvtransparenta pills som reser sig nerifrån och sveper över bilden medan texten tonar ut (ca 3,5–4,5 s), därefter disclaimer-platta. Mellanrutor saknas mellan 4,0 och 5,0 s, så exakt förlopp är osäkert.",
+    "illustration_animation": "Ingen illustration; stapelmönstret är enda grafiska elementet (fade in, sedan uppskalat som övergång).",
+    "pacing": "calm",
+    "end_card": "Juridisk räkneexempel-platta på Nordea-blått med vit logga top-center, fet rubrik och två stycken centrerad vit brödtext; tonar ut i slutet. Ingen CTA."
+  },
+  "copy": {
+    "headline": "Kan du få ett bättre bolån?",
+    "body": "Flytta ditt bolån till oss och få en rådgivare för hela din privatekonomi",
+    "disclaimer": "Räkneexempel - 3 mån bunden bolåneränta\n\nMed ett lånebelopp på 1 000 000 kronor och en rak amortering på 50 år, tillsammans med en ränta på 3,94 % och e-låneavi ger det en effektiv ränta på 4,01 % per 2026-06-12. Den första månadsbetalningen blir 4 950 kronor och lånet har totalt 600 återbetalningar. Beräkningen är gjord utifrån Konsumentverkets riktlinjer. Det totala beloppet som ska återbetalas är 1 986 642 kronor.\n\nSom en förutsättning för lånet, gäller det att krediten är förenad med panträtt i fast egendom, tomträtt, bostadsrätt eller liknande rätt. Kreditgivare är Nordea Hypotek AB, 556091-5448, 105 71 Stockholm och förutsätter en godkänd kreditprövning samt kreditupplysning. Valutakursförändringar kan komma att påverka beloppen som du ska betala om du till exempel har inkomst i annan valuta än lånet.",
+    "pattern": "Fråga + svar: retorisk fråga med nyckelordet fetat ('Kan du få ett / bättre bolån?') följt av ett konkret erbjudande som underrubrik; avslutas med obligatoriskt räkneexempel."
+  },
+  "observations": [
+    "Produkten är härledd från innehållet: bolån ('bättre bolån', 'Flytta ditt bolån', bolåneräntans räkneexempel, Nordea Hypotek) → 'mortgage'.",
+    "År 2026 är härlett från datumet i disclaimern ('effektiv ränta på 4,01 % per 2026-06-12').",
+    "Helt grafisk/typografisk annons — enfärgad blå bakgrund, inget foto, ingen illustration. Går i stort att återskapa med en renderare för enfärgad bakgrund.",
+    "Rubriken är ljust persika/krämfärgad (#FBEDE8) snarare än vit, medan underrubrik, logga och disclaimer är vita — en medveten tvåtonstypografi på blått.",
+    "Stapelmönstret används i två roller: som statisk dekor nere till vänster och som uppskalad övergångs-wipe till disclaimern. Mönstrets klarblå #0200ED ligger utanför kärnpaletten.",
+    "Rubriken rör sig uppåt när underrubriken kommer in — layouten 'andas' för att hålla textblocket optiskt centrerat. Det kräver att renderaren kan animera position på ett redan synligt textblock.",
+    "Disclaimern står ca 3 s av 8 s — en betydande del av filmen går åt till lagkrav för bolån.",
+    "Ingen CTA-knapp eller URL."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

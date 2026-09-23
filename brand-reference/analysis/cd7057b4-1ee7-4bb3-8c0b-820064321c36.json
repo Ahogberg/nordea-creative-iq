@@ -1,0 +1,79 @@
+{
+  "ad_id": "cd7057b4-1ee7-4bb3-8c0b-820064321c36",
+  "source_files": ["cd7057b4-1ee7-4bb3-8c0b-820064321c36.mp4"],
+  "kind": "video",
+  "aspect_ratio": "4:5",
+  "product": "cards",
+  "layout": {
+    "archetype_hint": "helbildsfilm-rubrik-nere + blatt-textkort",
+    "description": "Två scener. Scen 1 (0–3 s): helbildsfilm (full-bleed) med vit logotyp överst i mitten, ett blått grafiskt 'stapelmönster' (fyra vertikala rundade staplar) som skärs av vid vänsterkanten i övre vänstra kvadranten, och vit rubrik + underrubrik centrerat i nedre tredjedelen, direkt ovanpå filmen utan platta eller skugga. Scen 2 (4–5,95 s): enfärgad Nordea-blå bakgrund, vit logotyp på samma plats och ett centrerat textblock (två rader + URL) i mitten.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 2, "notes": "Vit, ca 29 % av bredden, ca 7 % ned. Samma plats i båda scenerna." },
+      { "element": "photo", "position": "full-bleed", "approx_area_pct": 100, "notes": "Scen 1: filmat material, tätt beskuret." },
+      { "element": "pattern", "position": "middle-left", "approx_area_pct": 8, "notes": "Fyra vertikala rundade staplar (pill-former) i Nordea-blått, avtagande höjd från vänster till höger, den första avskuren av bildkanten. Ca 17–53 % höjd, 0–27 % bredd." },
+      { "element": "headline", "position": "bottom-center", "approx_area_pct": 6, "notes": "'Betalarmband' / 'för barn' på två rader, ca 65–77 % höjd." },
+      { "element": "subline", "position": "bottom-center", "approx_area_pct": 2, "notes": "'Enkelt och barnsäkert' på ca 82 % höjd." },
+      { "element": "headline", "position": "center", "approx_area_pct": 8, "notes": "Scen 2: 'Dessutom' / 'mobilförbudssäker.' på ca 45–56 % höjd." },
+      { "element": "cta", "position": "center", "approx_area_pct": 3, "notes": "Scen 2: URL 'nordea.se/betalarmband' på ca 62 % höjd, som ren text." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0"],
+    "text": ["#FFFFFF"],
+    "accents": ["#0000A0", "#FFFFFF"],
+    "notes": "End card och stapelmönster uppmätta #010094, nära #0000A0 (sannolikt videokodning) — paletten används. All text och logotyp vit. Filmens färgvärld är pastellrosa monokrom: rosa sweatshirt (ca #E8B4C0–#F2C9D2), rosa armband, rosa tennisboll, vit veckad kjol, bakgrund mörkblå/grön tennisbana i skugga. Ingen persika, ingen turkos. De vita 'tap'-strecken runt armbandet är rent vita."
+  },
+  "typography": {
+    "headline": { "font": "NordeaSansLarge", "weight": "bold", "case": "sentence", "approx_size_pct_of_height": 5, "max_lines": 2, "color": "#FFFFFF" },
+    "body": { "font": "NordeaSansSmall", "weight": "regular", "case": "sentence", "approx_size_pct_of_height": 3, "max_lines": 1, "color": "#FFFFFF" },
+    "cta": { "font": "NordeaSansSmall", "weight": "regular", "case": "sentence", "approx_size_pct_of_height": 3.5, "max_lines": 1, "color": "#FFFFFF" },
+    "notes": "Blandade vikter i samma rubrik: 'Betalarmband' i bold och 'för barn' i regular på raden under, samma storlek. End card på samma sätt: 'Dessutom' regular/light, 'mobilförbudssäker.' bold. Underrubriken 'Enkelt och barnsäkert' är regular, mindre. URL:en i gemener, regular. Allt centrerat."
+  },
+  "imagery": {
+    "type": "photo",
+    "photo": {
+      "subject": "Person (barn/ung tonåring enligt budskapet, ansikte ej i bild) sedd bakifrån från midjan till axlarna, händerna bakom ryggen; ena handen håller en rosa tennisboll, på handleden sitter ett rosa textilarmband med en läderflik och kontaktlös-symbol. Rosa sweatshirt, vit veckad tenniskjol, tennisbana i bakgrunden.",
+      "mood": "Lekfull, modern, stilren — 'fashion/lifestyle'-känsla snarare än bankreklam; ton-i-ton pastellrosa.",
+      "lighting": "Starkt, hårt solljus från sidan/ovan med tydliga skuggor och hög kontrast; naturligt dagsljus utomhus."
+    }
+  },
+  "motion": {
+    "duration_s": 6,
+    "hook_first_2s": "Första rutan är redan fylld: helbildsfilm av rosa armband + tennisboll, vit logotyp och blått stapelmönster. Rubriken 'Betalarmband för barn' dyker upp vid 0,5 s (ej synlig vid 0,25 s). Vid 0,75 s börjar vita korta strålstreck blinka runt armbandet ('tap'/kontaktlös signal) och pulserar — större vid 1,0 s, något mindre vid 1,25–1,5 s, större igen vid 1,75–2,0 s. Underrubriken 'Enkelt och barnsäkert' kommer vid 1,75 s. Kameran/bilden gör en långsam inzoomning och personen rör händerna lätt.",
+    "sequence": [
+      { "t_start": 0, "element": "logo", "animation": "Vit logotyp står stilla överst i mitten i alla rutor, även genom scenbytet." },
+      { "t_start": 0, "t_end": 3.0, "element": "photo", "animation": "Filmat material med långsam push-in (armbandet flyttar sig från ca 44 % till 46 % höjd och blir större) och lätt rörelse i händerna." },
+      { "t_start": 0, "t_end": 3.0, "element": "pattern", "animation": "Fyra blå rundade staplar vid vänsterkanten; höjder och lägen ändras lite mellan rutorna — subtil 'equalizer'/vågrörelse. Syns inte längre vid 4,0 s." },
+      { "t_start": 0.25, "t_end": 0.5, "element": "headline", "animation": "'Betalarmband' / 'för barn' finns fullt vid 0,5 s men inte vid 0,25 s — snabb intoning eller klipp in, ingen förflyttning syns." },
+      { "t_start": 0.75, "t_end": 2.5, "element": "icon", "animation": "Ca 10 vita korta radiella streck runt armbandets flik ('tap'-gnistor): dyker upp små vid 0,75 s, expanderar till 1,0 s, drar ihop sig något vid 1,25–1,5 s, expanderar igen 1,75–2,0 s; borta vid 3,0 s. Pulserande skalning." },
+      { "t_start": 1.5, "t_end": 1.75, "element": "subline", "animation": "'Enkelt och barnsäkert' dyker upp under rubriken (ej vid 1,5 s, fullt vid 1,75 s)." },
+      { "t_start": 3.0, "t_end": 4.0, "element": "photo", "animation": "Byte från film till enfärgat blått textkort. Övergången ligger helt mellan rutorna 3,0 och 4,0 s och kan inte avgöras." },
+      { "t_start": 4.0, "t_end": 5.5, "element": "headline", "animation": "'Dessutom' / 'mobilförbudssäker.' och URL:en står stilla i mitten; ingen rörelse 4,0–5,5 s." },
+      { "t_start": 5.5, "t_end": 5.95, "element": "headline", "animation": "Rubrik och URL tonar ut (ca 20 % opacitet vid 5,95 s); logotyp och blå bakgrund står kvar." }
+    ],
+    "logo_reveal": "Ingen reveal — vit logotyp på samma plats från första till sista rutan, även genom bytet från film till blått.",
+    "text_animation": "Textblock dyker upp i sin helhet på plats, i steg: rubrik (0,5 s) → underrubrik (1,75 s). Ingen ord- eller bokstavsstagger och ingen synlig glidning i rutorna. Uttoning av end card-texten i slutet.",
+    "cta_reveal": "Ingen knapp. URL:en 'nordea.se/betalarmband' fungerar som CTA och står i end card-textblocket från (senast) 4,0 s, samtidigt med rubriken.",
+    "transitions": "Film → blått textkort mellan 3,0 och 4,0 s (typ går inte att avgöra från rutorna). Slutet tonar ut texten mot blått med logotypen kvar.",
+    "illustration_animation": "Ingen illustration. Grafiska element: blått stapelmönster med subtil rörelse och vita pulserande 'tap'-streck runt produkten.",
+    "pacing": "medium",
+    "end_card": "Nordea-blå bakgrund, vit logotyp överst, centrerat 'Dessutom' (regular) / 'mobilförbudssäker.' (bold) och under det 'nordea.se/betalarmband' (regular, mindre). Ingen knapp."
+  },
+  "copy": {
+    "headline": "Betalarmband för barn",
+    "body": "Enkelt och barnsäkert / Dessutom mobilförbudssäker.",
+    "cta": "nordea.se/betalarmband",
+    "pattern": "Produktnamn + målgrupp ('Betalarmband för barn') + två korta fördelar ('Enkelt och barnsäkert') → extra fördel som knorr i end card ('Dessutom mobilförbudssäker.') + URL. Ingen disclaimer."
+  },
+  "observations": [
+    "Produkten är härledd från innehållet: ett betalarmband (kontaktlöst betalmedel) för barn. Enum-värdet 'cards' är närmaste kategori (betalning/kort), men produkten är tekniskt ett armband, inte ett kreditkort — kontrollera vid syntesen. Manifestet saknar produkt/kanal/år.",
+    "'mobilförbudssäker' anspelar på mobilförbud (t.ex. i skolan) — inget datum syns, så år är inte satt.",
+    "Fotostil: filmat livsstilsmaterial, inte produktfoto på färgplatta och inte utskuren produkt. Tät beskärning på bål och händer bakifrån (ansiktet syns inte), ton-i-ton pastellrosa styling (tröja, armband, tennisboll), hårt solljus med skarpa skuggor, lätt varm och något avmättad färgbehandling. Kameran gör en långsam push-in och personen rör sig lite.",
+    "Text ligger direkt på filmen utan platta, gradient eller skugga. Den vita texten mot ljusrosa tröja har låg kontrast — läsbarheten är svag i nedre delen.",
+    "Samma kampanj finns i 1:1 (d7e8ef2c-4c1d-4d0d-b959-3ac5cc5cdaa2) med annat foto men identisk grafik, copy och end card — ett kampanjsystem där bara filmklippet byts.",
+    "Det blå stapelmönstret (fyra rundade vertikala staplar i avtagande höjd, avskurna mot vänsterkanten) är ett grafiskt kampanjelement som påminner om en ljudvåg/signal och knyter an till kontaktlös betalning.",
+    "Vad en renderare som bara klarar enfärgad bakgrund eller en stillbild INTE kan återskapa: filmat material med kamerarörelse och rörelse i motivet, de pulserande 'tap'-strecken som måste placeras exakt runt produkten i bilden, och staplarnas subtila rörelse. Med en stillbild som bakgrund kan scen 1 approximeras (stillbild + långsam zoom + text + statiska staplar); end card-scenen kan återskapas helt med enfärgad bakgrund."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

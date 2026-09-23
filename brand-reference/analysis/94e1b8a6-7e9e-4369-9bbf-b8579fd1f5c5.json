@@ -1,0 +1,99 @@
+{
+  "ad_id": "94e1b8a6-7e9e-4369-9bbf-b8579fd1f5c5",
+  "source_files": ["94e1b8a6-7e9e-4369-9bbf-b8579fd1f5c5.mp4"],
+  "kind": "video",
+  "aspect_ratio": "1:1",
+  "product": "loans",
+  "year": 2026,
+  "layout": {
+    "archetype_hint": "logo-topp-isometrisk-ikon-mitt-rubrik-under",
+    "description": "Enfärgad Nordea-blå bakgrund, vit logga centrerad överst (ca 8 % från toppen) hela filmen. Scen 1 (0–ca 5,5 s): en centrerad isometrisk illustration av en varukorg med pilar som faller ner i den (ca 14–52 % av höjden) och en enradig rubrik centrerad under (ca 63 %). Från ca 2,5–3 s täcker en vit konsumentkreditvarningsruta nedre ca 27 % av bilden (triangel till vänster, text till höger). Scen 2 (ca 6–8 s): illustration och rubrik ersätts av ett centrerat block med räntevillkor (ca 29–59 %); varningsrutan ligger kvar.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 3, "notes": "Vit, statisk." },
+      { "element": "illustration", "position": "center", "approx_area_pct": 20, "notes": "Isometrisk varukorg + pilar, ca 36–60 % av bredden." },
+      { "element": "headline", "position": "center", "approx_area_pct": 6, "notes": "Två på varandra följande en-radsrubriker på samma plats (ca 63 % av höjden)." },
+      { "element": "disclaimer", "position": "bottom-center", "approx_area_pct": 27, "notes": "Vit fullbreddsruta från ca 73 % av höjden, mörkröd triangel till vänster, svart text till höger (5 rader)." },
+      { "element": "disclaimer", "position": "center", "approx_area_pct": 20, "notes": "Scen 2: räntevillkor, 9 rader centrerade, två första i bold." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0", "#FFFFFF"],
+    "text": ["#FBD9CA", "#FFFFFF", "#000000"],
+    "accents": ["#FBD9CA", "#9ECAF9", "#0700D6", "#E7E9F3", "#911D26"],
+    "notes": "Bakgrund Nordea-blå (mätt #010094 = #0000A0 efter videokodning). Rubrikerna är Nordea Peach (mätt medel ca #F3D4D8 inkl. kantutjämning mot blått → #FBD9CA), tydligt persika, inte vita. Villkorstexten i scen 2 är ren vit. Illustrationen: korgens kropp ljus himmelsblå #9ECAF9, kant/handtag mättad klarblå #0700D6, kantens ovansida nästan vit #E7E9F3; huvudpilen persika #FBD9CA (ljusare och mörkare persikatoner på sidoytorna), de bakre pilarna samma persika vid låg opacitet så att de ser lila ut (#4937A3). Varningsrutan vit med svart text och mörkröd triangel #911D26."
+  },
+  "typography": {
+    "headline": {
+      "font": "NordeaSansLarge",
+      "weight": "bold",
+      "case": "sentence",
+      "approx_size_pct_of_height": 5.5,
+      "max_lines": 1,
+      "color": "#FBD9CA"
+    },
+    "body": {
+      "font": "NordeaSansSmall",
+      "weight": "regular",
+      "case": "sentence",
+      "approx_size_pct_of_height": 3,
+      "max_lines": 9,
+      "color": "#FFFFFF"
+    },
+    "notes": "Rubrik 1 'Samla lån och krediter' är helt bold. Rubrik 2 blandar vikter: 'och sänk din' i regular/light, nyckelordet 'månadskostnad' i bold — rubrik 2 fortsätter meningen från rubrik 1. Villkorsblocket: de två första raderna ('Ränta 4,95 % – 12,95 %' och '(effektiv ränta 5,24 % – 13,97 %)') i bold, resten regular. Varningsrutan: 'Att låna kostar pengar!' bold på egen rad, resten regular, svart, vänsterjusterad, ca 1,7 % av höjden."
+  },
+  "imagery": {
+    "type": "isometric_illustration",
+    "illustration": {
+      "projection": "isometric",
+      "angle_deg": 30,
+      "shading": "cel",
+      "outline": "none",
+      "palette": ["#9ECAF9", "#0700D6", "#E7E9F3", "#FBD9CA", "#E8B9A5", "#4937A3"],
+      "detail_level": "low",
+      "people": "none",
+      "motifs": ["varukorg", "pil nedåt", "samla ihop"],
+      "composition": "En central ikon-liknande illustration mitt i bilden: varukorgen något under mitten av den blå ytan, en stor persikafärgad 3D-pil på väg ner i korgen, två mindre pilar ovanför (vänster och höger) på väg ner. Mycket luft runt om; illustrationen fungerar som en stor ikon.",
+      "description": "Isometrisk (ca 30°) varukorg med rundade hörn, handtag som bågar över korgen, vertikala spjälor i sidan. Cel-skuggning med 3 platta toner (ljus ovansida, mellanblå sida, mörkare insida), inga konturer, inga gradienter. Pilarna är extruderade 3D-blockpilar i isometri, persika med ljusare framsida och mörkare sidoyta. Bakre pilar i låg opacitet ger djup. Enkel, ikonartad detaljnivå, inga människor."
+    }
+  },
+  "motion": {
+    "duration_s": 8.1,
+    "hook_first_2s": "Rutan 0,0 s: bara logga på blått. Vid 0,25 s tonar korgen och rubriken 'Samla lån och krediter' in samtidigt (halvgenomskinliga), fulla vid 0,5 s. Vid 0,75 s faller den stora persikapilen ner i korgen (halvgenomskinlig, på väg in uppifrån) och landar vid 1,0 s. Vid 1,0 s dyker en mindre pil upp överst till vänster, vid 1,5 s en till överst till höger — båda halvgenomskinliga och på väg nedåt. Hooken visualiserar 'samla' direkt: saker faller ner i en korg.",
+    "sequence": [
+      { "t_start": 0, "t_end": 8.1, "element": "logo", "animation": "Vit logga statisk hela filmen." },
+      { "t_start": 0.1, "t_end": 0.5, "element": "illustration", "animation": "Varukorgen tonar in på plats (ingen skalning eller förflyttning synlig)." },
+      { "t_start": 0.1, "t_end": 0.5, "element": "headline", "animation": "'Samla lån och krediter' tonar in som block samtidigt med korgen." },
+      { "t_start": 0.6, "t_end": 1.0, "element": "illustration", "animation": "Stor persikafärgad 3D-pil faller rakt ner i korgen och tonar samtidigt in; stannar med spetsen i korgen." },
+      { "t_start": 1.0, "t_end": 5.5, "element": "illustration", "animation": "Två mindre pilar (överst vänster från 1,0 s, överst höger från 1,5 s) tonar in i låg opacitet och sjunker långsamt nedåt; små positionsskillnader mellan rutorna tyder på en kontinuerlig svävande/fallande loop." },
+      { "t_start": 2.0, "t_end": 3.0, "element": "disclaimer", "animation": "Vit konsumentkreditvarningsruta kommer in och täcker nedre ~27 %; fullt synlig vid 3,0 s. Om den glider upp eller tonar in syns inte." },
+      { "t_start": 2.5, "t_end": 3.5, "element": "headline", "animation": "Rubrik 1 tonar ut (halvgenomskinlig vid 3,0 s) …" },
+      { "t_start": 3.5, "t_end": 5.5, "element": "headline", "animation": "… och rubrik 2 'och sänk din månadskostnad' står på samma plats vid 4,0 s (tonar in)." },
+      { "t_start": 5.5, "t_end": 6.1, "element": "illustration", "animation": "Korg, pilar och rubrik 2 tonar ut tillsammans (halvgenomskinliga vid 6,0 s)." },
+      { "t_start": 6.0, "t_end": 6.6, "element": "disclaimer", "animation": "Räntevillkoren tonar in centrerat (mycket svaga vid 6,1 s, fulla vid 6,6 s) — korstoning med illustrationen." },
+      { "t_start": 6.6, "t_end": 8.1, "element": "disclaimer", "animation": "Villkor + varningsruta stilla till slut." }
+    ],
+    "logo_reveal": "Ingen — loggan är statisk från första rutan.",
+    "text_animation": "Rubriker tonar in/ut som hela block på samma position (rubrik 1 → rubrik 2 som fortsättning av meningen). Ingen ord-/bokstavsstaggering synlig.",
+    "cta_reveal": "Ingen CTA-knapp eller URL.",
+    "transitions": "Mjuka korstoningar: rubrikbyte ca 3–4 s, och illustration → villkor ca 5,5–6,6 s. Varningsrutan kommer in tidigt (ca 2–3 s) och ligger sedan kvar genom resten av filmen.",
+    "illustration_animation": "Korgen tonar in statiskt; pilarna faller in uppifrån en i taget (stor pil först, sedan två mindre i lägre opacitet) och fortsätter sväva/falla. Elementen animeras var för sig — en enkel form av uppbyggnad i delar.",
+    "pacing": "calm",
+    "end_card": "Räntevillkor centrerat på blått + vit konsumentkreditvarningsruta nertill, logga överst. Inget separat logo-end card."
+  },
+  "copy": {
+    "headline": "Samla lån och krediter / och sänk din månadskostnad",
+    "disclaimer": "Ränta 4,95 % – 12,95 % (effektiv ränta 5,24 % – 13,97 %) För ett lån på 100 000 kronor, med rak amortering upplagt på 7 år (84 avbetalningar) och rörlig årsränta 8,20 % blir den effektiva räntan 8,71 %, inklusive uppläggningsavgift 525 kronor, exklusive kostnad för Vardagspaketet. Totalt belopp att betala tillbaka blir 129 567 kronor. Första återbetalning är 1 873 kronor och sista 1 198 kronor. Årsränta per 2026-03-05. | Att låna kostar pengar! Om du inte kan betala tillbaka skulden i tid riskerar du en betalningsanmärkning. Det kan leda till svårigheter att få hyra bostad, teckna abonnemang och få nya lån. För stöd, vänd dig till budget- och skuldrådgivningen i din kommun. Kontaktuppgifter finns på konsumentverket.se",
+    "pattern": "Uppmaning + nytta, en mening delad över två textkort ('Samla lån och krediter' → 'och sänk din månadskostnad', nyttan i bold) → räntespann + representativt exempel + lagstadgad konsumentkreditvarning."
+  },
+  "observations": [
+    "Produkt härledd från innehållet: 'Samla lån och krediter', räntespann 4,95–12,95 %, lån på 100 000 kr över 7 år = privatlån/samlingslån → product = loans.",
+    "År härlett från 'Årsränta per 2026-03-05' i villkorstexten → year = 2026.",
+    "Helt grafisk: enfärgad Nordea-blå bakgrund + isometrisk illustration. Inget foto, ingen film. Går att återskapa med enfärgad bakgrund om illustrationen finns som separata lager (korg, pilar).",
+    "Konsumentkreditvarningen ligger uppe i ca 5 s av 8 (från ca 3 s till slut) — mycket längre än i kreditkortsannonserna 8a639c36/9035e2f3 där den bara syns i slutscenen. Den krymper den blå ytan till ~73 %.",
+    "Persika används både i rubriktext och som accentfärg i illustrationen (pilen) — samma ton binder ihop text och bild.",
+    "Pilarna är 'ghostade' (låg opacitet) för djupverkan — bakre objekt i lägre opacitet i stället för mindre storlek/oskärpa.",
+    "Vad renderaren behöver: isometriska illustrationslager som kan animeras separat (fall uppifrån + intoning, loopad svävning), och en varningsruta som ligger kvar över flera scener."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

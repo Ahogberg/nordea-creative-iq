@@ -1,0 +1,99 @@
+{
+  "ad_id": "f8d59013-9c9e-4272-8845-f05415557c42",
+  "source_files": ["f8d59013-9c9e-4272-8845-f05415557c42.mp4"],
+  "kind": "video",
+  "aspect_ratio": "1:1",
+  "product": "savings",
+  "layout": {
+    "archetype_hint": "logo-topp-isometrisk-illustration-mitt-rubrik-under-disclaimer-botten",
+    "description": "Enfärgad Nordea-blå 1:1-yta i två scener. Scen 1 (0–ca 3,5 s): vit logotyp centrerad upptill (ca 10 %), under den ett centrerat isometriskt illustrationskluster på en klarblå cirkel (ca 20–65 % av höjden, ca 47 % av bredden), rubrik i två centrerade rader under illustrationen (ca 69–82 %), och juridisk text i en rad längst ned (ca 92 %). Scen 2 (ca 3,5–6,1 s): illustrationen borta; logotyp och disclaimer ligger kvar på samma plats, i mitten ett centrerat textblock i fyra rader där produktnamnet är störst.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 2, "notes": "Vit ordmärkeslogotyp ca 10 % från toppen, samma plats i båda scenerna." },
+      { "element": "illustration", "position": "center", "approx_area_pct": 21, "notes": "Scen 1: isometriskt objektkluster på en klarblå cirkel, ca 20–65 % av höjden." },
+      { "element": "headline", "position": "bottom-center", "approx_area_pct": 8, "notes": "Scen 1: två centrerade rader, ca 69–82 % av höjden." },
+      { "element": "headline", "position": "center", "approx_area_pct": 18, "notes": "Scen 2: 'Välj' / 'SparaSmart' / 'när du vill spara både' / 'tid och pengar.' ca 33–62 % av höjden." },
+      { "element": "disclaimer", "position": "bottom-center", "approx_area_pct": 2, "notes": "En rad ca 92 % av höjden, synlig från 0,25 s till slutet, över båda scenerna." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0"],
+    "text": ["#FFFFFF"],
+    "accents": ["#1A1AF0", "#8DB8F5", "#5E9BF0", "#F8CDB8", "#1E9BF0", "#1A1A7A"],
+    "notes": "Bakgrunden ligger nära Nordea-blå (#0000A0). All text och logotyp är rent vit. Illustrationens bakgrundscirkel är en klar, ljusare blå (ca #1A1AF0) som inte finns i paletten men ligger i samma blå familj. Illustrationen använder ljusa himmelsblå toner (#8DB8F5, #5E9BF0), en klarare cyanblå sida på huset (#1E9BF0), mörk marinblå för tak (#1A1A7A) och persika för mynt, pajdiagramsbit, stock och vagnens band (ca #F8CDB8, nära Nordea-persika #FBD9CA). Ingen turkos CTA-färg."
+  },
+  "typography": {
+    "headline": {
+      "font": "NordeaSansLarge",
+      "weight": "regular",
+      "case": "sentence",
+      "approx_size_pct_of_height": 5,
+      "max_lines": 4,
+      "color": "#FFFFFF"
+    },
+    "body": {
+      "font": "NordeaSansSmall",
+      "weight": "regular",
+      "case": "sentence",
+      "approx_size_pct_of_height": 2.8,
+      "max_lines": 1,
+      "color": "#FFFFFF"
+    },
+    "notes": "Scen 1-rubriken blandar vikter: regular för 'Spara … eller spara' och bold för nyckelorden 'tid' och 'pengar?'. Scen 2: 'Välj' regular, produktnamnet 'SparaSmart' bold och klart störst (ca 8 % av höjden, ca 1,6× rubrikgraden), 'när du vill spara både tid och pengar.' regular i ungefär samma grad som scen 1-rubriken. Disclaimer i liten regular (Small). Allt centrerat, meningsversal; produktnamnet i CamelCase. 'body' avser disclaimern."
+  },
+  "imagery": {
+    "type": "isometric_illustration",
+    "illustration": {
+      "projection": "isometric",
+      "angle_deg": 30,
+      "shading": "cel",
+      "outline": "none",
+      "palette": ["#1A1AF0", "#8DB8F5", "#5E9BF0", "#1E9BF0", "#1A1A7A", "#F8CDB8", "#FFFFFF"],
+      "detail_level": "medium",
+      "people": "none",
+      "motifs": ["spargris", "myntstapel med groddplanta", "förstoringsglas", "pengasäck", "pajdiagram", "hus", "barnvagn", "granar/koner", "buskar", "vedträn/stockar", "mynt"],
+      "composition": "Tät, centrerad cluster-komposition av ca 11 fristående objekt som 'svävar' runt och över en klarblå cirkel. Myntstapeln med grodd är fokuspunkten i mitten; spargris uppe till vänster, pengasäck + förstoringsglas uppe till höger, pajdiagram höger, hus nere till vänster, barnvagn nere till höger, små granar/buskar och vedträn som fyllnad. Objekten överlappar cirkelns kant och varandra lätt; ingen markyta, inga slagskuggor mot mark.",
+      "description": "Isometrisk vektorillustration (≈30°-vinklar, t.ex. husets tak och väggar och myntstapelns cylindrar). Cel-shading: varje yta har 2–3 platta toner (ljus topp, mellanton sida, mörkare skuggsida) utan gradienter och utan konturlinjer. Små vita högdagrar/'snö'-toppar på granar och buskar och ljusreflexer på grisen, glaset och säcken. Nästan monokrom blå palett med persika som enda varma accentfärg (mynt, pajbit, stock, vagnens band, husets fönster). Objekten är stiliserade, mjukt rundade och leksaksaktiga. Inga människor. Motivvalet signalerar sparande (gris, mynt, säck, pajdiagram) blandat med livssituationer (hus, barnvagn) och natur (granar, ved)."
+    }
+  },
+  "motion": {
+    "duration_s": 6.1,
+    "hook_first_2s": "Rubrik, logotyp och hela illustrationen är på plats redan i ruta 0 – ingen uppbyggnad. Hooken är frågan 'Spara tid eller spara pengar?' plus små loopande mikroanimationer i illustrationen: ett persikamynt faller ner i spargrisens springa (0,25–0,75 s och igen 1,5–2,0 s), groddplantan på myntstapeln växer/sträcker ut bladen (1,0–2,0 s), mynt dyker upp vid pengasäcken och pajdiagrammet. Disclaimern tonar in 0,1–0,5 s.",
+    "sequence": [
+      { "t_start": 0, "element": "logo", "animation": "Statisk från första rutan." },
+      { "t_start": 0, "element": "headline", "animation": "Rubriken 'Spara tid eller spara pengar?' står på plats från första rutan." },
+      { "t_start": 0, "element": "illustration", "animation": "Hela klustret på plats från start; ingen uppbyggnad eller inflygning." },
+      { "t_start": 0.1, "t_end": 0.5, "element": "disclaimer", "animation": "Disclaimern tonar in (halvgenomskinlig vid 0,25 s, full vid 0,5 s)." },
+      { "t_start": 0.25, "t_end": 0.75, "element": "illustration", "animation": "Ett persikamynt faller uppifrån (ovanför logotypens höjd) ner i spargrisens springa." },
+      { "t_start": 1.0, "t_end": 2.0, "element": "illustration", "animation": "Groddplantan på myntstapeln växer: bladen blir större och sträcker sig ut över stapelns kant. Samtidigt dyker ett mynt upp vid pengasäcken och ett vid pajdiagrammets kant (poppar fram/tippar)." },
+      { "t_start": 1.5, "t_end": 2.0, "element": "illustration", "animation": "Nytt mynt faller ner i spargrisen (loop av myntanimationen)." },
+      { "t_start": 2.0, "t_end": 3.0, "element": "illustration", "animation": "Grodden är fullvuxen; husets fönster skiftar färg (från mörk till persika, 'ljus tänds'). Pengasäcken gungar lätt." },
+      { "t_start": 3.0, "t_end": 4.0, "element": "headline", "animation": "Scenbyte: illustration och rubrik ersätts av textblocket 'Välj SparaSmart när du vill spara både tid och pengar.' Logotyp och disclaimer ligger kvar. Övergångstypen syns inte i rutorna." },
+      { "t_start": 4.0, "t_end": 6.05, "element": "headline", "animation": "End card står helt stilla till slutet; ingen uttoning syns i sista rutan." }
+    ],
+    "logo_reveal": "Ingen – logotypen är statisk på samma plats hela filmen, även över scenbytet.",
+    "text_animation": "Scen 1-rubriken är på plats från start (ingen intro). Byte till scen 2-text mellan 3 och 4 s som ett helt block. Disclaimern tonar in i början. Ingen ord-/bokstavsstagger synlig.",
+    "cta_reveal": "Ingen knapp och ingen URL. 'Välj SparaSmart …' fungerar som mjuk uppmaning på end card.",
+    "transitions": "En scenövergång mellan 3 och 4 s (illustration + fråga → textkort); typ går inte att avgöra från stillbilderna. Bakgrund, logotyp och disclaimer är konstanta, så bytet påverkar bara mittfältet.",
+    "illustration_animation": "Loopande mikroanimationer i en annars stillastående isometrisk scen: mynt faller ner i spargrisen (upprepas ca var 1,25 s), groddplantan växer ut, mynt poppar fram vid säck och pajdiagram, husets fönster tänds (färgbyte), pengasäcken gungar lätt. Ingen del byggs upp från noll – allt finns från ruta 0 och 'lever' på plats.",
+    "pacing": "calm",
+    "end_card": "Enfärgad Nordea-blå, vit logotyp upptill, centrerat 'Välj' (regular) / 'SparaSmart' (bold, störst) / 'när du vill spara både' / 'tid och pengar.' (regular), disclaimer 'Investeringar innebär en risk.' längst ned. Ingen knapp, ingen URL. Står stilla till sista rutan."
+  },
+  "copy": {
+    "headline": "Spara tid eller spara pengar?",
+    "body": "Välj SparaSmart när du vill spara både tid och pengar.",
+    "disclaimer": "Investeringar innebär en risk.",
+    "pattern": "Fråga + svar: en valfråga ('X eller Y?') i scen 1 och en upplösning som ger båda ('Välj [produkt] när du vill … både X och Y') i scen 2. Ordlek på 'spara' (spara tid / spara pengar). Fetstil på nyckelorden och produktnamnet."
+  },
+  "observations": [
+    "Produkten är härledd från innehållet: SparaSmart är en sparprodukt och disclaimern 'Investeringar innebär en risk.' anger att det är investeringssparande (t.ex. fonder). Satt till 'savings'.",
+    "Inget årtal eller datum syns i annonsen; year är utelämnat.",
+    "Bakgrunden är helt grafisk/enfärgad genom hela filmen – det är illustrationen och dess mikroanimationer som kräver mer än en enkel renderare.",
+    "Illustrationen är den typiska isometriska Nordea-stilen: ≈30° isometri, cel-shading med 2–3 platta toner per objekt, inga konturer, blå monokrom palett med persika som enda varma accent, leksaksaktiga rundade former, klustrad komposition på en ljusare blå cirkel. Bra underlag för en generationsprompt.",
+    "Mikroanimationerna (fallande mynt, växande grodd, fönster som tänds) kräver att illustrationen är uppdelad i separata lager/objekt – en platt stillbild räcker inte för att återskapa rörelsen.",
+    "Disclaimern ligger kvar över scenbytet på exakt samma plats – kravtext för investeringsprodukter visas under hela filmen.",
+    "Samma 'regular + bold på nyckelord'-mönster i rubriken som i flera andra Nordea-annonser.",
+    "Ingen uttoning i slutet (till skillnad från betalarmbandsannonserna) – filmen slutar tvärt på end card."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

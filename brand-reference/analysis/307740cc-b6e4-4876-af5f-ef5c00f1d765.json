@@ -1,0 +1,81 @@
+{
+  "ad_id": "307740cc-b6e4-4876-af5f-ef5c00f1d765",
+  "source_files": ["307740cc-b6e4-4876-af5f-ef5c00f1d765.mp4"],
+  "kind": "video",
+  "aspect_ratio": "4:5",
+  "product": "cards",
+  "layout": {
+    "archetype_hint": "helbildsfilm-rubrik-nedre-mitt + blå-textplatta-end-card",
+    "description": "Två scener. Scen 1 (0–ca 3,5 s): helbildsfilm (full-bleed) av ett barn som ligger i gräset och håller upp handleden med ett mörkblått betalarmband mot kameran; armbandet är i skärpa, ansiktet och bakgrunden kraftigt oskarpa (grunt skärpedjup). Vit Nordea-logga centrerad upptill (ca 7 % ned), Nordeas mönster av fyra vertikala rundade staplar i Nordea-blått vid vänsterkanten (beskurna av kanten, ca 17–53 % höjd), rubrik i två rader centrerad i nedre halvan (ca 64–77 %), underrubrik direkt under (ca 82 %). En vit 'gnistra'-grafik (tio korta radiella streck) pulserar runt armbandets spänne mitt i bild. Scen 2 (ca 3,5–6 s): enfärgad Nordea-blå platta, loggan kvar på exakt samma plats, två rader text + URL centrerat strax under mitten (ca 45–61 %).",
+    "zones": [
+      { "element": "photo", "position": "full-bleed", "approx_area_pct": 100, "notes": "Filmat material, scen 1. Motivet (handled + armband) ligger i mitten/höger om mitten." },
+      { "element": "logo", "position": "top-center", "approx_area_pct": 3, "notes": "Vit ordmärke 'Nordea', ca 29 % av bildbredden, ca 7 % från överkanten. Oförändrad position genom hela filmen." },
+      { "element": "pattern", "position": "middle-left", "approx_area_pct": 8, "notes": "Fyra vertikala rundade staplar (pills) i #0000A0, avtagande höjd från vänster till höger, den första beskuren av vänsterkanten." },
+      { "element": "icon", "position": "center", "approx_area_pct": 4, "notes": "Vit radiell 'gnistra' (10 korta streck) runt armbandets betalspänne — markerar kontaktlös betalning." },
+      { "element": "headline", "position": "bottom-center", "approx_area_pct": 8, "notes": "Två rader, centrerad, ca 64–77 % höjd." },
+      { "element": "subline", "position": "bottom-center", "approx_area_pct": 3, "notes": "En rad under rubriken, ca 82 % höjd." },
+      { "element": "body", "position": "center", "approx_area_pct": 8, "notes": "End card: 'Dessutom / mobilförbudssäker.' centrerat, ca 45–54 % höjd." },
+      { "element": "cta", "position": "center", "approx_area_pct": 3, "notes": "End card: URL 'nordea.se/betalarmband' som textrad (ingen knapp), ca 60 % höjd." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0"],
+    "text": ["#FFFFFF"],
+    "accents": ["#0000A0", "#FFFFFF"],
+    "notes": "Scen 1 har ingen grafisk bakgrund utan filmat foto: dominerande färger är ljust mintgrå/salviagrön tröja (ca #A9BDB6), gräsgrönt (ca #61792F–#6D7F2B), varma hudtoner och ett mörkt marinblått armband (ca #1F2A55). End card är enfärgad Nordea-blå; i JPEG-rutorna mäts den till #010094, vilket tolkas som #0000A0 efter komprimering. All text och loggan är vit — rubriken på filmen ser rent vit ut (möjligen en aning varm, men inte tydligt persika). Stapelmönstret ligger i Nordea-blått direkt ovanpå filmen, utan platta."
+  },
+  "typography": {
+    "headline": { "font": "NordeaSansLarge", "weight": "bold", "case": "sentence", "approx_size_pct_of_height": 5.5, "max_lines": 2, "color": "#FFFFFF" },
+    "body": { "font": "NordeaSansSmall", "weight": "regular", "case": "sentence", "approx_size_pct_of_height": 3.2, "max_lines": 1, "color": "#FFFFFF" },
+    "cta": { "font": "NordeaSansSmall", "weight": "regular", "case": "sentence", "approx_size_pct_of_height": 3.2, "max_lines": 1, "color": "#FFFFFF" },
+    "notes": "Blandade vikter i samma rubrik: rad 1 'Betalarmband' i bold, rad 2 'för barn' i regular i samma storlek. Samma mönster på end card: 'Dessutom' regular, 'mobilförbudssäker.' bold (nyckelordet i fetstil). Underrubriken 'Enkelt och barnsäkert' och URL:en är regular i ca 60 % av rubrikstorleken. Allt centrerat, sentence case, inga versaler."
+  },
+  "imagery": {
+    "type": "photo",
+    "photo": {
+      "subject": "Ett barn (ca 8–12 år) i ljus mintgrå collegetröja ligger på rygg i gräset, skuggar ansiktet med ena handen och håller upp andra handleden med tummen upp mot kameran. Handleden bär ett mörkblått textilarmband med ett läderliknande spänne med kontaktlös-symbol (betalarmbandet).",
+      "mood": "Glad, avslappnad, sorglös sommar/fritid; barnet ler brett.",
+      "lighting": "Naturligt, starkt solljus snett ovanifrån med hårda skuggor och varm ton; grunt skärpedjup (armbandet skarpt, ansikte och gräs oskarpa)."
+    }
+  },
+  "motion": {
+    "duration_s": 6,
+    "hook_first_2s": "Filmen står redan i bild från första rutan med loggan och det blå stapelmönstret; rubriken tonar in 0,25–0,5 s, en vit gnistra poppar runt armbandet vid 0,75 s och pulserar, och underrubriken kommer in vid ca 1,75 s. Hooken är produkten i skärpa på ett glatt barn — ingen upptakt på enfärgad bakgrund.",
+    "sequence": [
+      { "t_start": 0, "t_end": 3.5, "element": "photo", "animation": "Filmat material full-bleed från första rutan. Mellan rutorna flyttar sig tummen och handleden något uppåt/åt höger och ansiktet glider åt vänster — antingen barnets egen rörelse eller en långsam kamerarörelse/inzoomning; kan inte avgöras säkert från stillbilder." },
+      { "t_start": 0, "element": "logo", "animation": "Står stilla i vitt, top-center, från första rutan till sista. Ingen in-animation." },
+      { "t_start": 0, "t_end": 3.5, "element": "pattern", "animation": "Fyra blå pills vid vänsterkanten syns från start; höjden på de två minsta staplarna ändras något mellan rutorna (den minsta går från prick till kort pill vid 1,25–1,5 s) — en diskret equalizer-/ljudvågsliknande puls." },
+      { "t_start": 0.25, "t_end": 0.5, "element": "headline", "animation": "'Betalarmband / för barn' tonar in på plats (halvtransparent vid 0,25 s, full opacitet vid 0,5 s); ingen synlig förflyttning." },
+      { "t_start": 0.75, "t_end": 2, "element": "icon", "animation": "Vit radiell gnistra (10 streck) poppar upp runt armbandets spänne vid 0,75 s, är större vid 1,0–1,25 s, krymper ihop till en liten gnistra på spännets kontaktlös-symbol vid 1,5 s och expanderar igen vid 1,75–2,0 s — två pulser. Borta vid 3,0 s." },
+      { "t_start": 1.5, "t_end": 1.75, "element": "subline", "animation": "'Enkelt och barnsäkert' dyker upp under rubriken mellan 1,5 och 1,75 s (troligen fade; inte fångat mellan rutorna)." },
+      { "t_start": 3.5, "t_end": 5.5, "element": "body", "animation": "Byte till enfärgad blå platta någon gång mellan 3,0 och 4,0 s (övergången syns inte i rutorna). 'Dessutom / mobilförbudssäker.' och URL:en står redan på plats vid 4,0 s och hålls stilla." },
+      { "t_start": 3.5, "t_end": 5.5, "element": "cta", "animation": "URL 'nordea.se/betalarmband' som ren textrad under end-card-texten; kommer in samtidigt med den." },
+      { "t_start": 5.5, "t_end": 5.95, "element": "body", "animation": "All text tonar ut; vid 5,95 s återstår bara loggan på blå botten (i 9:16-versionen 6b8c07f2 syns texten halvt uttonad vid samma tidpunkt)." }
+    ],
+    "logo_reveal": "Ingen reveal — loggan står statisk top-center från första till sista rutan och behåller exakt position när bakgrunden byts från film till blå platta.",
+    "text_animation": "Rubriken tonar in som ett block (ingen ord-för-ord-stagger synlig) på ca 0,25–0,5 s; underrubrik följer ca 1,25 s senare. Utgång: fade out i slutet.",
+    "cta_reveal": "Ingen CTA-knapp. URL:en visas som vanlig textrad på end card tillsammans med tilläggsbudskapet.",
+    "transitions": "Film → blå platta mellan 3,0 och 4,0 s; övergångstypen syns inte (hårt klipp eller snabb fade). Loggan ligger kvar oförändrad över övergången.",
+    "illustration_animation": "Enda grafiken utöver text är gnistran (pulserar två gånger) och stapelmönstret (subtil höjdpuls).",
+    "pacing": "medium",
+    "end_card": "Enfärgad #0000A0, vit logga top-center, 'Dessutom' (regular) / 'mobilförbudssäker.' (bold) centrerat och 'nordea.se/betalarmband' under; texten tonar ut mot slutet så att bara loggan återstår."
+  },
+  "copy": {
+    "headline": "Betalarmband för barn",
+    "body": "Enkelt och barnsäkert. Dessutom mobilförbudssäker.",
+    "cta": "nordea.se/betalarmband",
+    "pattern": "Produktnamn + målgrupp som rubrik ('Betalarmband / för barn'), kort nyttoargument som underrubrik, sedan ett 'Dessutom …'-tillägg med nyckelordet i fetstil + URL på end card."
+  },
+  "observations": [
+    "Produkten är härledd från innehållet: betalarmband för barn (betalmedel kopplat till kort/konto) → 'cards'. Manifestet saknar produktdata.",
+    "Samma annons finns i 9:16 (6b8c07f2-ef6d-40cc-a8ee-e73608348b82) med identisk tidslinje och copy — bara omplacerade zoner.",
+    "Bakgrund i scen 1 är filmat foto, inte grafik: närbild/halvnära med kraftig bakgrundsoskärpa, naturligt solljus, ingen synlig färgbehandling utöver varm/mättad sommarton. Motivet är beskuret så att handleden ligger i bildens mitt och barnets ansikte uppe till vänster, halvt dolt av handen.",
+    "En renderare som bara klarar enfärgad bakgrund eller en stillbild kan inte återskapa: rörelsen i filmen (hand/tumme som rör sig, ev. långsam push-in), det grunda skärpedjupet i rörelse, eller gnistrans synk mot ett rörligt objekt. Med en stillbild som bakgrund går layouten (logga, stapelmönster, rubrik, gnistra) att återskapa men inte liv/rörelse i bilden.",
+    "Nordeas stapelmönster (fyra rundade vertikala staplar, jfr kortdesignens ljudvåg) används som varumärkesdekor direkt ovanpå fotot, i Nordea-blått, beskuret av vänsterkanten.",
+    "Gnistran är en enkel vit linjegrafik (tio korta radiella streck med rundade ändar) som signalerar 'blip'/kontaktlös betalning — ett återkommande sätt att peka ut produkten i bild.",
+    "Ingen juridisk text/disclaimer och ingen CTA-knapp; URL fungerar som uppmaning.",
+    "Rubriken ligger direkt på fotot utan skugga eller mörk platta; läsbarheten bärs av den ljusa men tillräckligt kontrastrika tröjan/oskarpan."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

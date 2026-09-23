@@ -1,0 +1,84 @@
+{
+  "ad_id": "7e8b34cf-75ea-416e-9567-cfa4baa151d3",
+  "source_files": ["7e8b34cf-75ea-416e-9567-cfa4baa151d3.mp4"],
+  "kind": "video",
+  "aspect_ratio": "4:5",
+  "product": "cards",
+  "layout": {
+    "archetype_hint": "logo-topp-rubrik-mitt-illustration-under",
+    "description": "Enfärgad Nordea-blå bakgrund. Vit Nordea-logga centrerad överst (ca 7 % från toppen). Under loggan ligger en nästan kvadratisk panel i en aning ljusare/violettare blå (ca 83 % av bredden, 68 % av höjden) som går ut i vänsterkanten men slutar ca 17 % från högerkanten — den är alltså inte centrerad. I panelen: centrerad rubrik i 3 rader i övre delen och en platt illustration av ett golfhål (ellips) nere i mitten; en vit golfboll rullar in från vänster och faller i hålet. Ingen CTA-knapp, ingen URL, ingen disclaimer.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 3, "notes": "Vit ordmärkeslogga, statisk hela filmen." },
+      { "element": "pattern", "position": "center", "approx_area_pct": 56, "notes": "Kvadratisk panel i något ljusare blå (#100BA0), vänsterjusterad och utfallande i vänsterkanten, 17 % luft till höger. Ser ut som en 1:1-animation lagd på en 4:5-duk utan att färgerna matchar — kan vara en produktionsartefakt, inte avsiktlig design." },
+      { "element": "headline", "position": "center", "approx_area_pct": 20, "notes": "Centrerad, 3 rader, i panelens övre halva (ca 27–46 % av höjden)." },
+      { "element": "illustration", "position": "bottom-center", "approx_area_pct": 14, "notes": "Golfhål (ellips) och golfboll, ca 63–84 % av höjden." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0", "#100BA0"],
+    "text": ["#FBD9CA"],
+    "accents": ["#FFFFFF", "#4D9AF4", "#1C15EF", "#070477"],
+    "notes": "Bakgrunden mäts till ca #010094 i videorutorna — det är Nordea-blå #0000A0 efter videokodning (samma avvikelse i alla videor). Panelen mäts till ca #0E0A95, dvs. en synligt ljusare och lite violettare blå än bakgrunden; uppskattat originalvärde #100BA0. Rubriken är INTE vit utan ljust persika (mätt medel ca #F2D3D4 inkl. kantutjämning mot blått) — tolkat som Nordea Peach #FBD9CA. Loggan är ren vit. Golfhålet: kant/innervägg ljus himmelsblå #4D9AF4, botten mättad ultramarin #1C15EF. Bollen ren vit, skuggan under bollen mörkblå #070477."
+  },
+  "typography": {
+    "headline": {
+      "font": "NordeaSansLarge",
+      "weight": "regular",
+      "case": "sentence",
+      "approx_size_pct_of_height": 5.5,
+      "max_lines": 3,
+      "color": "#FBD9CA"
+    },
+    "notes": "Blandade vikter i samma rubrik: löptext i regular, nyckelord i bold — 'Nordea Gold', 'Nordea Premium,' och 'Hole in one'. Samma färg på båda vikterna. Rubriken är delad över två textkort (meningen fortsätter efter kommatecknet i nästa kort). Radavstånd tätt (~1,1). Typsnittet ser ut som Nordea Sans; att det är Large-varianten är en bedömning."
+  },
+  "imagery": {
+    "type": "flat_illustration",
+    "illustration": {
+      "projection": "flat",
+      "shading": "flat",
+      "outline": "none",
+      "palette": ["#4D9AF4", "#1C15EF", "#FFFFFF", "#070477", "#100BA0"],
+      "detail_level": "low",
+      "people": "none",
+      "motifs": ["golfhål", "golfboll"],
+      "composition": "Hålet centrerat i panelens nedre del; bollen kommer in från vänster och hamnar mitt i hålet. Stort negativt utrymme mellan rubrik och illustration.",
+      "description": "Minimalistisk platt vektorillustration: golfhålet är en liggande ellips i två toner (ljus himmelsblå övre ellips = hålets innervägg, mörkare mättad blå halvmåne nertill = hålets botten), vilket ger en enkel snett-ovanifrån-känsla utan egentlig perspektivkonstruktion. Bollen är en ren vit cirkel utan gropar eller skuggning, med en platt mörkblå ellipsskugga under. Inga konturer, inga gradienter, ingen gräsyta eller flagga. Helt blå skala + vitt."
+    }
+  },
+  "motion": {
+    "duration_s": 6.13,
+    "hook_first_2s": "Rutan 0,0 s visar bara logga, panel och det tomma golfhålet. Redan vid 0,25 s är rubrikens första del på plats (något dämpad/lila ton = sista delen av en snabb intoning), full styrka vid 0,5 s. Vid 1,0 s börjar den vita golfbollen rulla in från vänsterkanten och rör sig mot hålet under resten av hooken. Hooken är alltså text först, sedan en liten fysisk handling (bollen) som skapar förväntan.",
+    "sequence": [
+      { "t_start": 0, "t_end": 6.13, "element": "logo", "animation": "Statisk vit logga överst hela filmen, ingen intro-animation." },
+      { "t_start": 0, "t_end": 6.13, "element": "illustration", "animation": "Golfhålet står stilla på plats från första rutan." },
+      { "t_start": 0.1, "t_end": 0.5, "element": "headline", "animation": "Textkort 1 ('Betala din greenfee med Nordea Gold eller Nordea Premium,') tonar in som ett block; nästan fullt synligt vid 0,25 s, fullt vid 0,5 s. Ingen synlig förflyttning." },
+      { "t_start": 1.0, "t_end": 3.0, "element": "illustration", "animation": "Vit golfboll rullar in från vänster (halvt utanför kanten vid 1,0 s) och glider allt långsammare åt höger mot hålet (x ≈ 5 % → 27 % av bredden mellan 1,0 och 3,0 s). Ingen rotation syns (bollen saknar detaljer). Skuggan följer med." },
+      { "t_start": 3.0, "t_end": 4.0, "element": "illustration", "animation": "Bollen når hålet och sjunker ner i det — vid 4,0 s sticker bara övre halvan upp ur hålet. Själva fallet ligger mellan rutorna och kan inte beskrivas i detalj." },
+      { "t_start": 3.0, "t_end": 4.0, "element": "headline", "animation": "Textkort 1 byts mot textkort 2 ('få en Hole in one-försäkring värd 2000 kronor.') samtidigt som bollen går i hål. Om det är korstoning eller klipp syns inte i rutorna." },
+      { "t_start": 5.63, "t_end": 6.13, "element": "headline", "animation": "Textkort 2 tonar ut — nästan borta vid 6,08 s, medan bollen ligger kvar i hålet. Slutrutan har ingen text, vilket gör att filmen loopar mjukt mot startrutan." }
+    ],
+    "logo_reveal": "Ingen — loggan är statisk från första rutan till sista.",
+    "text_animation": "Två textkort som tonar in/ut som hela block (ingen ord- eller radstaggering synlig). Kort 1 in ca 0–0,5 s, byte till kort 2 någon gång mellan 3,0 och 4,0 s, kort 2 ut ca 5,6–6,1 s.",
+    "cta_reveal": "Ingen CTA, ingen URL och ingen knapp i annonsen.",
+    "transitions": "Inga scenbyten — en enda scen där bara texten byts. Textbytet synkas med att bollen går i hål.",
+    "illustration_animation": "Bollen rullar horisontellt in från vänster med inbromsning (ease-out) och faller sedan ner i hålet (maskas av hålets främre kant). Hålet är statiskt. Enkel 2D-rörelse; inga delar byggs upp.",
+    "pacing": "calm",
+    "end_card": "Inget separat end card. Sista rutan = logga + panel + boll i hål, texten har tonat ut."
+  },
+  "copy": {
+    "headline": "Betala din greenfee med Nordea Gold eller Nordea Premium, få en Hole in one-försäkring värd 2000 kronor.",
+    "pattern": "Villkor → förmån, en mening delad över två textkort ('Betala … med X, få Y värd Z kronor.'). Visuell ordlek: bollen går i hål exakt när 'Hole in one' visas. Produktnamn och förmån i bold."
+  },
+  "observations": [
+    "Produkt härledd från innehållet: annonsen gäller betalning med kreditkorten Nordea Gold/Nordea Premium; förmånen är en försäkring men produkten som marknadsförs är kortet → product = cards.",
+    "Inget datum syns i annonsen, därför inget år.",
+    "Grafisk, enfärgad bakgrund — ingen foto eller film. Går att återskapa med enfärgad bakgrund + ett extra färgat rektangelelement.",
+    "Den ljusare kvadratiska panelen som går ut i vänsterkanten ser ut som en 1:1-animation monterad på 4:5-duk med färgavvikelse. Bör inte kopieras som regel utan bekräftelse från marknad.",
+    "Rubriken är persika (#FBD9CA) på blått, medan loggan är vit — tydlig skillnad mellan logofärg och rubrikfärg.",
+    "Ingen CTA och ingen juridisk text trots att det är ett kreditkort — ingen konsumentkreditvarning syns i någon ruta.",
+    "Kort film (6,1 s) byggd som loop: startar och slutar utan text.",
+    "Renderaren behöver kunna: animera en enkel form längs en bana med ease-out och maska den bakom en annan form (bollen ner i hålet), och synka ett textbyte till en illustrationshändelse."
+  ],
+  "confidence": "medium",
+  "analyzed_at": "2026-09-23"
+}
