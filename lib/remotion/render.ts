@@ -43,6 +43,10 @@ export async function getBundle(): Promise<string> {
       entryPoint: path.join(process.cwd(), "remotion", "index.ts"),
       publicDir: path.join(process.cwd(), "public"),
       webpackOverride: withProjectAliases,
+    }).catch((err) => {
+      // Spara inte ett misslyckat försök (t.ex. full disk) — försök igen nästa gång.
+      bundlePromise = null;
+      throw err;
     });
   }
   return bundlePromise;
