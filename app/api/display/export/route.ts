@@ -1,23 +1,13 @@
 import { NextResponse } from "next/server";
-import { PassThrough } from "node:stream";
 import { ZodError } from "zod";
 import { parseDisplaySet } from "@/lib/display/schema";
 import { renderDisplaySet, DisplayRenderUnavailable, type RenderedBanner } from "@/lib/display/render";
+import { zipEntries } from "@/lib/zip";
 
 // Leveranspaket: alla format som bilder + specifikation, i en ZIP.
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
-
-// archiver 8 är ESM och exporterar klasser (ZipArchive); @types/archiver
-// beskriver fortfarande v7:s fabriksfunktion, så typen anges här.
-interface ZipArchiveLike {
-  append(source: Buffer | string, data: { name: string }): void;
-  finalize(): Promise<void>;
-  pipe<T extends NodeJS.WritableStream>(destination: T): T;
-  on(event: "error", listener: (err: Error) => void): unknown;
-}
-type ZipArchiveCtor = new (options?: { zlib?: { level?: number } }) => ZipArchiveLike;
 
 function specSheet(name: string, banners: RenderedBanner[]): string {
   const rows = banners.map((b) => {
@@ -51,38 +41,26 @@ export async function POST(req: Request) {
     const set = parseDisplaySet(body?.set);
     const banners = await renderDisplaySet(set);
 
-    const { ZipArchive } = (await import("archiver")) as unknown as { ZipArchive: ZipArchiveCtor };
-    const archive = new ZipArchive({ zlib: { level: 9 } });
-    const sink = new PassThrough();
-    const chunks: Buffer[] = [];
-    sink.on("data", (c: Buffer) => chunks.push(c));
-    const done = new Promise<void>((resolve, reject) => {
-      sink.on("end", resolve);
-      archive.on("error", reject);
-    });
-    archive.pipe(sink);
-    for (const b of banners) archive.append(b.buffer, { name: `display/${b.fileName}` });
-    archive.append(specSheet(set.name, banners), { name: "LEVERANS.md" });
-    archive.append(
-      JSON.stringify(
-        banners.map((b) => ({
-          format: b.formatId,
-          width: b.spec.width,
-          height: b.spec.height,
-          file: `display/${b.fileName}`,
-          bytes: b.bytes,
-          maxKb: b.spec.maxKb,
-          issues: b.issues,
-        })),
-        null,
-        2
-      ),
-      { name: "specifikation.json" }
-    );
-    await archive.finalize();
-    await done;
-
-    const zip = Buffer.concat(chunks);
+    const zip = await zipEntries([
+      ...banners.map((b) => ({ name: `display/${b.fileName}`, data: b.buffer })),
+      { name: "LEVERANS.md", data: specSheet(set.name, banners) },
+      {
+        name: "specifikation.json",
+        data: JSON.stringify(
+          banners.map((b) => ({
+            format: b.formatId,
+            width: b.spec.width,
+            height: b.spec.height,
+            file: `display/${b.fileName}`,
+            bytes: b.bytes,
+            maxKb: b.spec.maxKb,
+            issues: b.issues,
+          })),
+          null,
+          2
+        ),
+      },
+    ]);
     const fileName = `${banners[0]?.fileName.split("_")[0] ?? "kampanj"}_display.zip`;
     return new NextResponse(new Uint8Array(zip), {
       headers: {

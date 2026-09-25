@@ -97,6 +97,18 @@ export function compileCanvasComponent(compiledJs: string): SceneComponent | nul
   return compileComponent(compiledJs, buildScope());
 }
 
+/**
+ * Samma kod med en annan scope — t.ex. HTML5-banners, där Remotions hooks
+ * byts mot en fast tidpunkt och <Layer> mot en grupp som CSS animerar.
+ * Namnen i scopen måste vara desamma som i buildScope().
+ */
+export function compileCanvasComponentWithScope(
+  compiledJs: string,
+  overrides: Partial<Record<keyof ScopeRecord, unknown>>
+): SceneComponent | null {
+  return compileComponent(compiledJs, { ...buildScope(), ...overrides } as ScopeRecord);
+}
+
 function compileComponent(compiledJs: string, scope: ScopeRecord): SceneComponent | null {
   try {
     const names = Object.keys(scope);

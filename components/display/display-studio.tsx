@@ -19,6 +19,7 @@ import {
   ImageOff,
   Image as ImageIcon,
   Scan,
+  RotateCcw,
 } from "lucide-react";
 import { useStudioStore } from "@/lib/studio/store";
 import { DISPLAY_FORMATS, type DisplayFormatSpec } from "@/lib/formats/registry";
@@ -27,6 +28,8 @@ import { displayContentFromVideo } from "@/lib/display/from-video";
 import { layoutDisplay } from "@/lib/display/layout";
 import { lintDisplay, type DisplayIssue } from "@/lib/display/lint";
 import { resolveContent, type DisplayContent, type DisplayOverride, type DisplaySet } from "@/lib/display/types";
+import { HTML5_TARGETS, type Html5Target } from "@/lib/display/html5/build";
+import { useHtml5Banners, type Html5Pair } from "@/lib/display/html5/use-html5";
 
 const FPS = 30;
 
@@ -65,6 +68,17 @@ export function DisplayStudio() {
   const [busy, setBusy] = useState<"render" | "export" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showBoxes, setShowBoxes] = useState(false);
+  const [mode, setMode] = useState<"static" | "html5">("static");
+  const [target, setTarget] = useState<Html5Target>("iab");
+  const [clickUrl, setClickUrl] = useState("https://www.nordea.se");
+  const [replay, setReplay] = useState(0);
+
+  const formatIds = display?.formats.join(",") ?? "";
+  const specs = useMemo(
+    () => DISPLAY_FORMATS.filter((f) => formatIds.split(",").includes(f.id)),
+    [formatIds]
+  );
+  const { banners: html5, building } = useHtml5Banners(display, specs, target, clickUrl, mode === "html5");
 
   if (!display) return null;
 
@@ -115,7 +129,25 @@ export function DisplayStudio() {
     setBusy("export");
     setError(null);
     try {
-      const res = await post("/api/display/export");
+      const res =
+        mode === "html5"
+          ? await fetch("/api/display/html5-export", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                set: display,
+                target,
+                clickUrl,
+                banners: Object.fromEntries(
+                  Object.entries(html5).map(([id, b]) => [id, { html: b.pkg.html, durationSeconds: b.pkg.durationSeconds }])
+                ),
+              }),
+            })
+          : await post("/api/display/export");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Exporten misslyckades");
+      }
       const blob = await res.blob();
       const name = res.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/)?.[1] ?? "display.zip";
       const url = URL.createObjectURL(blob);
@@ -131,7 +163,6 @@ export function DisplayStudio() {
     }
   };
 
-  const specs = DISPLAY_FORMATS.filter((f) => display.formats.includes(f.id));
   const selectedSpec = specs.find((s) => s.id === selected) ?? null;
 
   return (
@@ -153,21 +184,73 @@ export function DisplayStudio() {
               aria-label="Kampanjens namn"
               className="block w-[260px] max-w-full bg-transparent text-sm font-semibold text-nordea-text rounded px-1 -mx-1 hover:bg-nordea-bg-hover focus:bg-nordea-bg focus:outline-none focus:ring-2 focus:ring-nordea-blue/15"
             />
-            <p className="text-[11px] text-nordea-text-tertiary">Displayformat · {specs.length} format · statiska bilder</p>
+            <p className="text-[11px] text-nordea-text-tertiary">
+              Displayformat · {specs.length} format · {mode === "html5" ? "animerade HTML5-banners" : "statiska bilder"}
+            </p>
+          </div>
+          <div className="ml-2 flex rounded-lg bg-nordea-bg p-0.5" role="tablist" aria-label="Typ av banner">
+            {(["static", "html5"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={mode === m}
+                onClick={() => setMode(m)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${mode === m ? "bg-white text-nordea-blue shadow-sm" : "text-nordea-text-tertiary hover:text-nordea-text"}`}
+              >
+                {m === "static" ? "Statiska" : "Animerade (HTML5)"}
+              </button>
+            ))}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setShowBoxes((v) => !v)} className="nordea-btn nordea-btn-ghost nordea-btn-sm" title="Visa layoutens rutor">
-            <Scan className="w-4 h-4" />
-            {showBoxes ? "Dölj rutor" : "Visa rutor"}
-          </button>
-          <button type="button" onClick={() => void renderAll()} disabled={!!busy} className="nordea-btn nordea-btn-secondary nordea-btn-sm disabled:opacity-50">
-            {busy === "render" ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-            Rendera och kontrollera vikt
-          </button>
-          <button type="button" onClick={() => void exportZip()} disabled={!!busy} className="nordea-btn nordea-btn-primary nordea-btn-sm disabled:opacity-50">
+          {mode === "static" ? (
+            <>
+              <button type="button" onClick={() => setShowBoxes((v) => !v)} className="nordea-btn nordea-btn-ghost nordea-btn-sm" title="Visa layoutens rutor">
+                <Scan className="w-4 h-4" />
+                {showBoxes ? "Dölj rutor" : "Visa rutor"}
+              </button>
+              <button type="button" onClick={() => void renderAll()} disabled={!!busy} className="nordea-btn nordea-btn-secondary nordea-btn-sm disabled:opacity-50">
+                {busy === "render" ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                Rendera och kontrollera vikt
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={() => setReplay((r) => r + 1)} className="nordea-btn nordea-btn-ghost nordea-btn-sm">
+                <RotateCcw className="w-4 h-4" />
+                Spela igen
+              </button>
+              <select
+                value={target}
+                onChange={(e) => setTarget(e.target.value as Html5Target)}
+                aria-label="Annonsserver"
+                title={HTML5_TARGETS[target].note}
+                className="h-8 rounded-md border border-nordea-border bg-white px-2 text-xs text-nordea-text"
+              >
+                {(Object.keys(HTML5_TARGETS) as Html5Target[]).map((t) => (
+                  <option key={t} value={t}>
+                    {HTML5_TARGETS[t].label}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={clickUrl}
+                onChange={(e) => setClickUrl(e.target.value)}
+                aria-label="Klickadress"
+                placeholder="https://www.nordea.se/…"
+                className="h-8 w-[220px] rounded-md border border-nordea-border bg-white px-2 text-xs text-nordea-text focus:outline-none focus:border-nordea-blue/40"
+              />
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => void exportZip()}
+            disabled={!!busy || (mode === "html5" && (building || Object.keys(html5).length === 0))}
+            className="nordea-btn nordea-btn-primary nordea-btn-sm disabled:opacity-50"
+          >
             {busy === "export" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            Ladda ner paket
+            {mode === "html5" ? "Ladda ner HTML5-paket" : "Ladda ner paket"}
           </button>
         </div>
       </header>
@@ -202,8 +285,10 @@ export function DisplayStudio() {
                 adjusted={!!display.overrides[spec.id]}
                 selected={selected === spec.id}
                 onSelect={() => setSelected(selected === spec.id ? null : spec.id)}
-                rendered={rendered[spec.id]}
-                showBoxes={showBoxes}
+                rendered={mode === "static" ? rendered[spec.id] : undefined}
+                showBoxes={showBoxes && mode === "static"}
+                html5={mode === "html5" ? html5[spec.id] ?? null : undefined}
+                replay={replay}
               />
             ))}
           </div>
@@ -226,6 +311,8 @@ function BannerCard({
   onSelect,
   rendered,
   showBoxes,
+  html5,
+  replay,
 }: {
   spec: DisplayFormatSpec;
   content: DisplayContent;
@@ -234,11 +321,15 @@ function BannerCard({
   onSelect: () => void;
   rendered?: RenderedInfo;
   showBoxes: boolean;
+  /** undefined = statiskt läge; null = HTML5 byggs. */
+  html5?: Html5Pair | null;
+  replay: number;
 }) {
   const issues = useMemo(() => {
     if (rendered) return rendered.issues;
-    return lintDisplay(spec, content, layoutDisplay(spec.width, spec.height, content, spec.family));
-  }, [rendered, spec, content]);
+    const base = lintDisplay(spec, content, layoutDisplay(spec.width, spec.height, content, spec.family));
+    return html5 ? [...base, ...html5.pkg.issues] : base;
+  }, [rendered, spec, content, html5]);
   const frame = Math.round((content.illustration?.atSeconds ?? 0) * FPS);
   const props: DisplayBannerProps = { content, width: spec.width, height: spec.height, family: spec.family, showBoxes };
   const errors = issues.filter((i) => i.severity === "error").length;
@@ -262,7 +353,23 @@ function BannerCard({
         className={`block rounded-sm ring-offset-2 transition-shadow ${selected ? "ring-2 ring-nordea-blue" : "ring-1 ring-nordea-border hover:ring-nordea-blue/40"}`}
         style={{ width: spec.width, height: spec.height }}
       >
-        {rendered && !showBoxes ? (
+        {html5 !== undefined ? (
+          html5 ? (
+            <iframe
+              key={replay}
+              title={`${spec.label} ${spec.width}×${spec.height} (HTML5)`}
+              srcDoc={html5.preview.html}
+              width={spec.width}
+              height={spec.height}
+              sandbox="allow-scripts allow-popups"
+              className="block border-0 pointer-events-none"
+            />
+          ) : (
+            <div className="flex items-center justify-center bg-nordea-bg" style={{ width: spec.width, height: spec.height }}>
+              <Loader2 className="w-4 h-4 animate-spin text-nordea-text-tertiary" />
+            </div>
+          )
+        ) : rendered && !showBoxes ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={rendered.src} alt={`${spec.label} ${spec.width}×${spec.height}`} width={spec.width} height={spec.height} className="block" />
         ) : (
@@ -280,6 +387,11 @@ function BannerCard({
       </button>
       <div className="text-[10px] text-nordea-text-tertiary tabular-nums">
         {spec.channel}
+        {html5 && (
+          <span>
+            {" "}· ca {Math.round(html5.pkg.estimatedBytes / 1024)} kB okomprimerat · {html5.pkg.durationSeconds.toFixed(1).replace(".", ",")} s
+          </span>
+        )}
         {rendered && (
           <span className={rendered.withinLimit ? "" : "text-nordea-rose font-medium"}>
             {" "}· {rendered.mime === "image/png" ? "PNG" : "JPG"} {Math.round(rendered.bytes / 1024)} / {rendered.maxKb} kB
