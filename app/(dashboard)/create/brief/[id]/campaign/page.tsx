@@ -4,25 +4,10 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Loader2, Rocket } from "lucide-react";
 import type { CreativeBrief } from "@/lib/brief/types";
+import { CHANNELS, FORMATS, type Channel, type Format } from "@/lib/campaign-options";
 
 interface PageProps { params: Promise<{ id: string }> }
-type Format = "story" | "feed" | "landscape" | "vertical";
-type Channel = "meta" | "linkedin" | "google" | "tiktok" | "youtube";
 interface Result { template_ids: string[]; master_id: string | null }
-
-const CHANNELS: { id: Channel; name: string; description: string }[] = [
-  { id: "meta", name: "Meta / Instagram", description: "Flöde och Stories" },
-  { id: "linkedin", name: "LinkedIn", description: "Professionellt flöde" },
-  { id: "google", name: "Google Ads", description: "Display och video" },
-  { id: "tiktok", name: "TikTok", description: "Vertikal video" },
-  { id: "youtube", name: "YouTube", description: "Video i bredbild" },
-];
-const FORMATS: { id: Format; name: string; ratio: string }[] = [
-  { id: "story", name: "Story / Reel", ratio: "9:16" },
-  { id: "feed", name: "Kvadratisk", ratio: "1:1" },
-  { id: "vertical", name: "Porträtt", ratio: "4:5" },
-  { id: "landscape", name: "Bredbild", ratio: "16:9" },
-];
 
 export default function BriefCampaignPage({ params }: PageProps) {
   const { id } = use(params);
@@ -31,21 +16,30 @@ export default function BriefCampaignPage({ params }: PageProps) {
   const [formats, setFormats] = useState<Format[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [campaignId, setCampaignId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
 
   useEffect(() => {
     let active = true;
-    fetch(`/api/brief/${id}`)
-      .then(async (response) => {
+    Promise.all([
+      fetch(`/api/brief/${id}`).then(async (response) => {
         if (!response.ok) throw new Error("Briefen kunde inte laddas");
         return response.json();
-      })
-      .then(({ brief: value }: { brief: CreativeBrief }) => {
+      }),
+      fetch(`/api/campaigns?briefId=${encodeURIComponent(id)}`).then(async (response) => {
+        if (!response.ok) throw new Error("Kampanjvalen kunde inte laddas");
+        return response.json();
+      }),
+    ])
+      .then(([{ brief: value }, { campaigns }]: [{ brief: CreativeBrief }, { campaigns: { id: string; channels: string[]; formats: string[] }[] }]) => {
         if (!active) return;
         setBrief(value);
-        setChannels((value.recommended_channels ?? []).filter((item): item is Channel => CHANNELS.some((c) => c.id === item)));
-        setFormats((value.recommended_formats ?? []).filter((item): item is Format => FORMATS.some((f) => f.id === item)));
+        const existing = campaigns[0];
+        setCampaignId(existing?.id ?? null);
+        setChannels((existing?.channels?.length ? existing.channels : value.recommended_channels ?? []).filter((item): item is Channel => CHANNELS.some((c) => c.id === item)));
+        setFormats((existing?.formats?.length ? existing.formats : value.recommended_formats ?? []).filter((item): item is Format => FORMATS.some((f) => f.id === item)));
       })
       .catch((cause: unknown) => active && setError(cause instanceof Error ? cause.message : "Något gick fel"))
       .finally(() => active && setLoading(false));
@@ -56,10 +50,33 @@ export default function BriefCampaignPage({ params }: PageProps) {
     setSelected(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
   };
 
+  const saveChoices = async (): Promise<boolean> => {
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ briefId: id, channels, formats }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Kampanjen kunde inte sparas");
+      setCampaignId(data.campaign.id);
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Något gick fel");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const generate = async () => {
     setGenerating(true);
     setError(null);
     try {
+      const saved = await saveChoices();
+      if (!saved) return;
       const response = await fetch(`/api/brief/${id}/generate-campaign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,6 +101,7 @@ export default function BriefCampaignPage({ params }: PageProps) {
         <p className="text-xs font-semibold uppercase tracking-widest text-nordea-blue">Kampanj · steg 2 av 3</p>
         <h1 className="nordea-display mt-2 text-3xl text-nordea-deep">Välj kanaler och format</h1>
         <p className="mt-2 text-sm text-nordea-text-secondary">{brief?.title ?? "Brief"} · Välj var materialet ska användas innan du skapar det.</p>
+        {campaignId && <Link href={`/campaigns/${campaignId}`} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-nordea-blue hover:underline">Öppna kampanjöversikt <ArrowRight className="h-4 w-4" /></Link>}
       </div>
       <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
         <div className="space-y-5">
@@ -112,7 +130,8 @@ export default function BriefCampaignPage({ params }: PageProps) {
           <h2 className="font-semibold text-nordea-deep">Produktionsöversikt</h2>
           <dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between"><dt className="text-nordea-text-secondary">Kanaler</dt><dd className="font-semibold">{channels.length}</dd></div><div className="flex justify-between"><dt className="text-nordea-text-secondary">Format</dt><dd className="font-semibold">{formats.length}</dd></div><div className="flex justify-between border-t border-nordea-border pt-3"><dt className="text-nordea-text-secondary">Redigerbara mallar</dt><dd className="font-semibold">{formats.length}</dd></div></dl>
           <p className="mt-4 text-xs text-nordea-text-secondary">Granska budskap och anpassa materialet i Master eller Produktion innan publicering.</p>
-          <button type="button" onClick={generate} disabled={!brief || generating || channels.length === 0 || formats.length === 0 || !!result} className="nordea-btn nordea-btn-cobalt mt-5 w-full justify-center disabled:opacity-50">{generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}{generating ? "Skapar material…" : "Skapa kampanjmaterial"}</button>
+          <button type="button" onClick={saveChoices} disabled={!brief || saving || generating || channels.length === 0 || formats.length === 0} className="nordea-btn nordea-btn-secondary mt-5 w-full justify-center disabled:opacity-50">{saving ? "Sparar…" : "Spara kampanjval"}</button>
+          <button type="button" onClick={generate} disabled={!brief || generating || saving || channels.length === 0 || formats.length === 0 || !!result} className="nordea-btn nordea-btn-cobalt mt-2 w-full justify-center disabled:opacity-50">{generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}{generating ? "Skapar material…" : "Skapa kampanjmaterial"}</button>
           {(channels.length === 0 || formats.length === 0) && <p className="mt-2 text-xs text-nordea-text-secondary">Välj minst en kanal och ett format.</p>}
         </aside>
       </div>

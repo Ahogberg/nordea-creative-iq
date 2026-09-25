@@ -100,9 +100,7 @@ export default function CampaignsPage() {
           {campaigns.map((c) => {
             const statusCfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.draft;
             const templateCount = c.template_ids?.length ?? 0;
-            const href = c.brief_id
-              ? `/create/brief/${c.brief_id}`
-              : `/templates`;
+            const href = `/campaigns/${c.id}`;
             return (
               <Link key={c.id} href={href}>
                 <Card className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer h-full">
@@ -122,6 +120,9 @@ export default function CampaignsPage() {
                         </Badge>
                       )}
                     </div>
+                    <p className="mb-3 text-xs text-gray-500">
+                      {(c.channels ?? []).length} kanaler · {(c.formats ?? []).length} format
+                    </p>
 
                     <div className="flex items-center justify-between text-xs text-gray-500 mt-4 pt-3 border-t border-gray-100">
                       <span className="flex items-center gap-1">

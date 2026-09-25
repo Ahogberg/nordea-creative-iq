@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
+import { parseCampaignChoices } from "@/lib/campaign-options";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 import {
   DEFAULT_MOTION_CONFIG,
@@ -54,9 +55,6 @@ REGLER:
 
 Returnera ENDAST giltig JSON för VideoConfig.`;
 
-const VALID_FORMATS = ["story", "feed", "landscape", "vertical"] as const;
-const VALID_CHANNELS = ["meta", "linkedin", "google", "tiktok", "youtube"] as const;
-
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -64,20 +62,16 @@ export async function POST(
   try {
     const { id: briefId } = await params;
     const body = await request.json().catch(() => null);
-    const formats = body?.formats;
-    const channels = body?.channels;
-    if (
-      !Array.isArray(formats) || formats.length === 0 ||
-      formats.some((format: unknown) => !VALID_FORMATS.includes(format as typeof VALID_FORMATS[number])) ||
-      !Array.isArray(channels) || channels.length === 0 ||
-      channels.some((channel: unknown) => !VALID_CHANNELS.includes(channel as typeof VALID_CHANNELS[number]))
-    ) {
+    const choices = parseCampaignChoices(body);
+    if (!choices) {
       return NextResponse.json({ message: "Välj minst en giltig kanal och ett giltigt format." }, { status: 400 });
     }
-    const selectedFormats = [...new Set(formats)] as VideoConfig["format"][];
-    const selectedChannels = [...new Set(channels)] as string[];
+    const selectedFormats = choices.formats;
+    const selectedChannels = choices.channels;
 
-    const supabase = await createClient();
+    const auth = await requireUser();
+    if ("response" in auth) return auth.response;
+    const { user, supabase } = auth;
 
     const { data: brief, error: briefError } = await supabase
       .from("creative_briefs")
@@ -136,7 +130,7 @@ export async function POST(
       );
 
       await logGeneration({
-        user_id: "default-user",
+        user_id: user.id,
         kind: "video",
         provider: "claude",
         model: CLAUDE_MODEL,
@@ -155,7 +149,7 @@ export async function POST(
       const { data: template, error: templateError } = await supabase
         .from("templates")
         .insert({
-          user_id: "default-user",
+          user_id: user.id,
           name: `${templateName} · ${format}`,
           description: `[Från brief] Kanaler: ${selectedChannels.join(", ")}. ${brief.big_idea?.slice(0, 150) || ""}`,
           config: { ...config, format, id: `${config.id}-${format}` },
@@ -179,7 +173,7 @@ export async function POST(
           name: templateName,
           source_format: sourceFormat,
           master_config: config,
-          created_by: "default-user",
+          created_by: user.id,
         })
         .select()
         .single();
@@ -211,6 +205,8 @@ export async function POST(
       const { data: updated, error: updateErr } = await supabase
         .from("campaigns")
         .update({
+          channels: selectedChannels,
+          formats: selectedFormats,
           template_ids: allTemplateIds,
           master_creative_ids: masterIds,
           updated_at: new Date().toISOString(),
@@ -226,11 +222,13 @@ export async function POST(
         .insert({
           name: templateName,
           brief_id: briefId,
+          channels: selectedChannels,
+          formats: selectedFormats,
           master_creative_ids: masterId ? [masterId] : [],
           template_ids: templateIds,
           production_job_ids: [],
           status: "draft",
-          created_by: "default-user",
+          created_by: user.id,
         })
         .select()
         .single();
