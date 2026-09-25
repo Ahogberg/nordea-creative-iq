@@ -11,12 +11,8 @@ import { interpolate, useCurrentFrame } from "remotion";
 import { fonts } from "./styles";
 import type { LegalConfig, VideoConfig } from "./types";
 
-export const CREDIT_WARNING_TITLE = "Att låna kostar pengar!";
-export const CREDIT_WARNING_BODY =
-  "Om du inte kan betala tillbaka skulden i tid riskerar du en betalningsanmärkning. " +
-  "Det kan leda till svårigheter att få hyra bostad, teckna abonnemang och få nya lån. " +
-  "För stöd, vänd dig till budget- och skuldrådgivningen i din kommun. " +
-  "Kontaktuppgifter finns på konsumentverket.se";
+import { CREDIT_WARNING_BODY, CREDIT_WARNING_TITLE } from "./legal-text";
+export { CREDIT_WARNING_BODY, CREDIT_WARNING_TITLE };
 
 const WARNING_RED = "#911D26";
 const FPS = 30;
@@ -41,7 +37,7 @@ export function legalReserve(legal: LegalConfig | undefined, format: VideoConfig
   return Math.round(reserve);
 }
 
-const WarningTriangle: React.FC<{ size: number }> = ({ size }) => (
+export const WarningTriangle: React.FC<{ size: number }> = ({ size }) => (
   <svg width={size} height={size * 0.88} viewBox="0 0 100 88" style={{ flexShrink: 0, display: "block" }}>
     <path
       d="M50 6 L95 82 L5 82 Z"

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Download, Sparkles, ShieldCheck, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Download, Sparkles, ShieldCheck, Loader2, LayoutGrid } from "lucide-react";
 import { useStudioStore } from "@/lib/studio/store";
 import { SaveTemplateModal } from "./save-template-modal";
 import { ExportModal } from "./export-modal";
@@ -73,6 +73,14 @@ export function StudioTopbar() {
           {isGeneratingVariants ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           Varianter
         </button>
+        <Link
+          href="/create/display"
+          title="Samma budskap i svenska publicisters displayformat"
+          className="nordea-btn nordea-btn-secondary nordea-btn-sm"
+        >
+          <LayoutGrid className="w-4 h-4" />
+          Displayformat
+        </Link>
         <button type="button" onClick={() => setSaveOpen(true)} className="nordea-btn nordea-btn-secondary nordea-btn-sm">
           <Save className="w-4 h-4" />
           Spara som mall

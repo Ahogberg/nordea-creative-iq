@@ -27,6 +27,7 @@ import {
 } from "@/lib/remotion/types";
 import { describeChanges } from "./describe-changes";
 import type { AudienceCompareResponse, AudienceTestResponse } from "@/lib/audience/types";
+import type { DisplaySet } from "@/lib/display/types";
 
 export type AspectRatio = VideoConfig["format"]; // 'story' | 'feed' | 'landscape' | 'vertical'
 
@@ -140,6 +141,10 @@ interface StudioState {
   compareWithBefore: (messageId: string) => Promise<void>;
   /** Skickar fokusgruppens invändningar till AI:n som en ändringsbegäran. */
   fixFromAudience: (messageId: string) => Promise<void>;
+
+  // Displaypaketet (samma budskap i displayformat) — överlever byte av vy.
+  display: DisplaySet | null;
+  setDisplay: (display: DisplaySet | null) => void;
 
   // Lager och keyframes
   selectedKeyframe: SelectedKeyframe | null;
@@ -278,6 +283,9 @@ export const useStudioStore = create<StudioState>()(
       if (msg?.audience?.kind !== "test" || !msg.audience.data) return;
       await get().sendChatMessage(audienceFixPrompt(msg.audience.data), "Rätta det fokusgruppen invände mot");
     },
+
+    display: null,
+    setDisplay: (display) => set({ display }),
 
     selectedKeyframe: null,
     selectKeyframe: (kf) => set({ selectedKeyframe: kf }),
@@ -725,6 +733,11 @@ function completedTurns(messages: ChatMessage[]) {
     }
   }
   return turns.slice(-10);
+}
+
+// Utvecklingsläge: storen nås från webbläsarkonsolen för felsökning och test.
+if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+  (window as unknown as { __studioStore?: typeof useStudioStore }).__studioStore = useStudioStore;
 }
 
 // ── Debounced preview re-render ──

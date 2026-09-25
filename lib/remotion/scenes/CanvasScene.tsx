@@ -88,9 +88,14 @@ const buildScope = () => ({
 type ScopeRecord = ReturnType<typeof buildScope>;
 // `safe` = fri yta överst/nertill (px) som text och viktiga objekt ska hålla
 // sig innanför. I illustrationsscener är hela ytan redan säker (0/0).
-type SceneComponent = React.FC<{ width: number; height: number; scale: number; safe: SafeInsets }>;
+export type SceneComponent = React.FC<{ width: number; height: number; scale: number; safe: SafeInsets }>;
 
-const NO_INSETS: SafeInsets = { top: 0, bottom: 0 };
+export const NO_INSETS: SafeInsets = { top: 0, bottom: 0 };
+
+/** Kör kompilerad canvas-kod med den vitlistade scopen (även för displaybanners). */
+export function compileCanvasComponent(compiledJs: string): SceneComponent | null {
+  return compileComponent(compiledJs, buildScope());
+}
 
 function compileComponent(compiledJs: string, scope: ScopeRecord): SceneComponent | null {
   try {
@@ -278,7 +283,7 @@ interface ErrorBoundaryState {
   message?: string;
 }
 
-class CanvasErrorBoundary extends React.Component<
+export class CanvasErrorBoundary extends React.Component<
   { children: React.ReactNode; scale: number },
   ErrorBoundaryState
 > {
