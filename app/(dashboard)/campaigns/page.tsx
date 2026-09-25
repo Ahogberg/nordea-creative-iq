@@ -50,7 +50,7 @@ export default function CampaignsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Kampanjer</h1>
           <p className="text-gray-500 mt-1">
-            Kampanjer skapade från godkända briefs
+            Följ kampanjer från brief till färdigt material
           </p>
         </div>
         <Link href="/create/brief">
@@ -101,8 +101,8 @@ export default function CampaignsPage() {
             const statusCfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.draft;
             const templateCount = c.template_ids?.length ?? 0;
             const href = c.brief_id
-              ? `/create/brief/${c.brief_id}/campaign`
-              : `/studio`;
+              ? `/create/brief/${c.brief_id}`
+              : `/templates`;
             return (
               <Link key={c.id} href={href}>
                 <Card className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer h-full">
@@ -118,7 +118,7 @@ export default function CampaignsPage() {
                       {templateCount > 0 && (
                         <Badge variant="outline" className="text-xs flex items-center gap-1">
                           <Film className="w-3 h-3" />
-                          {templateCount} video{templateCount > 1 ? 's' : ''}
+                          {templateCount} {templateCount === 1 ? 'mall' : 'mallar'}
                         </Badge>
                       )}
                     </div>

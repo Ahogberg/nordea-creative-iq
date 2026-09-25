@@ -397,10 +397,10 @@ export function ReviewStage({
           <button
             type="button"
             onClick={onApprove}
-            className="nordea-btn nordea-btn-primary nordea-btn-lg"
+            className="nordea-btn nordea-btn-cobalt nordea-btn-lg"
           >
             <Rocket className="w-4 h-4" />
-            Generera kampanj
+            Välj kanaler och format
           </button>
         </div>
       </div>

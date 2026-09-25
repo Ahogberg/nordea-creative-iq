@@ -46,7 +46,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: null,
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Översikt', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Kampanjer', href: '/campaigns', icon: Rocket },
       {
         name: 'Skapa',

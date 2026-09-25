@@ -48,18 +48,34 @@ REGLER:
 - Använd strategins big_idea som ledtanke för title-scen
 - Plocka EN av strategins key_messages för rubriker (välj den som passar valt format bäst)
 - Använd EN av desired_action / CTAs som CTA-scen
-- Om recommended_formats finns: använd första format-värdet
+- Använd det valda primärformatet och anpassa budskapet för valda kanaler
 - totalDurationSeconds = exakt summan
 - Behåll Nordea brand-tone
 
 Returnera ENDAST giltig JSON för VideoConfig.`;
 
+const VALID_FORMATS = ["story", "feed", "landscape", "vertical"] as const;
+const VALID_CHANNELS = ["meta", "linkedin", "google", "tiktok", "youtube"] as const;
+
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: briefId } = await params;
+    const body = await request.json().catch(() => null);
+    const formats = body?.formats;
+    const channels = body?.channels;
+    if (
+      !Array.isArray(formats) || formats.length === 0 ||
+      formats.some((format: unknown) => !VALID_FORMATS.includes(format as typeof VALID_FORMATS[number])) ||
+      !Array.isArray(channels) || channels.length === 0 ||
+      channels.some((channel: unknown) => !VALID_CHANNELS.includes(channel as typeof VALID_CHANNELS[number]))
+    ) {
+      return NextResponse.json({ message: "Välj minst en giltig kanal och ett giltigt format." }, { status: 400 });
+    }
+    const selectedFormats = [...new Set(formats)] as VideoConfig["format"][];
+    const selectedChannels = [...new Set(channels)] as string[];
 
     const supabase = await createClient();
 
@@ -78,7 +94,7 @@ export async function POST(
     let config: VideoConfig;
 
     if (!client) {
-      config = buildMockConfig(brief);
+      config = buildMockConfig(brief, selectedFormats[0]);
     } else {
       const response = await client.messages.create({
         model: CLAUDE_MODEL,
@@ -96,7 +112,8 @@ export async function POST(
                 value_props: brief.value_props,
                 desired_action: brief.desired_action,
                 tone_of_voice: brief.tone_of_voice,
-                recommended_formats: brief.recommended_formats,
+                selected_formats: selectedFormats,
+                selected_channels: selectedChannels,
               },
               null,
               2
@@ -112,6 +129,7 @@ export async function POST(
 
       config = JSON.parse(jsonMatch[0]) as VideoConfig;
       if (!config.motion) config.motion = DEFAULT_MOTION_CONFIG;
+      config.format = selectedFormats[0];
       config.totalDurationSeconds = config.scenes.reduce(
         (sum, s) => sum + (s.durationSeconds || 0),
         0
@@ -130,32 +148,31 @@ export async function POST(
       });
     }
 
-    // Always save as a regular template (lives on main since Sprint 3 — safe).
+    // Save one editable template per selected aspect ratio.
     const templateName = brief.title || "Kampanj från brief";
-    const { data: template, error: templateError } = await supabase
-      .from("templates")
-      .insert({
-        user_id: "default-user",
-        name: templateName,
-        description: `[Från brief] ${brief.big_idea?.slice(0, 200) || ""}`,
-        config,
-        is_favorite: false,
-      })
-      .select()
-      .single();
-
-    if (templateError) throw templateError;
+    const templateIds: string[] = [];
+    for (const format of selectedFormats) {
+      const { data: template, error: templateError } = await supabase
+        .from("templates")
+        .insert({
+          user_id: "default-user",
+          name: `${templateName} · ${format}`,
+          description: `[Från brief] Kanaler: ${selectedChannels.join(", ")}. ${brief.big_idea?.slice(0, 150) || ""}`,
+          config: { ...config, format, id: `${config.id}-${format}` },
+          is_favorite: false,
+        })
+        .select()
+        .single();
+      if (templateError) throw templateError;
+      templateIds.push(template.id);
+    }
 
     // Try Master Creative (Sprint 9) — if the table is missing because that
     // sprint hasn't merged yet, treat as a soft miss and continue. The user
     // still gets a template + campaign row.
     let masterId: string | null = null;
     try {
-      const sourceFormat =
-        Array.isArray(brief.recommended_formats) &&
-        brief.recommended_formats.length > 0
-          ? brief.recommended_formats[0]
-          : config.format;
+      const sourceFormat = selectedFormats[0];
       const { data: master, error: masterError } = await supabase
         .from("master_creatives")
         .insert({
@@ -187,16 +204,14 @@ export async function POST(
 
     if (existingCampaign.data) {
       const prev = existingCampaign.data;
-      const templateIds = [
-        ...new Set([...(prev.template_ids ?? []), template.id]),
-      ];
+      const allTemplateIds = [...new Set([...(prev.template_ids ?? []), ...templateIds])];
       const masterIds = masterId
         ? [...new Set([...(prev.master_creative_ids ?? []), masterId])]
         : prev.master_creative_ids ?? [];
       const { data: updated, error: updateErr } = await supabase
         .from("campaigns")
         .update({
-          template_ids: templateIds,
+          template_ids: allTemplateIds,
           master_creative_ids: masterIds,
           updated_at: new Date().toISOString(),
         })
@@ -212,7 +227,7 @@ export async function POST(
           name: templateName,
           brief_id: briefId,
           master_creative_ids: masterId ? [masterId] : [],
-          template_ids: [template.id],
+          template_ids: templateIds,
           production_job_ids: [],
           status: "draft",
           created_by: "default-user",
@@ -233,7 +248,8 @@ export async function POST(
 
     return NextResponse.json({
       campaign,
-      template_id: template.id,
+      template_id: templateIds[0],
+      template_ids: templateIds,
       master_id: masterId,
       config,
     });
@@ -249,23 +265,17 @@ export async function POST(
   }
 }
 
-function buildMockConfig(brief: Record<string, unknown>): VideoConfig {
+function buildMockConfig(brief: Record<string, unknown>, selectedFormat: VideoConfig["format"]): VideoConfig {
   const bigIdea =
     typeof brief.big_idea === "string" ? brief.big_idea : "Kampanj";
   const desiredAction =
     typeof brief.desired_action === "string"
       ? brief.desired_action
       : "Kontakta oss";
-  const format =
-    Array.isArray(brief.recommended_formats) &&
-    typeof brief.recommended_formats[0] === "string"
-      ? (brief.recommended_formats[0] as VideoConfig["format"])
-      : "story";
-
   return {
     id: `mock-${Date.now()}`,
     title: bigIdea.slice(0, 50),
-    format,
+    format: selectedFormat,
     backgroundColor: "#0000A0",
     accentColor: "#40BFA3",
     scenes: [
