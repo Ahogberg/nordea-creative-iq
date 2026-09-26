@@ -251,6 +251,6 @@ Tom array om copy:n är ren.`;
     }));
   } catch (error) {
     console.error("[qa:compliance] LLM check failed:", error);
-    return [];
+    throw error;
   }
 }

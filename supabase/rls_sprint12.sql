@@ -8,12 +8,12 @@
 -- creative_briefs
 ALTER TABLE creative_briefs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users see own briefs" ON creative_briefs
-  FOR ALL USING (auth.uid()::text = user_id);
+  FOR ALL USING (auth.uid()::text = created_by);
 
 -- campaigns
 ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users see own campaigns" ON campaigns
-  FOR ALL USING (auth.uid()::text = user_id);
+  FOR ALL USING (auth.uid()::text = created_by);
 
 -- ai_generations
 ALTER TABLE ai_generations ENABLE ROW LEVEL SECURITY;
@@ -45,7 +45,7 @@ ALTER TABLE templates ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users read templates" ON templates
   FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "Users modify own templates" ON templates
-  FOR ALL USING (auth.uid()::text = created_by);
+  FOR ALL USING (auth.uid()::text = user_id);
 
 -- production_jobs
 ALTER TABLE production_jobs ENABLE ROW LEVEL SECURITY;

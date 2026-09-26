@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 
 export const runtime = "nodejs";
@@ -35,6 +35,9 @@ Om något fält saknas i briefen — lämna det som tom sträng, hitta inte på.
 Returnera ENDAST JSON, inga förklaringar eller markdown.`;
 
 export async function POST(request: Request) {
+  const auth = await requireUser();
+  if ("response" in auth) return auth.response;
+  const { supabase, user } = auth;
   try {
     const body = await request.json();
     const { text } = RequestSchema.parse(body);
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
       parsed = JSON.parse(jsonMatch[0]);
 
       await logGeneration({
-        user_id: "default-user",
+        user_id: user.id,
         kind: "video",
         provider: "claude",
         model: CLAUDE_MODEL,
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
 
     // Persist the parsed brief immediately so the upload flow lands the
     // user on /review with a real id, mirroring the wizard's auto-save UX.
-    const supabase = await createClient();
+
     const { data: brief, error } = await supabase
       .from("creative_briefs")
       .insert({
@@ -88,7 +91,7 @@ export async function POST(request: Request) {
         key_message: parsed.key_message || null,
         unique_value: parsed.unique_value || null,
         status: "draft",
-        created_by: "default-user",
+        created_by: user.id,
       })
       .select()
       .single();

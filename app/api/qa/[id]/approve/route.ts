@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 
 export async function POST(
   request: Request,
@@ -8,35 +8,45 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
-    const supabase = await createClient();
+    const auth = await requireUser();
+    if ("response" in auth) return auth.response;
+    const { supabase, user } = auth;
 
     // Only 'warn' runs can be manually approved. 'fail' (blocking compliance)
     // must be re-run after the underlying issue is fixed.
     const { data: run, error: fetchError } = await supabase
       .from("qa_runs")
-      .select("status")
+      .select("status, blocking_issues, approved_at")
       .eq("id", id)
-      .single();
+      .eq("user_id", user.id)
+      .maybeSingle();
 
     if (fetchError) throw fetchError;
 
-    if (run?.status === "fail") {
+    if (!run) return NextResponse.json({ error: "Granskningen hittades inte" }, { status: 404 });
+    if (run.status !== "warn" || run.approved_at || (run.blocking_issues ?? []).length > 0) {
       return NextResponse.json(
-        { error: "Cannot approve a failed QA run — fix the blocking issue and re-run" },
+        { error: "Endast avslutade granskningar med varningar utan blockerande problem kan godkännas" },
         { status: 400 }
       );
     }
 
-    const { error: updateError } = await supabase
+    const { data: approved, error: updateError } = await supabase
       .from("qa_runs")
       .update({
-        approved_by: "default-user",
+        approved_by: user.id,
         approved_at: new Date().toISOString(),
-        approval_note: body?.note ?? null,
+        approval_note: typeof body?.note === "string" ? body.note.slice(0, 2000) : null,
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .eq("status", "warn")
+      .is("approved_at", null)
+      .select("id")
+      .maybeSingle();
 
     if (updateError) throw updateError;
+    if (!approved) return NextResponse.json({ error: "Granskningen har ändrats. Ladda om sidan." }, { status: 409 });
 
     return NextResponse.json({ success: true });
   } catch (error) {

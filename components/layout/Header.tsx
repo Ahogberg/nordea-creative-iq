@@ -30,7 +30,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Översikt', icon: LayoutDashboard },
   { href: '/campaigns', label: 'Kampanjer', icon: Rocket },
   { href: '/create', label: 'Skapa', icon: Sparkles },
   { href: '/templates', label: 'Mallar', icon: LayoutGrid },

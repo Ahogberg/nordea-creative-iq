@@ -70,6 +70,8 @@ export interface Campaign {
   id: string;
   name: string;
   brief_id: string | null;
+  channels: string[];
+  formats: string[];
 
   master_creative_ids: string[];
   template_ids: string[];

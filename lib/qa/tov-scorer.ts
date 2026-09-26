@@ -89,7 +89,7 @@ Sätt examples till tom array om copy:n är ren.`;
     };
   } catch (error) {
     console.error("[qa:tov] scorer failed:", error);
-    return neutralFallback();
+    throw error;
   }
 }
 

@@ -57,13 +57,14 @@ export async function runQAGate(request: RunQARequest): Promise<ReportPayload> {
   ]);
 
   const weights = DEFAULT_THRESHOLDS.weights;
-  const heatmap_score = heatmap?.attention_score ?? 75; // copy-only baseline
+  const heatmap_score = heatmap?.attention_score ?? 0;
+  const activeWeight = weights.persona + weights.tov + weights.compliance + (heatmap ? weights.heatmap : 0);
 
   const total_score = Math.round(
-    persona_jury.aggregate_score * weights.persona +
+    (persona_jury.aggregate_score * weights.persona +
       tov.weighted_score * weights.tov +
       compliance.score * weights.compliance +
-      heatmap_score * weights.heatmap
+      heatmap_score * weights.heatmap) / activeWeight
   );
 
   // Status: blocking compliance always wins

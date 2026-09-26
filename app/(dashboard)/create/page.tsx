@@ -46,7 +46,7 @@ const SHORTCUTS: Shortcut[] = [
     id: "brief",
     icon: FileText,
     title: "Från brief",
-    description: "Importera brief → komplett kampanj",
+    description: "Strategi, kanalval och kampanjmaterial",
     mode: "brief",
   },
   {
@@ -88,7 +88,7 @@ export default function CreatePage() {
             Vad vill du skapa idag?
           </h1>
           <p className="text-base text-nordea-text-secondary">
-            Beskriv din idé så genererar AI:n direkt — eller välj ett verktyg nedan
+            Beskriv din idé eller välj ett verktyg för att börja
           </p>
         </div>
 
