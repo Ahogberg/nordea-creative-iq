@@ -100,9 +100,7 @@ export default function CampaignsPage() {
           {campaigns.map((c) => {
             const statusCfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.draft;
             const templateCount = c.template_ids?.length ?? 0;
-            const href = c.brief_id
-              ? `/create/brief/${c.brief_id}/campaign`
-              : `/studio`;
+            const href = `/campaigns/${c.id}`;
             return (
               <Link key={c.id} href={href}>
                 <Card className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer h-full">

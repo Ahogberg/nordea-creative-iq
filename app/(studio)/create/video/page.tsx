@@ -10,6 +10,7 @@ import { SceneStrip } from "@/components/studio/scene-strip";
 import { LayerTracks } from "@/components/studio/layer-tracks";
 import { Inspector } from "@/components/studio/inspector";
 import { StudioPlayerProvider } from "@/components/studio/player-context";
+import { openCampaign } from "@/lib/studio/campaign-sync";
 
 /**
  * Motion Studio
@@ -25,7 +26,13 @@ import { StudioPlayerProvider } from "@/components/studio/player-context";
 function StudioPageInner() {
   const searchParams = useSearchParams();
   const promptFromUrl = searchParams.get("prompt");
+  const campaignFromUrl = searchParams.get("campaign");
   const processedRef = useRef(false);
+
+  // ?campaign=<id>: kampanjens video laddas och ändringar sparas tillbaka.
+  useEffect(() => {
+    if (campaignFromUrl) void openCampaign(campaignFromUrl);
+  }, [campaignFromUrl]);
 
   useEffect(() => {
     if (!promptFromUrl || processedRef.current) return;

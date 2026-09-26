@@ -30,6 +30,7 @@ import { lintDisplay, type DisplayIssue } from "@/lib/display/lint";
 import { resolveContent, type DisplayContent, type DisplayOverride, type DisplaySet } from "@/lib/display/types";
 import { HTML5_TARGETS, type Html5Target } from "@/lib/display/html5/build";
 import { useHtml5Banners, type Html5Pair } from "@/lib/display/html5/use-html5";
+import { CampaignChip, useCampaignQuery } from "@/components/studio/campaign-chip";
 
 const FPS = 30;
 
@@ -72,6 +73,7 @@ export function DisplayStudio() {
   const [target, setTarget] = useState<Html5Target>("iab");
   const [clickUrl, setClickUrl] = useState("https://www.nordea.se");
   const [replay, setReplay] = useState(0);
+  const campaignQuery = useCampaignQuery();
 
   const formatIds = display?.formats.join(",") ?? "";
   const specs = useMemo(
@@ -170,7 +172,7 @@ export function DisplayStudio() {
       <header className="h-14 px-3 border-b border-nordea-border bg-white flex items-center justify-between gap-4 flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <Link
-            href="/create/video"
+            href={`/create/video${campaignQuery}`}
             aria-label="Tillbaka till videon"
             title="Tillbaka till videon"
             className="w-9 h-9 rounded-lg flex items-center justify-center text-nordea-text-tertiary hover:text-nordea-text hover:bg-nordea-bg-hover"
@@ -204,6 +206,7 @@ export function DisplayStudio() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <CampaignChip />
           {mode === "static" ? (
             <>
               <button type="button" onClick={() => setShowBoxes((v) => !v)} className="nordea-btn nordea-btn-ghost nordea-btn-sm" title="Visa layoutens rutor">

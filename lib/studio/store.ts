@@ -146,6 +146,10 @@ interface StudioState {
   display: DisplaySet | null;
   setDisplay: (display: DisplaySet | null) => void;
 
+  /** Kampanjen som öppnats i studion (?campaign=) — video och display sparas dit. */
+  campaign: { id: string; name: string } | null;
+  campaignSave: "idle" | "saving" | "saved" | "error";
+
   // Lager och keyframes
   selectedKeyframe: SelectedKeyframe | null;
   selectKeyframe: (kf: SelectedKeyframe | null) => void;
@@ -286,6 +290,9 @@ export const useStudioStore = create<StudioState>()(
 
     display: null,
     setDisplay: (display) => set({ display }),
+
+    campaign: null,
+    campaignSave: "idle",
 
     selectedKeyframe: null,
     selectKeyframe: (kf) => set({ selectedKeyframe: kf }),

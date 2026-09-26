@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Download, Sparkles, ShieldCheck, Loader2, LayoutGrid }
 import { useStudioStore } from "@/lib/studio/store";
 import { SaveTemplateModal } from "./save-template-modal";
 import { ExportModal } from "./export-modal";
+import { CampaignChip, useCampaignQuery } from "./campaign-chip";
 
 /** Nordeas ordmärke i Nordea-blått (samma fil som i videorna, som mask). */
 function Wordmark() {
@@ -25,6 +26,8 @@ export function StudioTopbar() {
   const generateVariants = useStudioStore((s) => s.generateVariants);
   const isGeneratingVariants = useStudioStore((s) => s.isGeneratingVariants);
   const setInspectorTab = useStudioStore((s) => s.setInspectorTab);
+  const campaign = useStudioStore((s) => s.campaign);
+  const campaignQuery = useCampaignQuery();
 
   const [saveOpen, setSaveOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -38,9 +41,9 @@ export function StudioTopbar() {
     <header className="h-14 px-3 border-b border-nordea-border bg-white flex items-center justify-between gap-4 flex-shrink-0">
       <div className="flex items-center gap-3 min-w-0">
         <Link
-          href="/create"
+          href={campaign ? `/campaigns/${campaign.id}` : "/create"}
           aria-label="Tillbaka"
-          title="Tillbaka"
+          title={campaign ? "Tillbaka till kampanjen" : "Tillbaka"}
           className="w-9 h-9 rounded-lg flex items-center justify-center text-nordea-text-tertiary hover:text-nordea-text hover:bg-nordea-bg-hover transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -73,8 +76,9 @@ export function StudioTopbar() {
           {isGeneratingVariants ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           Varianter
         </button>
+        <CampaignChip />
         <Link
-          href="/create/display"
+          href={`/create/display${campaignQuery}`}
           title="Samma budskap i svenska publicisters displayformat"
           className="nordea-btn nordea-btn-secondary nordea-btn-sm"
         >
