@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/server';
 
 // GET - List all templates
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const auth = await requireUser();
+    if ("response" in auth) return auth.response;
+    const { supabase, user } = auth;
 
     const { data, error } = await supabase
       .from('templates')
@@ -25,7 +27,9 @@ export async function GET() {
 // { name, description, config, is_favorite }
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
+    const auth = await requireUser();
+    if ("response" in auth) return auth.response;
+    const { supabase, user } = auth;
     const body = await request.json();
 
     if (!body?.name || !body?.config) {
@@ -38,7 +42,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabase
       .from('templates')
       .insert({
-        user_id: 'default-user',
+        user_id: user.id,
         name: body.name,
         description: body.description ?? null,
         config: body.config,

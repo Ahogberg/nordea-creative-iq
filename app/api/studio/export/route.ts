@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 import { doProduction } from "@/lib/production/worker";
 import {
   calculateTotalVideos,
@@ -27,7 +27,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { config, formats, name } = RequestSchema.parse(body);
 
-    const supabase = await createClient();
+    const auth = await requireUser();
+    if ("response" in auth) return auth.response;
+    const { supabase, user } = auth;
 
     const templateName =
       name?.trim() ||
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
     const { data: template, error: templateError } = await supabase
       .from("templates")
       .insert({
-        user_id: "default-user",
+        user_id: user.id,
         name: templateName,
         description: "[Studio export] auto-generated for one-off render",
         config,
@@ -60,7 +62,7 @@ export async function POST(request: Request) {
     const { data: job, error: jobError } = await supabase
       .from("production_jobs")
       .insert({
-        user_id: "default-user",
+        user_id: user.id,
         template_id: template.id,
         name: templateName,
         variants,

@@ -1,293 +1,65 @@
 "use client";
-
-import { Download, CheckCircle2, X, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { Topbar } from "@/components/layout/topbar";
-import { SectionTitle } from "@/components/layout/section-title";
-import { NordeaBadge } from "@/components/ui/nordea-badge";
-import { PersonaImage } from "@/components/ui/persona-image";
-import { getPersonaById } from "@/lib/persona-library";
-
-// ── MOCK DATA — TODO Sprint 8+ ─────────────────────────────────────────────
-// This page renders a sample QA report so the design pattern is visible.
-// Real wiring will fetch the latest /api/qa/[id] (or list via a new
-// /api/qa endpoint that doesn't exist yet) and render the actual report.
-// Data shape below matches QAReport type in lib/qa/types.ts so swapping
-// in real data is a straight replacement.
-
-const MOCK_REPORT = {
-  total_score: 87,
-  status: "pass" as const,
-  threshold: 80,
-  breakdowns: [
-    { label: "Persona-jury", value: 84, color: "var(--nordea-green)" },
-    { label: "Tone of voice", value: 91, color: "var(--nordea-teal)" },
-    { label: "Compliance", value: 92, color: "var(--nordea-blue)" },
-    { label: "Heatmap focus", value: 79, color: "var(--nordea-amber)" },
-  ],
-  suggestions: [
-    { tone: "amber" as const, title: "Håll rubriken 0,4 s längre", sub: "Birgitta (60) hinner inte läsa texten." },
-    { tone: "cobalt" as const, title: "Nämn amorteringskravet", sub: "Erik (38) saknar informationen." },
-    { tone: "green" as const, title: "Tonen är on-brand", sub: "Inga ändringar behövs." },
-  ],
-  personas: [
-    // Samma personas som i biblioteket (lib/persona-library.ts).
-    { id: "forstagangskopare", score: 92, take: '"Känns ärlig och konkret. Räkneknappen är tydlig."', tone: "green" as const },
-    { id: "familjeforaldern", score: 84, take: '"Visa något om amorteringskravet — det saknas."', tone: "cobalt" as const },
-    { id: "spararen", score: 88, take: '"Snyggt, men jag vill veta vad det kostar."', tone: "green" as const },
-    { id: "pensionsspararen", score: 71, take: '"Texten går för fort. Ge mig en sekund till."', tone: "amber" as const },
-  ],
-  tov: [
-    { axis: "Personlig", value: 78, target: 70 },
-    { axis: "Expert", value: 64, target: 65 },
-    { axis: "Ansvarsfull", value: 88, target: 80 },
-  ],
-  compliance: [
-    { ok: true, label: "Riskinformation present", sub: "§ 6.2.1" },
-    { ok: true, label: "Effektiv ränta visible", sub: "§ 4.1" },
-    { ok: true, label: "Disclaimer time ≥ 2s", sub: "2.4s detected" },
-    { ok: false, label: "Logo clear-space", sub: "8% short on left" },
-    { ok: true, label: "Brand colors only", sub: "0 off-palette pixels" },
-    { ok: true, label: "Subtitles present", sub: "WCAG AA" },
-  ],
-};
-
-export default function QAReportsPage() {
-  const r = MOCK_REPORT;
-  const scoreColor =
-    r.total_score >= 80
-      ? "text-nordea-green"
-      : r.total_score >= 70
-        ? "text-nordea-amber"
-        : "text-nordea-rose";
-
-  return (
-    <div className="min-h-screen bg-nordea-bg">
-      <Topbar
-        breadcrumb={["QA-rapporter", "Bolån Hero — variant 03"]}
-        right={
-          <div className="flex gap-2">
-            <button type="button" className="nordea-btn nordea-btn-secondary">
-              <Download className="w-4 h-4" />
-              Exportera rapport
-            </button>
-            <button type="button" className="nordea-btn nordea-btn-primary">
-              <CheckCircle2 className="w-4 h-4" />
-              Godkänn
-            </button>
-          </div>
-        }
-      />
-
-      {/* Exempel-rapport banner */}
-      <div className="px-8 pt-4">
-        <div className="bg-nordea-amber-soft border border-nordea-amber/30 rounded-md px-4 py-2.5 flex items-center gap-2 text-xs text-nordea-amber">
-          <AlertCircle className="w-3.5 h-3.5" />
-          Exempelrapport — full QA-historik kommer i Sprint 8. Kör QA från Skapa → Video för att bedöma riktiga assets.
-        </div>
-      </div>
-
-      <div className="px-8 py-6 grid grid-cols-[320px_1fr] gap-5 max-w-[1400px] mx-auto">
-        {/* LEFT — total score */}
-        <div className="flex flex-col gap-4">
-          <div className="nordea-card p-6">
-            <div className="nordea-eyebrow mb-4">Total QA-poäng</div>
-            <div className="flex items-baseline gap-2">
-              <span className={`nordea-display text-7xl tracking-tighter ${scoreColor}`}>
-                {r.total_score}
-              </span>
-              <span className="text-base text-nordea-text-tertiary">/100</span>
-            </div>
-            <div className="mt-3 flex items-center gap-2">
-              <NordeaBadge tone="green" dot>
-                Över tröskel
-              </NordeaBadge>
-              <span className="text-[11px] text-nordea-text-tertiary">
-                Tröskel {r.threshold}
-              </span>
-            </div>
-            <div className="mt-5 flex flex-col gap-3.5">
-              {r.breakdowns.map((b) => (
-                <div key={b.label}>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-nordea-text-secondary">{b.label}</span>
-                    <span className="font-mono text-[11px]" style={{ color: b.color }}>
-                      {b.value}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-nordea-bg-hover rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${b.value}%`, backgroundColor: b.color }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="nordea-card p-4">
-            <SectionTitle title="Förslag" hint={`${r.suggestions.length}`} />
-            <div className="flex flex-col gap-2.5">
-              {r.suggestions.map((s, i) => (
-                <div
-                  key={i}
-                  className="flex gap-2.5 p-2.5 bg-nordea-bg-hover border border-nordea-hairline rounded-md"
-                >
-                  <span
-                    className="w-1 rounded"
-                    style={{
-                      background:
-                        s.tone === "amber"
-                          ? "var(--nordea-amber)"
-                          : s.tone === "cobalt"
-                            ? "var(--nordea-blue)"
-                            : "var(--nordea-teal)",
-                    }}
-                  />
-                  <div>
-                    <div className="text-xs font-medium text-nordea-text">{s.title}</div>
-                    <div className="text-[11px] text-nordea-text-tertiary mt-0.5">{s.sub}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT — sections */}
-        <div className="grid grid-cols-2 gap-3.5 content-start">
-          {/* Persona jury — full width */}
-          <div className="nordea-card p-4 col-span-2">
-            <SectionTitle
-              title="Persona-jury"
-              hint="4 personas · viktat snitt 84"
-            />
-            <div className="grid grid-cols-4 gap-2.5">
-              {r.personas.map((p, i) => {
-                const profile = getPersonaById(p.id);
-                if (!profile) return null;
-                return (
-                <div
-                  key={i}
-                  className="p-3 bg-nordea-bg-hover border border-nordea-hairline rounded-md"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <PersonaImage name={profile.name} color={profile.color} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-nordea-text">
-                        {profile.name.split(" ")[0]}, {profile.representativeAge}
-                      </div>
-                      <div className="text-[10px] text-nordea-text-tertiary truncate">
-                        {profile.shortName}
-                      </div>
-                    </div>
-                    <span
-                      className="font-mono text-[13px] font-semibold"
-                      style={{
-                        color:
-                          p.tone === "green"
-                            ? "var(--nordea-green)"
-                            : p.tone === "cobalt"
-                              ? "var(--nordea-blue)"
-                              : "var(--nordea-amber)",
-                      }}
-                    >
-                      {p.score}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-nordea-text-secondary italic leading-relaxed">
-                    {p.take}
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ToV */}
-          <div className="nordea-card p-4">
-            <SectionTitle title="Tone of voice" hint="3 axlar" />
-            <div className="flex flex-col gap-3.5">
-              {r.tov.map((a) => (
-                <div key={a.axis}>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span>{a.axis}</span>
-                    <span className="font-mono text-[11px] text-nordea-text-tertiary">
-                      <span className="text-nordea-teal">{a.value}</span>
-                      <span className="mx-1.5">/</span>
-                      mål {a.target}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-nordea-bg-hover rounded-full relative overflow-hidden">
-                    <div
-                      className="absolute top-[-2px] bottom-[-2px] w-px bg-nordea-text-tertiary"
-                      style={{ left: `${a.target}%` }}
-                    />
-                    <div
-                      className="h-full bg-nordea-teal rounded-full"
-                      style={{ width: `${a.value}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Compliance */}
-          <div className="nordea-card p-4">
-            <SectionTitle title="Compliance" hint={`${r.compliance.length} kontroller`} />
-            <div className="flex flex-col gap-2">
-              {r.compliance.map((c, i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  <span
-                    className={`w-4 h-4 rounded inline-flex items-center justify-center ${
-                      c.ok ? "bg-nordea-green-soft text-nordea-green" : "bg-nordea-rose-soft text-nordea-rose"
-                    }`}
-                  >
-                    {c.ok ? <CheckCircle2 className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                  </span>
-                  <span className="text-xs flex-1">{c.label}</span>
-                  <span className="text-[11px] font-mono text-nordea-text-tertiary">{c.sub}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Heatmap — full width */}
-          <div className="nordea-card p-4 col-span-2">
-            <SectionTitle title="Uppmärksamhets-heatmap" hint="Predikterat fokus · första 3s" />
-            <div className="aspect-[16/6] bg-nordea-deep rounded-md relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-nordea-deep via-nordea-blue to-nordea-deep opacity-90" />
-              <div className="absolute left-[12%] top-[40%] w-24 h-24 rounded-full bg-nordea-rose/40 blur-2xl" />
-              <div className="absolute left-[20%] top-[70%] w-16 h-16 rounded-full bg-nordea-amber/40 blur-2xl" />
-              <div className="absolute left-[70%] top-[35%] w-20 h-20 rounded-full bg-nordea-amber/30 blur-2xl" />
-              <div className="absolute left-[60%] top-[60%] w-12 h-12 rounded-full bg-nordea-blue/30 blur-xl" />
-              <div className="absolute left-[5%] bottom-[15%] max-w-[50%]">
-                <div className="nordea-display text-xl text-white/85">
-                  Drömhuset — utan drömräntan
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-between mt-2.5 text-[11px] text-nordea-text-tertiary">
-              <div className="flex gap-3.5">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-nordea-rose" />
-                  Hett
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-nordea-amber" />
-                  Varmt
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-nordea-blue" />
-                  Kallt
-                </span>
-              </div>
-              <span>Logo får 12% uppmärksamhet — inom mål</span>
-            </div>
-          </div>
-        </div>
-      </div>
+import type { QAStatus } from "@/lib/qa/types";
+interface Run {
+  id: string; creative_kind: string; creative_ref: string;
+  creative_metadata: { headline?: string } | null;
+  status: QAStatus; total_score: number | null;
+  blocking_issues: string[] | null; warnings: string[] | null; suggestions: string[] | null;
+  approved_at: string | null; created_at: string; error_message: string | null;
+}
+const labels: Record<QAStatus, string> = { pass: "Granskad utan hinder", warn: "Behöver bedömning", fail: "Behöver åtgärdas", running: "Granskning pågår", error: "Ej slutförd" };
+export default function QAPage() {
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  async function load() {
+    setError(null);
+    try {
+      const response = await fetch("/api/qa");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      setRuns(data.runs);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Kunde inte ladda granskningar"); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => {
+    setSelected(new URLSearchParams(window.location.search).get("run"));
+    void load();
+  }, []);
+  const run = runs.find((item) => item.id === selected);
+  async function approve() {
+    if (!run) return;
+    setBusy(true); setError(null);
+    try {
+      const response = await fetch(`/api/qa/${run.id}/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ note }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      setNote(""); await load();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Godkännandet kunde inte sparas"); }
+    finally { setBusy(false); }
+  }
+  return <>
+    <Topbar breadcrumb={["CreativeIQ", "Granskningar"]} />
+    <div className="mx-auto max-w-6xl space-y-6 p-8">
+      <header className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="nordea-display text-3xl text-nordea-deep">Granskningar</h1><p className="mt-2 text-sm text-nordea-text-secondary">Sparade resultat och åtgärder för ditt kreativa material. AI-bedömningar är beslutsstöd.</p></div><button onClick={() => void load()} className="nordea-btn nordea-btn-secondary">Uppdatera</button></header>
+      {error && <p role="alert" className="rounded-lg bg-red-50 p-4 text-sm text-red-800">{error}</p>}
+      {loading ? <Loader2 className="animate-spin text-nordea-blue" /> : runs.length === 0 ? <section className="nordea-card p-8 text-center"><ShieldCheck className="mx-auto h-8 w-8 text-nordea-blue" /><h2 className="mt-3 font-semibold">Inga sparade granskningar ännu</h2><p className="mt-2 text-sm text-nordea-text-secondary">Öppna kreativt material och kör QA. Resultat och förbättringsförslag visas här.</p><Link href="/produce" className="nordea-btn nordea-btn-cobalt mt-5">Öppna produktion</Link></section> : <div className="grid items-start gap-5 lg:grid-cols-[340px_1fr]">
+        <section className="nordea-card divide-y divide-nordea-border">{runs.map((item) => <button key={item.id} onClick={() => { setSelected(item.id); setNote(""); }} className={`w-full p-4 text-left hover:bg-nordea-blue-soft ${selected === item.id ? "bg-nordea-blue-soft" : ""}`}><span className="block truncate font-medium text-nordea-deep">{item.creative_metadata?.headline || item.creative_ref || "Kreativt material"}</span><span className="mt-1 block text-sm text-nordea-blue">{item.approved_at ? "Manuellt godkänd" : labels[item.status]}</span><span className="mt-2 block text-xs text-nordea-text-secondary">{new Date(item.created_at).toLocaleString("sv-SE")}</span></button>)}</section>
+        <section className="nordea-card p-6">{run ? <div className="space-y-5"><div><h2 className="text-xl font-semibold text-nordea-deep">{run.creative_metadata?.headline || "Granskningsresultat"}</h2><p className="mt-2 text-sm text-nordea-blue">{run.approved_at ? "Manuellt godkänd" : labels[run.status]}</p>{["pass", "warn", "fail"].includes(run.status) && run.total_score !== null && <p className="mt-3 text-3xl font-semibold text-nordea-deep">{Math.round(run.total_score)} <span className="text-base font-normal">/ 100</span></p>}</div>
+          {run.error_message && <p className="text-sm text-red-700">{run.error_message}</p>}
+          {([ ["Åtgärda innan användning", run.blocking_issues], ["Varningar", run.warnings], ["Förbättringsförslag", run.suggestions] ] as const).map(([title, items]) => items?.length ? <div key={title}><h3 className="font-semibold text-nordea-deep">{title}</h3><ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-nordea-text-secondary">{items.map((item, i) => <li key={i}>{item}</li>)}</ul></div> : null)}
+          {run.status === "warn" && !run.approved_at && !run.blocking_issues?.length && <div className="border-t border-nordea-border pt-4"><label className="block text-sm font-medium" htmlFor="approval-note">Kommentar till beslutet</label><textarea id="approval-note" maxLength={2000} value={note} onChange={(event) => setNote(event.target.value)} className="mt-2 w-full rounded-lg border border-nordea-border p-3 text-sm" /><button disabled={busy} onClick={() => void approve()} className="nordea-btn nordea-btn-cobalt mt-3">{busy ? "Sparar…" : "Godkänn med varningar"}</button></div>}
+          {run.creative_kind === "template" && <Link href={`/produce?template=${encodeURIComponent(run.creative_ref)}`} className="nordea-btn nordea-btn-secondary">Öppna materialet</Link>}
+        </div> : <p className="text-sm text-nordea-text-secondary">Välj en granskning för att se resultat och nästa steg.</p>}</section>
+      </div>}
+      {runs.length === 100 && <p className="text-xs text-nordea-text-secondary">Visar de 100 senaste granskningarna.</p>}
     </div>
-  );
+  </>;
 }

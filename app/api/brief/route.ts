@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -29,7 +29,9 @@ const PostSchema = z.object({
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const auth = await requireUser();
+    if ("response" in auth) return auth.response;
+    const { supabase, user } = auth;
     const { data, error } = await supabase
       .from("creative_briefs")
       .select("*")
@@ -52,12 +54,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = PostSchema.parse(body);
 
-    const supabase = await createClient();
+    const auth = await requireUser();
+    if ("response" in auth) return auth.response;
+    const { supabase, user } = auth;
     const { data, error } = await supabase
       .from("creative_briefs")
       .insert({
         ...parsed,
-        created_by: "default-user",
+        created_by: user.id,
       })
       .select()
       .single();

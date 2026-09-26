@@ -12,7 +12,7 @@ const STATUS: Record<Campaign["status"], string> = {
   approved: "Godkänd",
   live: "Live",
 };
-interface TemplateSummary { id: string; name: string; format: string | null }
+interface TemplateSummary { id: string; name: string; format: string | null; qa: { id: string; status: string; approved_at: string | null } | null }
 
 export default function CampaignPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -20,6 +20,22 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [qaBusy, setQaBusy] = useState<string | null>(null);
+  const [qaError, setQaError] = useState<string | null>(null);
+  async function reviewText(templateId: string) {
+    setQaBusy(templateId); setQaError(null);
+    try {
+      const response = await fetch("/api/qa/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creative_kind: "template", creative_ref: templateId }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Granskningen kunde inte köras");
+      const detail = await fetch(`/api/campaigns/${id}`);
+      const data = await detail.json();
+      if (!detail.ok) throw new Error(data.error);
+      setTemplates(data.templates);
+    } catch (cause) { setQaError(cause instanceof Error ? cause.message : "Något gick fel"); }
+    finally { setQaBusy(null); }
+  }
 
   useEffect(() => {
     let active = true;
@@ -68,10 +84,12 @@ export default function CampaignPage({ params }: { params: Promise<{ id: string 
 
         <section className="nordea-card p-5">
           <h2 className="font-semibold text-nordea-deep">Kreativt material</h2>
+          <p className="mt-2 text-xs text-nordea-text-secondary">Textgranskning ger beslutsstöd. Granska även bild, animation och färdig video innan användning.</p>
+          {qaError && <p role="alert" className="mt-3 text-sm text-red-700">{qaError}</p>}
           <p className="mt-1 text-sm text-nordea-text-secondary">{templateIds.length} redigerbara mallar kopplade till kampanjen.</p>
           {templateIds.length ? <div className="mt-4 divide-y divide-nordea-border rounded-lg border border-nordea-border">{templateIds.map((templateId, index) => {
             const template = templates.find((item) => item.id === templateId);
-            return <Link key={templateId} href={`/produce?template=${templateId}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-nordea-blue-soft/40"><span className="text-sm font-medium text-nordea-deep">{template?.format ? formatName(template.format) : template?.name ?? `Mall ${index + 1}`}</span><ArrowRight className="h-4 w-4 text-nordea-blue" /></Link>;
+            return <div key={templateId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"><Link href={`/produce?template=${templateId}`} className="text-sm font-medium text-nordea-deep hover:underline">{template?.format ? formatName(template.format) : template?.name ?? `Mall ${index + 1}`}</Link><div className="flex items-center gap-3">{template?.qa && <Link href={`/qa?run=${template.qa.id}`} className="text-xs text-nordea-blue hover:underline">Senaste textgranskning: {template.qa.approved_at ? "Manuellt godkänd" : ({ pass: "Utan hinder", warn: "Behöver bedömning", fail: "Behöver åtgärdas", running: "Pågår", error: "Ej slutförd" } as Record<string, string>)[template.qa.status] ?? "Okänd"}</Link>}<button disabled={qaBusy !== null} onClick={() => void reviewText(templateId)} className="nordea-btn nordea-btn-secondary text-xs">{qaBusy === templateId ? "Granskar…" : "Granska text"}</button></div></div>;
           })}</div> : <div className="mt-4 rounded-lg border border-dashed border-nordea-border p-5 text-sm text-nordea-text-secondary">Materialet är ännu inte genererat. Välj kanaler och format för att fortsätta.</div>}
           {missingFormats.length > 0 && <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Material saknas för {missingFormats.map(formatName).join(", ")}. Skapa nya mallar för dessa format innan granskning.</p>}
         </section>

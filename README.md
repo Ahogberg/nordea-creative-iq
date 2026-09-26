@@ -94,3 +94,17 @@ The app will use fallback fonts/placeholders if these are missing.
 ## 📝 License
 
 Internal Nordea tool - Not for distribution.
+
+## Supabase: aktivt CreativeIQ-projekt
+
+Projekt: `beiulqgftqiqtntumqmj`.
+
+- Sätt `NEXT_PUBLIC_SUPABASE_URL` och `NEXT_PUBLIC_SUPABASE_ANON_KEY` i hostingmiljön för både preview och produktion. Använd projektets publika nyckel.
+- `SUPABASE_SERVICE_ROLE_KEY` behövs endast på servern för produktionsarbetaren och får aldrig exponeras i webbläsaren.
+- Kanal- och formatmigreringen `20260925100530_campaign_channels_formats.sql` är applicerad i detta projekt.
+- Briefar, kampanjer, QA och egna malländringar använder inloggad användares id och databasens befintliga RLS.
+- Kampanjöversiktens textgranskning läser textfält i den sparade mallen. Fria canvas-animationer kräver granskning av färdig video. Bilder, animation och faktisk läsbarhet ingår inte i textgranskningen.
+- QA kräver `ANTHROPIC_API_KEY` för en slutförd AI-bedömning. Utan nyckel sparas tydligt markerade demonstrationsresultat som `error` och kan inte godkännas.
+- Ett AI-fel eller misslyckad databassparning får inte resultera i ett godkänt QA-resultat.
+
+Verifierat: produktionsbygge, TypeScript, inloggningskrav på nya QA-API:er samt anonym läsisolering för kampanjer, briefar och QA via Supabase REST. Fullständigt inloggat användarflöde och Remotion-export i hostingmiljön återstår att verifiera.

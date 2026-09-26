@@ -143,7 +143,7 @@ async function simulatePersona(
     };
   } catch (error) {
     console.error(`[qa:persona:${persona.id}] simulation failed:`, error);
-    return neutralFallback(persona, "(simulering misslyckades)");
+    throw error;
   }
 }
 

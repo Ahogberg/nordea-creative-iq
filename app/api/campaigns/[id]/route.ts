@@ -24,12 +24,19 @@ export async function GET(
     console.error("[campaigns:detail] templates error:", templatesError);
     return NextResponse.json({ error: "Kampanjmaterialet kunde inte laddas." }, { status: 500 });
   }
+  const { data: runs, error: qaError } = templateIds.length
+    ? await auth.supabase.from("qa_runs").select("id, creative_ref, status, approved_at, created_at")
+      .eq("user_id", auth.user.id).eq("creative_kind", "template")
+      .in("creative_ref", templateIds).order("created_at", { ascending: false })
+    : { data: [], error: null };
+  if (qaError) return NextResponse.json({ error: "Granskningsstatus kunde inte laddas" }, { status: 500 });
   return NextResponse.json({
     campaign: data,
     templates: (templates ?? []).map((template) => ({
       id: template.id,
       name: template.name,
       format: template.config?.format ?? null,
+      qa: (runs ?? []).find((run) => run.creative_ref === template.id) ?? null,
     })),
   });
 }
