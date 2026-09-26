@@ -127,7 +127,6 @@ export async function POST(request: Request) {
     };
 
     await logGeneration({
-      user_id: "default-user",
       kind: "video",
       provider: "claude",
       model: CLAUDE_MODEL,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 
 export async function POST(
   request: Request,
@@ -8,7 +8,9 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     // Only 'warn' runs can be manually approved. 'fail' (blocking compliance)
     // must be re-run after the underlying issue is fixed.
@@ -16,6 +18,7 @@ export async function POST(
       .from("qa_runs")
       .select("status")
       .eq("id", id)
+      .eq("user_id", ownerId)
       .single();
 
     if (fetchError) throw fetchError;
@@ -30,11 +33,12 @@ export async function POST(
     const { error: updateError } = await supabase
       .from("qa_runs")
       .update({
-        approved_by: "default-user",
+        approved_by: ownerId,
         approved_at: new Date().toISOString(),
         approval_note: body?.note ?? null,
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", ownerId);
 
     if (updateError) throw updateError;
 

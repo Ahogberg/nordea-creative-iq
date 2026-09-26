@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireDb } from '@/lib/supabase/db';
+
+// Mallbiblioteket delas: alla inloggade läser, bara ägaren ändrar och tar bort.
 
 // GET - Get single template
 export async function GET(
@@ -8,9 +10,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ('response' in db) return db.response;
 
-    const { data, error } = await supabase
+    const { data, error } = await db.supabase
       .from('templates')
       .select('*')
       .eq('id', id)
@@ -32,13 +35,17 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
-    const body = await request.json();
+    const db = await requireDb();
+    if ('response' in db) return db.response;
+    // Id och ägare ändras aldrig via PATCH.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, user_id: _owner, created_at: _created, ...updates } = (await request.json()) ?? {};
 
-    const { data, error } = await supabase
+    const { data, error } = await db.supabase
       .from('templates')
-      .update(body)
+      .update(updates)
       .eq('id', id)
+      .eq('user_id', db.ownerId)
       .select()
       .single();
 
@@ -58,12 +65,14 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ('response' in db) return db.response;
 
-    const { error } = await supabase
+    const { error } = await db.supabase
       .from('templates')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', db.ownerId);
 
     if (error) throw error;
 

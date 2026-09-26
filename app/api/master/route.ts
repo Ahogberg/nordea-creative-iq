@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 
 export const runtime = "nodejs";
 
@@ -15,11 +15,14 @@ const PostSchema = z.object({
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const { data, error } = await supabase
       .from("master_creatives")
       .select("*")
+      .eq("created_by", ownerId)
       .order("updated_at", { ascending: false })
       .limit(50);
 
@@ -39,7 +42,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = PostSchema.parse(body);
 
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const { data, error } = await supabase
       .from("master_creatives")
@@ -48,7 +53,7 @@ export async function POST(request: Request) {
         source_format: parsed.source_format,
         master_config: parsed.master_config,
         format_overrides: parsed.format_overrides ?? {},
-        created_by: "default-user",
+        created_by: ownerId,
       })
       .select()
       .single();

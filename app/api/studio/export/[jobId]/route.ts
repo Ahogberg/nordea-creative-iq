@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 
 export const runtime = "nodejs";
 
@@ -12,7 +12,9 @@ export async function GET(
 ) {
   try {
     const { jobId } = await params;
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const { data, error } = await supabase
       .from("production_jobs")
@@ -20,6 +22,7 @@ export async function GET(
         "status, total_videos, completed_videos, zip_url, output_urls, error_message"
       )
       .eq("id", jobId)
+      .eq("user_id", ownerId)
       .single();
 
     if (error || !data) {

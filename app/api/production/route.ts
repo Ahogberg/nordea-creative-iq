@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireDb } from "@/lib/supabase/db";
 import { calculateTotalVideos } from '@/lib/video-types';
 import { doProduction } from '@/lib/production/worker';
 
@@ -11,11 +11,14 @@ export const maxDuration = 60;
 // GET - List recent production jobs
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const { data, error } = await supabase
       .from('production_jobs')
       .select('*, templates(name)')
+      .eq('user_id', ownerId)
       .order('created_at', { ascending: false })
       .limit(20);
 
@@ -32,7 +35,9 @@ export async function GET() {
 // immediately; clients poll /api/production/[id] for status + zip_url.
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
     const body = await request.json();
 
     if (!body?.template_id) {
@@ -47,7 +52,7 @@ export async function POST(request: Request) {
     const { data: job, error } = await supabase
       .from('production_jobs')
       .insert({
-        user_id: 'default-user',
+        user_id: ownerId,
         template_id: body.template_id,
         name: body.name || `Production ${new Date().toISOString()}`,
         variants: body.variants,

@@ -71,7 +71,6 @@ export class FalVideoProvider implements VideoProvider {
     if (!this.isAvailable()) {
       // Log the stubbed attempt so we can see demand for this provider
       await logGeneration({
-        user_id: "default-user",
         kind: "video",
         provider: "fal",
         model: opts.model ?? "kling-2.5-turbo",

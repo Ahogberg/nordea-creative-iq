@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 import {
   DEFAULT_MOTION_CONFIG,
@@ -61,12 +61,15 @@ export async function POST(
   try {
     const { id: briefId } = await params;
 
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const { data: brief, error: briefError } = await supabase
       .from("creative_briefs")
       .select("*")
       .eq("id", briefId)
+      .eq("created_by", ownerId)
       .single();
 
     if (briefError || !brief) {
@@ -118,7 +121,6 @@ export async function POST(
       );
 
       await logGeneration({
-        user_id: "default-user",
         kind: "video",
         provider: "claude",
         model: CLAUDE_MODEL,
@@ -135,7 +137,7 @@ export async function POST(
     const { data: template, error: templateError } = await supabase
       .from("templates")
       .insert({
-        user_id: "default-user",
+        user_id: ownerId,
         name: templateName,
         description: `[Från brief] ${brief.big_idea?.slice(0, 200) || ""}`,
         config,
@@ -162,7 +164,7 @@ export async function POST(
           name: templateName,
           source_format: sourceFormat,
           master_config: config,
-          created_by: "default-user",
+          created_by: ownerId,
         })
         .select()
         .single();
@@ -180,6 +182,7 @@ export async function POST(
       .from("campaigns")
       .select("id, template_ids, master_creative_ids")
       .eq("brief_id", briefId)
+      .eq("created_by", ownerId)
       .maybeSingle();
 
     let campaign: Record<string, unknown>;
@@ -201,6 +204,7 @@ export async function POST(
           updated_at: new Date().toISOString(),
         })
         .eq("id", prev.id)
+        .eq("created_by", ownerId)
         .select()
         .single();
       campaign = updated as Record<string, unknown>;
@@ -215,7 +219,7 @@ export async function POST(
           template_ids: [template.id],
           production_job_ids: [],
           status: "draft",
-          created_by: "default-user",
+          created_by: ownerId,
         })
         .select()
         .single();
@@ -229,7 +233,8 @@ export async function POST(
     await supabase
       .from("creative_briefs")
       .update({ status: "used", updated_at: new Date().toISOString() })
-      .eq("id", briefId);
+      .eq("id", briefId)
+      .eq("created_by", ownerId);
 
     return NextResponse.json({
       campaign,

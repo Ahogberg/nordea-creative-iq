@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       provider.info.cost_per_call_usd ??
       0;
     if (estimated > 0) {
-      await checkBudget("default-user", estimated);
+      await checkBudget(estimated);
     }
 
     const result = await provider.generate(opts);

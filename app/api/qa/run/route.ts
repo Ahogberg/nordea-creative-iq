@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 import { RunQARequestSchema, type RunQARequest } from "@/lib/qa/types";
 import { runQAGate } from "@/lib/qa/gate";
 
@@ -19,7 +19,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     // Insert in 'running' state so the row is queryable while the gate works.
     // If insert fails (Supabase unconfigured locally), we fall back to running
@@ -27,7 +29,7 @@ export async function POST(request: Request) {
     const { data: row, error: insertError } = await supabase
       .from("qa_runs")
       .insert({
-        user_id: "default-user",
+        user_id: ownerId,
         creative_kind: parsed.data.creative_kind,
         creative_ref: parsed.data.creative_ref,
         creative_metadata: stripInlineImages(parsed.data.metadata ?? {}),
@@ -65,7 +67,8 @@ export async function POST(request: Request) {
           duration_ms: report.duration_ms,
           completed_at: new Date().toISOString(),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("user_id", ownerId);
 
       if (updateError) {
         console.error("[qa] update failed:", updateError);

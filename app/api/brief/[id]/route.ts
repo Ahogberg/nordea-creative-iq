@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 
 export const runtime = "nodejs";
 
@@ -9,11 +9,14 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
     const { data, error } = await supabase
       .from("creative_briefs")
       .select("*")
       .eq("id", id)
+      .eq("created_by", ownerId)
       .single();
 
     if (error || !data) {
@@ -36,15 +39,21 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
+    // Id och ägare ändras aldrig via PUT.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, created_by: _owner, created_at: _created, ...updates } = body ?? {};
 
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
     const { data, error } = await supabase
       .from("creative_briefs")
       .update({
-        ...body,
+        ...updates,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
+      .eq("created_by", ownerId)
       .select()
       .single();
 
@@ -68,11 +77,14 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
     const { error } = await supabase
       .from("creative_briefs")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("created_by", ownerId);
 
     if (error) throw error;
     return NextResponse.json({ success: true });
