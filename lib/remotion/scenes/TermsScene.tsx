@@ -2,7 +2,7 @@ import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from "remotion";
 import { fonts } from "../styles";
 import { useSafeArea } from "../safe-area";
-import { resolveBackground } from "../scene-utils";
+import { resolveBackground, inlineElement, positionedElement } from "../scene-utils";
 import type { TermsScene as TermsSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
 import { RichText } from "../rich-text";
@@ -36,6 +36,22 @@ export const TermsSceneComponent: React.FC<{
     interpolate(frame, [endFrame - 10, endFrame], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
   );
 
+  const textNode = (
+    <div
+      style={{
+        fontFamily: fonts.body,
+        fontSize,
+        lineHeight: 1.3,
+        color: theme.text,
+        textAlign: "center",
+        maxWidth: 900 * scale,
+      }}
+    >
+      {scene.heading && <div style={{ fontWeight: 700, marginBottom: fontSize * 0.2 }}>{scene.heading}</div>}
+      <RichText as="div" text={scene.body} style={{ fontWeight: 400, whiteSpace: "pre-line" }} />
+    </div>
+  );
+
   return (
     <AbsoluteFill
       style={{
@@ -48,19 +64,8 @@ export const TermsSceneComponent: React.FC<{
         opacity,
       }}
     >
-      <div
-        style={{
-          fontFamily: fonts.body,
-          fontSize,
-          lineHeight: 1.3,
-          color: theme.text,
-          textAlign: "center",
-          maxWidth: 900 * scale,
-        }}
-      >
-        {scene.heading && <div style={{ fontWeight: 700, marginBottom: fontSize * 0.2 }}>{scene.heading}</div>}
-        <RichText as="div" text={scene.body} style={{ fontWeight: 400, whiteSpace: "pre-line" }} />
-      </div>
+      {inlineElement(scene, "text", textNode)}
+      {positionedElement(scene, "text", textNode)}
     </AbsoluteFill>
   );
 };

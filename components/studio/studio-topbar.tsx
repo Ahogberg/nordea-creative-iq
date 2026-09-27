@@ -7,6 +7,7 @@ import { useStudioStore } from "@/lib/studio/store";
 import { SaveTemplateModal } from "./save-template-modal";
 import { ExportModal } from "./export-modal";
 import { CampaignChip, useCampaignQuery } from "./campaign-chip";
+import { UndoRedo } from "./undo-redo";
 
 /** Nordeas ordmärke i Nordea-blått (samma fil som i videorna, som mask). */
 function Wordmark() {
@@ -64,6 +65,7 @@ export function StudioTopbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        <UndoRedo />
         <button
           type="button"
           onClick={() => {

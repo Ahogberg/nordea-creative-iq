@@ -44,6 +44,8 @@ export async function openCampaign(id: string): Promise<void> {
     savedConfig = useStudioStore.getState().config;
     savedDisplay = c.display_set ?? null;
     useStudioStore.setState({ campaign: { id: c.id, name: c.name }, campaignSave: "saved", campaignLoad: null });
+    // Inläsningen är ingen ändring — ångra ska inte kunna gå tillbaka förbi den.
+    useStudioStore.getState().clearHistory();
   } catch (err) {
     // Visas av CampaignGate.
     useStudioStore.setState({

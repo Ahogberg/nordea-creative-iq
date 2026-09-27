@@ -31,6 +31,7 @@ import { resolveContent, type DisplayContent, type DisplayOverride, type Display
 import { HTML5_TARGETS, type Html5Target } from "@/lib/display/html5/build";
 import { useHtml5Banners, type Html5Pair } from "@/lib/display/html5/use-html5";
 import { CampaignChip, useCampaignQuery } from "@/components/studio/campaign-chip";
+import { UndoRedo } from "@/components/studio/undo-redo";
 
 const FPS = 30;
 
@@ -206,6 +207,7 @@ export function DisplayStudio() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <UndoRedo />
           <CampaignChip />
           {mode === "static" ? (
             <>

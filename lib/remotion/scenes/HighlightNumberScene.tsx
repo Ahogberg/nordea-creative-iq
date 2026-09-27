@@ -6,7 +6,7 @@ import { colors, fonts } from "../styles";
 import type { HighlightNumberScene as HighlightNumberSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { CountingNumber } from "../animations/CountingNumber";
-import { resolveBackground } from "../scene-utils";
+import { resolveBackground, inlineElement, positionedElement } from "../scene-utils";
 import { useSceneTheme } from "../theme";
 
 export const HighlightNumberSceneComponent: React.FC<{
@@ -36,6 +36,102 @@ export const HighlightNumberSceneComponent: React.FC<{
   const numericValue = parseNumericNumber(scene.number);
   const useCountUp = m.numbers.enabled && numericValue !== null;
 
+  const labelNode = (
+    <div
+      style={{
+        fontFamily: fonts.body,
+        fontSize: Math.round(30 * scale),
+        fontWeight: 500,
+        color: theme.textSecondary,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        marginBottom: 30 * scale,
+        textAlign: "center",
+        ...labelAnim,
+      }}
+    >
+      {scene.label}
+    </div>
+  );
+
+  // Siffran med ringarna runt — flyttas som en enhet.
+  const valueNode = (
+    <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div
+        style={{
+          position: "absolute",
+          width: 320 * scale,
+          height: 320 * scale,
+          borderRadius: "50%",
+          border: `3px solid ${accent}`,
+          opacity: ringScale * 0.4,
+          transform: `scale(${0.8 + ringScale * 0.2})`,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          width: 380 * scale,
+          height: 380 * scale,
+          borderRadius: "50%",
+          border: `2px solid ${accent}`,
+          opacity: ringScale * 0.15,
+          transform: `scale(${0.7 + ringScale * 0.3})`,
+        }}
+      />
+
+      {/* Number — count-up when numeric, otherwise fall back to static scale-pop */}
+      {useCountUp ? (
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <CountingNumber
+            from={0}
+            to={numericValue}
+            startFrame={10}
+            durationFrames={m.numbers.duration}
+            fontSize={Math.round(140 * scale)}
+            fontWeight={900}
+            color={accent}
+            fontFamily={fonts.headline}
+            suffix={extractSuffix(scene.number)}
+          />
+        </div>
+      ) : (
+        <div
+          style={{
+            fontFamily: fonts.headline,
+            fontSize: Math.round(140 * scale),
+            fontWeight: 900,
+            color: accent,
+            opacity: numberOpacity,
+            transform: `scale(${numberScale})`,
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          {scene.number}
+        </div>
+      )}
+    </div>
+  );
+
+  const descNode = scene.description ? (
+    <div
+      style={{
+        fontFamily: fonts.body,
+        fontSize: Math.round(30 * scale),
+        fontWeight: 400,
+        color: theme.textSecondary,
+        marginTop: 40 * scale,
+        textAlign: "center",
+        lineHeight: 1.4,
+        maxWidth: 700 * scale,
+        ...descAnim,
+      }}
+    >
+      {scene.description}
+    </div>
+  ) : null;
+
   return (
     <AbsoluteFill
       style={{
@@ -47,98 +143,13 @@ export const HighlightNumberSceneComponent: React.FC<{
         padding: `${safe.top}px ${110 * scale}px ${safe.bottom}px`,
       }}
     >
-      {/* Label */}
-      <div
-        style={{
-          fontFamily: fonts.body,
-          fontSize: Math.round(30 * scale),
-          fontWeight: 500,
-          color: theme.textSecondary,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          marginBottom: 30 * scale,
-          ...labelAnim,
-        }}
-      >
-        {scene.label}
-      </div>
+      {inlineElement(scene, "label", labelNode)}
+      {inlineElement(scene, "value", valueNode)}
+      {inlineElement(scene, "description", descNode)}
 
-      {/* Glow circle */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div
-          style={{
-            position: "absolute",
-            width: 320 * scale,
-            height: 320 * scale,
-            borderRadius: "50%",
-            border: `3px solid ${accent}`,
-            opacity: ringScale * 0.4,
-            transform: `scale(${0.8 + ringScale * 0.2})`,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: 380 * scale,
-            height: 380 * scale,
-            borderRadius: "50%",
-            border: `2px solid ${accent}`,
-            opacity: ringScale * 0.15,
-            transform: `scale(${0.7 + ringScale * 0.3})`,
-          }}
-        />
-
-        {/* Number — count-up when numeric, otherwise fall back to static scale-pop */}
-        {useCountUp ? (
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <CountingNumber
-              from={0}
-              to={numericValue}
-              startFrame={10}
-              durationFrames={m.numbers.duration}
-              fontSize={Math.round(140 * scale)}
-              fontWeight={900}
-              color={accent}
-              fontFamily={fonts.headline}
-              suffix={extractSuffix(scene.number)}
-            />
-          </div>
-        ) : (
-          <div
-            style={{
-              fontFamily: fonts.headline,
-              fontSize: Math.round(140 * scale),
-              fontWeight: 900,
-              color: accent,
-              opacity: numberOpacity,
-              transform: `scale(${numberScale})`,
-              position: "relative",
-              zIndex: 1,
-            }}
-          >
-            {scene.number}
-          </div>
-        )}
-      </div>
-
-      {/* Description */}
-      {scene.description && (
-        <div
-          style={{
-            fontFamily: fonts.body,
-            fontSize: Math.round(30 * scale),
-            fontWeight: 400,
-            color: theme.textSecondary,
-            marginTop: 40 * scale,
-            textAlign: "center",
-            lineHeight: 1.4,
-            maxWidth: 700 * scale,
-            ...descAnim,
-          }}
-        >
-          {scene.description}
-        </div>
-      )}
+      {positionedElement(scene, "label", labelNode)}
+      {positionedElement(scene, "value", valueNode)}
+      {descNode && positionedElement(scene, "description", descNode)}
     </AbsoluteFill>
   );
 };

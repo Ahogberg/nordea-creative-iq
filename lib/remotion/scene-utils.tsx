@@ -56,13 +56,15 @@ export function positionedElement(
 export function inlineElement(
   scene: Pick<SceneBase, "elementTransforms">,
   id: string,
-  node: React.ReactNode
+  node: React.ReactNode,
+  /** Omslagets plats i layouten, t.ex. { flex: 1 } i en rad. */
+  style?: React.CSSProperties
 ): React.ReactNode {
   if (!node || scene.elementTransforms?.[id]) return null;
   // flow-root: nodens marginal hamnar inuti omslaget, precis som i det
   // absolut placerade omslaget — mittpunkten blir densamma när det flyttas.
   return (
-    <div key={`inline-${id}`} data-element={id} style={{ display: "flow-root" }}>
+    <div key={`inline-${id}`} data-element={id} style={{ display: "flow-root", ...style }}>
       {node}
     </div>
   );

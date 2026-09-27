@@ -14,6 +14,10 @@ const ELEMENT_LABELS: Record<string, string> = {
   description: "Beskrivning",
   caption: "Bildtext",
   illustration: "Illustration",
+  left: "Vänster sida",
+  right: "Höger sida",
+  divider: "Avdelare",
+  text: "Text",
 };
 
 const ASSET_LABELS: Record<string, string> = {
@@ -36,5 +40,8 @@ export function elementLabel(scene: Scene | undefined, id: string): string {
     const asset = scene?.assets?.find((a) => `asset-${a.id}` === id);
     return asset ? ASSET_LABELS[asset.type] ?? "Bild" : "Bild";
   }
+  // Textavslöjande: en rad per element ("row-0" → "Rad 1").
+  const row = /^row-(\d+)$/.exec(id);
+  if (row) return `Rad ${Number(row[1]) + 1}`;
   return ELEMENT_LABELS[id] ?? id;
 }

@@ -50,6 +50,8 @@ interface DragState {
   overlayRect: DOMRect;
   startTransform: ElementTransform;
   startLayer?: MotionLayer;
+  /** Element som låses på sina platser vid första rörelsen (se nedan). */
+  pins: Record<string, ElementTransform> | null;
   /** Resize: avståndet från mittpunkten när greppet började. */
   startDistance: number;
   center: { x: number; y: number };
@@ -184,20 +186,22 @@ export function CanvasOverlay() {
 
       let startTransform = currentTransform(scene, box) ?? pinFromBox(box, overlayRect);
       let startLayer: MotionLayer | undefined;
+      let pins: Record<string, ElementTransform> | null = null;
       if (box.kind === "layer") {
         const layerId = box.id.slice(LAYER_PREFIX.length);
         startLayer =
           (scene.type === "canvas" ? scene.layers?.find((l) => l.id === layerId) : undefined) ??
           { id: layerId, name: layerId, keyframes: {} };
       } else if (box.kind === "element" && !scene.elementTransforms?.[box.id]) {
-        // Lås scenens alla element där de ligger innan det här lyfts ur layouten.
-        const pins: Record<string, ElementTransform> = {};
+        // Scenens alla element låses där de ligger innan det här lyfts ur
+        // layouten — först vid första rörelsen, så att ett klick bara markerar
+        // och en dragning blir ett enda steg att ångra.
+        pins = {};
         for (const b of boxes) {
           if (b.sceneIndex === box.sceneIndex && b.kind === "element" && !scene.elementTransforms?.[b.id]) {
             pins[b.id] = pinFromBox(b, overlayRect);
           }
         }
-        state.pinElements(box.sceneIndex, pins);
         startTransform = pins[box.id] ?? startTransform;
       }
 
@@ -210,6 +214,7 @@ export function CanvasOverlay() {
         overlayRect,
         startTransform,
         startLayer,
+        pins,
         startDistance: Math.max(8, Math.hypot(e.clientX - center.x, e.clientY - center.y)),
         center,
       });
@@ -223,10 +228,19 @@ export function CanvasOverlay() {
     if (!dragState) return;
     const { box, mode, startMouseX, startMouseY, overlayRect, startTransform, startLayer } = dragState;
     const store = useStudioStore.getState;
+    let pins = dragState.pins;
+    let moved = false;
 
     const handlePointerMove = (e: PointerEvent) => {
       const dxPx = e.clientX - startMouseX;
       const dyPx = e.clientY - startMouseY;
+      // Ett klick med lite darr ska bara markera, inte flytta.
+      if (!moved && Math.abs(dxPx) < 2 && Math.abs(dyPx) < 2) return;
+      moved = true;
+      if (pins) {
+        store().pinElements(box.sceneIndex, pins);
+        pins = null;
+      }
 
       if (mode === "resize") {
         const factor = Math.hypot(e.clientX - dragState.center.x, e.clientY - dragState.center.y) / dragState.startDistance;

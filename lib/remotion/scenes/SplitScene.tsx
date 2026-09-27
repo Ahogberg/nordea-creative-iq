@@ -3,7 +3,7 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, fadeIn, s2f } from "../utils";
 import { colors, fonts } from "../styles";
-import { resolveBackground } from "../scene-utils";
+import { resolveBackground, inlineElement, positionedElement } from "../scene-utils";
 import type { SplitScene as SplitSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
 
@@ -22,6 +22,101 @@ export const SplitSceneComponent: React.FC<{
   const rightAnim = fadeSlideUp(frame, s2f(0.9), 18, 40);
   const dividerHeight = fadeIn(frame, s2f(0.4), 20);
 
+  // Tre flyttbara delar: "left", "divider" och "right". Sidorna delar på
+  // bredden (flex: 1) — den ligger på omslaget så att layouten är oförändrad.
+  const leftNode = (
+    <div style={{ textAlign: "center", ...leftAnim }}>
+      <div
+        style={{
+          fontFamily: fonts.body,
+          fontSize: Math.round(26 * scale),
+          fontWeight: 500,
+          color: theme.textSecondary,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          marginBottom: 16 * scale,
+        }}
+      >
+        {scene.leftLabel}
+      </div>
+      <div
+        style={{
+          fontFamily: fonts.headline,
+          fontSize: Math.round(72 * scale),
+          fontWeight: 900,
+          color: theme.text,
+        }}
+      >
+        {scene.leftValue}
+      </div>
+    </div>
+  );
+
+  const dividerNode = (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 12 * scale,
+      }}
+    >
+      <div
+        style={{
+          width: 2 * scale,
+          height: 120 * scale * dividerHeight,
+          backgroundColor: theme.hairline,
+        }}
+      />
+      <div
+        style={{
+          fontFamily: fonts.body,
+          fontSize: Math.round(22 * scale),
+          fontWeight: 700,
+          color: colors.teal,
+          opacity: vsAnim,
+        }}
+      >
+        {scene.vsText || "VS"}
+      </div>
+      <div
+        style={{
+          width: 2 * scale,
+          height: 120 * scale * dividerHeight,
+          backgroundColor: theme.hairline,
+        }}
+      />
+    </div>
+  );
+
+  const rightNode = (
+    <div style={{ textAlign: "center", ...rightAnim }}>
+      <div
+        style={{
+          fontFamily: fonts.body,
+          fontSize: Math.round(26 * scale),
+          fontWeight: 500,
+          color: theme.textSecondary,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          marginBottom: 16 * scale,
+        }}
+      >
+        {scene.rightLabel}
+      </div>
+      <div
+        style={{
+          fontFamily: fonts.headline,
+          fontSize: Math.round(72 * scale),
+          fontWeight: 900,
+          color: colors.teal,
+        }}
+      >
+        {scene.rightValue}
+      </div>
+    </div>
+  );
+
   return (
     <AbsoluteFill
       style={{
@@ -34,95 +129,13 @@ export const SplitSceneComponent: React.FC<{
         gap: 40 * scale,
       }}
     >
-      {/* Left side */}
-      <div style={{ flex: 1, textAlign: "center", ...leftAnim }}>
-        <div
-          style={{
-            fontFamily: fonts.body,
-            fontSize: Math.round(26 * scale),
-            fontWeight: 500,
-            color: theme.textSecondary,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            marginBottom: 16 * scale,
-          }}
-        >
-          {scene.leftLabel}
-        </div>
-        <div
-          style={{
-            fontFamily: fonts.headline,
-            fontSize: Math.round(72 * scale),
-            fontWeight: 900,
-            color: theme.text,
-          }}
-        >
-          {scene.leftValue}
-        </div>
-      </div>
+      {inlineElement(scene, "left", leftNode, { flex: 1 })}
+      {inlineElement(scene, "divider", dividerNode)}
+      {inlineElement(scene, "right", rightNode, { flex: 1 })}
 
-      {/* Divider + VS */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 12 * scale,
-        }}
-      >
-        <div
-          style={{
-            width: 2 * scale,
-            height: 120 * scale * dividerHeight,
-            backgroundColor: theme.hairline,
-          }}
-        />
-        <div
-          style={{
-            fontFamily: fonts.body,
-            fontSize: Math.round(22 * scale),
-            fontWeight: 700,
-            color: colors.teal,
-            opacity: vsAnim,
-          }}
-        >
-          {scene.vsText || "VS"}
-        </div>
-        <div
-          style={{
-            width: 2 * scale,
-            height: 120 * scale * dividerHeight,
-            backgroundColor: theme.hairline,
-          }}
-        />
-      </div>
-
-      {/* Right side */}
-      <div style={{ flex: 1, textAlign: "center", ...rightAnim }}>
-        <div
-          style={{
-            fontFamily: fonts.body,
-            fontSize: Math.round(26 * scale),
-            fontWeight: 500,
-            color: theme.textSecondary,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            marginBottom: 16 * scale,
-          }}
-        >
-          {scene.rightLabel}
-        </div>
-        <div
-          style={{
-            fontFamily: fonts.headline,
-            fontSize: Math.round(72 * scale),
-            fontWeight: 900,
-            color: colors.teal,
-          }}
-        >
-          {scene.rightValue}
-        </div>
-      </div>
+      {positionedElement(scene, "left", leftNode)}
+      {positionedElement(scene, "divider", dividerNode)}
+      {positionedElement(scene, "right", rightNode)}
     </AbsoluteFill>
   );
 };

@@ -152,6 +152,14 @@ interface StudioState {
   /** Inläsningen av kampanjen — studion visas först när den är klar. */
   campaignLoad: { id: string; status: "loading" | "error"; message?: string } | null;
 
+  // Ångra/gör om — video och displaypaket (se "Historik" längst ned).
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
+  /** Tömmer historiken, t.ex. när en ny video eller kampanj har laddats. */
+  clearHistory: () => void;
+
   // Lager och keyframes
   selectedKeyframe: SelectedKeyframe | null;
   selectKeyframe: (kf: SelectedKeyframe | null) => void;
@@ -303,6 +311,12 @@ export const useStudioStore = create<StudioState>()(
     campaignSave: "idle",
     campaignLoad: null,
 
+    canUndo: false,
+    canRedo: false,
+    undo: () => stepHistory("undo"),
+    redo: () => stepHistory("redo"),
+    clearHistory: () => clearHistory(),
+
     selectedKeyframe: null,
     selectKeyframe: (kf) => set({ selectedKeyframe: kf }),
 
@@ -397,13 +411,16 @@ export const useStudioStore = create<StudioState>()(
 
     setIsRendering: (rendering) => set({ isRendering: rendering }),
 
-    loadConfig: (config) =>
+    loadConfig: (config) => {
       set({
         config: { ...config, motion: config.motion ?? DEFAULT_MOTION_CONFIG },
         selectedSceneIndex: config.scenes.length > 0 ? 0 : null,
         selectedElementId: null,
         previewKey: 0,
-      }),
+      });
+      // En annan video — det finns inget att ångra tillbaka till.
+      clearHistory();
+    },
 
     // ── Variants ────────────────────────────────────────────────────────
     generateVariants: async () => {
@@ -832,6 +849,104 @@ useStudioStore.subscribe(
   (isDragging) => {
     if (!isDragging) {
       setTimeout(() => useStudioStore.getState().triggerRender(), 100);
+    }
+  }
+);
+
+// ── Historik: ångra / gör om ──
+// Varje ändring av videon eller displaypaketet sparar läget innan den i en
+// stack. Ändringar som kommer tätt (skrivande, pilsteg) blir ett steg, och en
+// hel dragning på videon blir ett steg. Ångra/gör om sparas till kampanjen
+// som vanligt (campaign-sync lyssnar på config och display).
+
+interface Snapshot {
+  config: VideoConfig;
+  display: DisplaySet | null;
+}
+
+const HISTORY_LIMIT = 100;
+const COALESCE_MS = 700;
+
+let past: Snapshot[] = [];
+let future: Snapshot[] = [];
+let applyingHistory = false;
+let lastChangeAt = 0;
+let dragRecorded = false;
+
+function publishHistory() {
+  const { canUndo, canRedo } = useStudioStore.getState();
+  const next = { canUndo: past.length > 0, canRedo: future.length > 0 };
+  if (next.canUndo !== canUndo || next.canRedo !== canRedo) useStudioStore.setState(next);
+}
+
+function clearHistory() {
+  past = [];
+  future = [];
+  lastChangeAt = 0;
+  dragRecorded = false;
+  publishHistory();
+}
+
+function recordChange(before: Snapshot) {
+  if (applyingHistory) return;
+  const now = Date.now();
+  if (useStudioStore.getState().isDragging) {
+    // Hela dragningen är ett steg: bara läget innan första ändringen sparas.
+    if (!dragRecorded) {
+      dragRecorded = true;
+      past.push(before);
+    }
+  } else if (now - lastChangeAt > COALESCE_MS) {
+    past.push(before);
+  }
+  if (past.length > HISTORY_LIMIT) past.shift();
+  lastChangeAt = now;
+  future = [];
+  publishHistory();
+}
+
+function stepHistory(direction: "undo" | "redo") {
+  const from = direction === "undo" ? past : future;
+  const to = direction === "undo" ? future : past;
+  const target = from.pop();
+  if (!target) return;
+  const state = useStudioStore.getState();
+  to.push({ config: state.config, display: state.display });
+  applyingHistory = true;
+  useStudioStore.setState({
+    config: target.config,
+    display: target.display,
+    selectedSceneIndex: clampScene(state.selectedSceneIndex, target.config),
+  });
+  applyingHistory = false;
+  // Nästa ändring efter ett ångra blir alltid ett eget steg.
+  lastChangeAt = 0;
+  publishHistory();
+}
+
+useStudioStore.subscribe(
+  (state) => state.config,
+  (_config, prevConfig) => recordChange({ config: prevConfig, display: useStudioStore.getState().display }),
+  { equalityFn: Object.is }
+);
+
+useStudioStore.subscribe(
+  (state) => state.display,
+  (display, prevDisplay) => {
+    // Displaystudion skapar paketet från videon när den öppnas — det är
+    // ingen ändring man vill ångra.
+    if (prevDisplay === null && display !== null) return;
+    recordChange({ config: useStudioStore.getState().config, display: prevDisplay });
+  },
+  { equalityFn: Object.is }
+);
+
+useStudioStore.subscribe(
+  (state) => state.isDragging,
+  (isDragging) => {
+    if (!isDragging) {
+      dragRecorded = false;
+      lastChangeAt = 0;
     }
   }
 );
