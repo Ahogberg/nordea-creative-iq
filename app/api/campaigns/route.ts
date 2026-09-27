@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     let query = db.supabase
       .from("campaigns")
       .select(
-        "id, name, status, brief_id, template_ids, master_creative_ids, created_at, updated_at"
+        "id, name, status, brief_id, template_ids, master_creative_ids, video_config, display_set, created_at, updated_at"
       )
       .eq("created_by", db.ownerId);
     const briefId = new URL(request.url).searchParams.get("brief_id");

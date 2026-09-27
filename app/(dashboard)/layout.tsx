@@ -1,6 +1,7 @@
 import { requireSessionUser } from '@/lib/auth/session-user';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
+import { userDisplay } from '@/lib/auth/user-display';
 
 export default async function DashboardLayout({
   children,
@@ -11,10 +12,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen">
-      <Sidebar />
+      <Sidebar user={userDisplay(user)} />
       <div className="lg:pl-[240px]">
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <Header user={user as any} />
+        <Header user={user} />
         <main className="p-4 lg:p-8">
           {children}
         </main>
