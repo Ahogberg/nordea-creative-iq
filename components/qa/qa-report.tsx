@@ -284,7 +284,7 @@ export function QAReportView({
           {report.status === "pass" && onExport && (
             <button
               onClick={onExport}
-              className="px-6 py-2 bg-[#40BFA3] hover:bg-[#40BFA3]/80 rounded-lg text-sm font-semibold text-[#00005E]"
+              className="px-6 py-2 bg-nordea-blue hover:bg-[#000080] rounded-lg text-sm font-semibold text-white"
             >
               Exportera
             </button>

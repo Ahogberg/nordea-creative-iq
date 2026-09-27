@@ -275,8 +275,8 @@ export default function TemplatesPage() {
 function EmptyState() {
   return (
     <div className="text-center py-20">
-      <div className="w-16 h-16 bg-nordea-teal/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <Sparkles className="w-8 h-8 text-nordea-teal" />
+      <div className="w-16 h-16 bg-nordea-blue-soft rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <Sparkles className="w-8 h-8 text-nordea-blue" />
       </div>
       <h3 className="text-lg font-semibold text-nordea-text mb-2">Inga mallar ännu</h3>
       <p className="text-sm text-nordea-text-tertiary mb-6 max-w-sm mx-auto">

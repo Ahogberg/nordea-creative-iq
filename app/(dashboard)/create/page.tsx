@@ -111,7 +111,7 @@ export default function CreatePage() {
               type="button"
               onClick={handleGenerate}
               disabled={!prompt.trim() || isGenerating}
-              className="absolute bottom-4 right-4 w-10 h-10 bg-nordea-teal hover:bg-nordea-teal-hover text-nordea-deep rounded-xl flex items-center justify-center disabled:opacity-30 transition-colors"
+              className="absolute bottom-4 right-4 w-10 h-10 bg-nordea-blue hover:bg-[#000080] text-white rounded-xl flex items-center justify-center disabled:opacity-30 transition-colors"
               title="Generera (⌘+Enter)"
             >
               <Sparkles className="w-5 h-5" />
@@ -140,7 +140,7 @@ export default function CreatePage() {
                 onClick={() => handleShortcut(s.mode)}
                 className="group bg-white border border-nordea-border rounded-xl p-5 text-left hover:border-nordea-blue/30 hover:shadow-md transition-all"
               >
-                <div className="w-10 h-10 bg-nordea-teal/10 text-nordea-teal rounded-lg flex items-center justify-center mb-4 group-hover:bg-nordea-teal/15">
+                <div className="w-10 h-10 bg-nordea-blue-soft text-nordea-blue rounded-lg flex items-center justify-center mb-4">
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="flex items-start justify-between mb-1">
