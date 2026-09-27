@@ -18,6 +18,7 @@ import { PersonaImage } from "@/components/ui/persona-image";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { getPersonaById } from "@/lib/persona-library";
 import { DEFAULT_THRESHOLDS } from "@/lib/qa/thresholds";
+import { COPY_ONLY_HEATMAP_BASELINE } from "@/lib/qa/scoring";
 import { formatRelative } from "@/lib/campaign-status";
 import type {
   QAStatus,
@@ -101,7 +102,16 @@ export default function QAReportsPage() {
       if (!res.ok) throw new Error(body.error ?? "Kunde inte hämta QA-historiken");
       const list = (body.runs ?? []) as RunSummary[];
       setRuns(list);
-      setSelectedId((cur) => cur ?? list.find((r) => r.status !== "running")?.id ?? list[0]?.id ?? null);
+      // ?run=<id> (länken från "Kör QA" i studion) väljer den rapporten.
+      const wanted = new URLSearchParams(window.location.search).get("run");
+      setSelectedId(
+        (cur) =>
+          cur ??
+          (wanted && list.some((r) => r.id === wanted) ? wanted : null) ??
+          list.find((r) => r.status !== "running")?.id ??
+          list[0]?.id ??
+          null
+      );
     } catch (err) {
       setListError(err instanceof Error ? err.message : "Okänt fel");
     }
@@ -285,7 +295,11 @@ function Report({ run }: { run: RunDetail }) {
     { label: "Persona-jury", value: run.persona_score },
     { label: "Tone of voice", value: run.tov_score },
     { label: "Compliance", value: run.compliance_score },
-    { label: "Uppmärksamhet", value: run.heatmap_score },
+    // Utan bild räknar gaten med en fast baslinje — visa den, så att delarna
+    // förklarar totalen.
+    run.heatmap_score != null
+      ? { label: "Uppmärksamhet", value: run.heatmap_score }
+      : { label: "Uppmärksamhet (baslinje, ingen bild)", value: COPY_ONLY_HEATMAP_BASELINE },
   ].filter((b): b is { label: string; value: number } => b.value != null);
 
   const notes = [

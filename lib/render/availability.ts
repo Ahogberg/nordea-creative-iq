@@ -32,7 +32,7 @@ export function videoExportAvailability(env: Env = process.env): RenderAvailabil
     return {
       available: false,
       reason:
-        "Videoexport kräver en server med Chromium och skrivbar disk, vilket Vercel saknar. Exportera från den lokala installationen eller en render-server.",
+        "Videoexport kräver en server med Chromium och skrivbar disk, vilket Vercel saknar. Exportera från en installation som kör lokalt.",
     };
   }
   return { available: true };

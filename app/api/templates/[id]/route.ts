@@ -38,7 +38,6 @@ export async function PATCH(
     const db = await requireDb();
     if ('response' in db) return db.response;
     // Id och ägare ändras aldrig via PATCH.
-     
     const { id: _id, user_id: _owner, created_at: _created, ...updates } = (await request.json()) ?? {};
 
     const { data, error } = await db.supabase

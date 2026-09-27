@@ -16,18 +16,23 @@ export async function POST(
     // must be re-run after the underlying issue is fixed.
     const { data: run, error: fetchError } = await supabase
       .from("qa_runs")
-      .select("status")
+      .select("status, approved_at")
       .eq("id", id)
       .eq("user_id", ownerId)
       .single();
 
     if (fetchError) throw fetchError;
 
-    if (run?.status === "fail") {
+    // Bara färdiga granskningar över eller strax under tröskeln kan godkännas.
+    // 'fail' (blockerande compliance) ska åtgärdas och köras om.
+    if (run?.status !== "pass" && run?.status !== "warn") {
       return NextResponse.json(
-        { error: "Cannot approve a failed QA run — fix the blocking issue and re-run" },
+        { error: "Bara granskningar som är klara och inte blockerade kan godkännas." },
         { status: 400 }
       );
+    }
+    if (run.approved_at) {
+      return NextResponse.json({ error: "Granskningen är redan godkänd." }, { status: 409 });
     }
 
     const { error: updateError } = await supabase

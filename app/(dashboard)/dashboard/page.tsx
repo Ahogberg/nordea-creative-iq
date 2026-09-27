@@ -86,7 +86,7 @@ export default async function DashboardPage() {
           <StatCard
             label="Renderade videor"
             value={data ? String(data.renderedVideos) : "—"}
-            sub="från massproduktion"
+            sub="från export och massproduktion"
             icon={Film}
           />
           <StatCard

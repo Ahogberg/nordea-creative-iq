@@ -40,7 +40,6 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     // Id och ägare ändras aldrig via PUT.
-     
     const { id: _id, created_by: _owner, created_at: _created, ...updates } = body ?? {};
 
     const db = await requireDb();

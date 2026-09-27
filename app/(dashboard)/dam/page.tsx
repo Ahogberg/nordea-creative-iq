@@ -184,8 +184,6 @@ function BrandLibrary() {
                   </dd>
                 </>
               )}
-              <dt className="text-nordea-text-tertiary">Användning</dt>
-              <dd className="text-right">Fri inom Nordea</dd>
             </dl>
             <a href={selected.url} download className="nordea-btn nordea-btn-secondary nordea-btn-full mt-5">
               <Download className="w-4 h-4" />

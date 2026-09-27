@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       .eq("created_by", db.ownerId);
     const briefId = new URL(request.url).searchParams.get("brief_id");
     if (briefId) query = query.eq("brief_id", briefId);
-    const { data, error } = await query.order("updated_at", { ascending: false });
+    const { data, error } = await query.order("updated_at", { ascending: false }).limit(100);
 
     if (error) throw error;
     return NextResponse.json({ campaigns: data ?? [] });

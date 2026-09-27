@@ -1,8 +1,7 @@
 // ── Översiktens siffror, hämtade på servern ──
 //
 // Allt på dashboarden kommer härifrån, så att inget värde är påhittat.
-// Varje fråga filtrerar på ägaren (se lib/supabase/db.ts). Mallbiblioteket
-// delas mellan alla inloggade och räknas därför utan ägarfilter.
+// Varje fråga filtrerar på ägaren (se lib/supabase/db.ts).
 
 import { getDb } from "@/lib/supabase/db";
 import type { VideoConfig } from "@/lib/remotion/types";
@@ -28,7 +27,6 @@ export interface Overview {
   campaigns: OverviewCampaign[];
   campaignCount: number;
   inReviewCount: number;
-  templateCount: number;
   renderedVideos: number;
   qa: { runs: number; avgScore: number | null; avgDurationMs: number | null };
   queue: OverviewJob[];
@@ -64,7 +62,7 @@ export async function getOverview(): Promise<OverviewResult> {
   const { supabase, ownerId } = db;
   const since = new Date(Date.now() - 30 * DAY_MS).toISOString();
 
-  const [recent, campaignCount, inReview, templates, jobs, queue, qa] = await Promise.all([
+  const [recent, campaignCount, inReview, jobs, queue, qa] = await Promise.all([
     supabase
       .from("campaigns")
       .select("id, name, status, updated_at, video_config")
@@ -77,7 +75,6 @@ export async function getOverview(): Promise<OverviewResult> {
       .select("id", { count: "exact", head: true })
       .eq("created_by", ownerId)
       .eq("status", "in_review"),
-    supabase.from("templates").select("id", { count: "exact", head: true }),
     supabase.from("production_jobs").select("completed_videos").eq("user_id", ownerId),
     supabase
       .from("production_jobs")
@@ -94,15 +91,19 @@ export async function getOverview(): Promise<OverviewResult> {
       .gte("created_at", since),
   ]);
 
-  const failed = [recent, campaignCount, inReview, templates, jobs, queue, qa].find((r) => r.error);
+  const failed = [recent, campaignCount, inReview, jobs, queue, qa].find((r) => r.error);
   if (failed?.error) {
     console.error("[dashboard] kunde inte hämta översikten:", failed.error);
     return { ok: false, message: "Översikten kunde inte hämtas från databasen." };
   }
 
   const qaRows = (qa.data ?? []) as { total_score: number | null; duration_ms: number | null }[];
-  const scores = qaRows.map((r) => Number(r.total_score)).filter((n) => Number.isFinite(n));
-  const durations = qaRows.map((r) => Number(r.duration_ms)).filter((n) => Number.isFinite(n) && n > 0);
+  // null får inte bli 0 (Number(null) === 0) och dra ner snittet.
+  const scores = qaRows.filter((r) => r.total_score != null).map((r) => Number(r.total_score)).filter(Number.isFinite);
+  const durations = qaRows
+    .filter((r) => r.duration_ms != null)
+    .map((r) => Number(r.duration_ms))
+    .filter((n) => Number.isFinite(n) && n > 0);
 
   return {
     ok: true,
@@ -113,7 +114,6 @@ export async function getOverview(): Promise<OverviewResult> {
       })),
       campaignCount: campaignCount.count ?? 0,
       inReviewCount: inReview.count ?? 0,
-      templateCount: templates.count ?? 0,
       renderedVideos: ((jobs.data ?? []) as { completed_videos: number | null }[]).reduce(
         (s, j) => s + (j.completed_videos ?? 0),
         0
