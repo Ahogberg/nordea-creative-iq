@@ -23,6 +23,12 @@ export async function openCampaign(id: string): Promise<void> {
   const state = useStudioStore.getState();
   if (state.campaign?.id === id || loadingId === id) return;
   loadingId = id;
+  useStudioStore.setState({ campaignLoad: { id, status: "loading" } });
+  // En annan kampanj var öppen: spara klart den innan den byts ut.
+  if (state.campaign) {
+    await flushCampaignSave();
+    closeCampaign();
+  }
   try {
     const res = await fetch(`/api/campaigns/${id}`);
     const data = (await res.json().catch(() => null)) as {
@@ -37,10 +43,16 @@ export async function openCampaign(id: string): Promise<void> {
     useStudioStore.getState().setDisplay(c.display_set ?? null);
     savedConfig = useStudioStore.getState().config;
     savedDisplay = c.display_set ?? null;
-    useStudioStore.setState({ campaign: { id: c.id, name: c.name }, campaignSave: "saved" });
+    useStudioStore.setState({ campaign: { id: c.id, name: c.name }, campaignSave: "saved", campaignLoad: null });
   } catch (err) {
-    console.error("[campaign-sync]", err);
-    useStudioStore.setState({ campaignSave: "error" });
+    // Visas av CampaignGate.
+    useStudioStore.setState({
+      campaignLoad: {
+        id,
+        status: "error",
+        message: err instanceof Error ? err.message : "Kampanjen kunde inte öppnas",
+      },
+    });
   } finally {
     loadingId = null;
   }

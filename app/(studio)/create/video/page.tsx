@@ -10,7 +10,7 @@ import { SceneStrip } from "@/components/studio/scene-strip";
 import { LayerTracks } from "@/components/studio/layer-tracks";
 import { Inspector } from "@/components/studio/inspector";
 import { StudioPlayerProvider } from "@/components/studio/player-context";
-import { openCampaign } from "@/lib/studio/campaign-sync";
+import { CampaignGate } from "@/components/studio/campaign-gate";
 
 /**
  * Motion Studio
@@ -28,11 +28,6 @@ function StudioPageInner() {
   const promptFromUrl = searchParams.get("prompt");
   const campaignFromUrl = searchParams.get("campaign");
   const processedRef = useRef(false);
-
-  // ?campaign=<id>: kampanjens video laddas och ändringar sparas tillbaka.
-  useEffect(() => {
-    if (campaignFromUrl) void openCampaign(campaignFromUrl);
-  }, [campaignFromUrl]);
 
   useEffect(() => {
     if (!promptFromUrl || processedRef.current) return;
@@ -56,21 +51,24 @@ function StudioPageInner() {
     };
   }, []);
 
+  // ?campaign=<id>: kampanjens video laddas och ändringar sparas tillbaka.
   return (
-    <StudioPlayerProvider>
-      <div className="h-full flex flex-col">
-        <StudioTopbar />
-        <div className="flex-1 min-h-0 flex">
-          <ChatPanel />
-          <main className="flex-1 min-w-0 flex flex-col">
-            <Stage />
-            <LayerTracks />
-            <SceneStrip />
-          </main>
-          <Inspector />
+    <CampaignGate campaignId={campaignFromUrl}>
+      <StudioPlayerProvider>
+        <div className="h-full flex flex-col">
+          <StudioTopbar />
+          <div className="flex-1 min-h-0 flex">
+            <ChatPanel />
+            <main className="flex-1 min-w-0 flex flex-col">
+              <Stage />
+              <LayerTracks />
+              <SceneStrip />
+            </main>
+            <Inspector />
+          </div>
         </div>
-      </div>
-    </StudioPlayerProvider>
+      </StudioPlayerProvider>
+    </CampaignGate>
   );
 }
 
