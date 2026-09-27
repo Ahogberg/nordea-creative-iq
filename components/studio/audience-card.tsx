@@ -7,6 +7,8 @@
 import { useState } from "react";
 import { Users, Wand2, ChevronDown, ChevronUp } from "lucide-react";
 import { useStudioStore, type ChatAudience } from "@/lib/studio/store";
+import { PersonaImage } from "@/components/ui/persona-image";
+import { findPersona } from "@/lib/persona-library";
 import type { AudienceCompareResponse, AudienceTestResponse } from "@/lib/audience/types";
 import type { CalibrationStatus } from "@/lib/audience/calibration";
 
@@ -59,7 +61,7 @@ function AudienceTestCard({ messageId, data }: { messageId: string; data: Audien
               disabled={!!p.error}
               className="w-full flex items-center gap-2 text-left rounded-md px-1 py-0.5 hover:bg-white disabled:hover:bg-transparent"
             >
-              <span className="text-sm w-5 text-center flex-shrink-0">{p.avatar}</span>
+              <PersonaImage name={p.name} color={findPersona(p.id)?.color ?? findPersona(p.name)?.color} size="xs" className="flex-shrink-0 shadow-none" />
               <span className="flex-1 min-w-0">
                 <span className="flex items-center gap-1.5">
                   <span className="text-[11px] text-nordea-text flex-1 min-w-0 truncate">{p.name}</span>
@@ -169,7 +171,7 @@ function AudienceCompareCard({ data }: { data: AudienceCompareResponse }) {
         {data.personas.map((p) => (
           <li key={p.id} className="text-[11px] leading-snug">
             <div className="flex items-center gap-2">
-              <span className="text-sm w-5 text-center">{p.avatar}</span>
+              <PersonaImage name={p.name} color={findPersona(p.id)?.color ?? findPersona(p.name)?.color} size="xs" className="flex-shrink-0 shadow-none" />
               <span className="flex-1 min-w-0 truncate text-nordea-text">{p.name}</span>
               {p.votes ? (
                 <span className="tabular-nums text-nordea-text-secondary">

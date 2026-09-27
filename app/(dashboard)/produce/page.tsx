@@ -22,6 +22,9 @@ import type { Template, ProductionJob } from '@/lib/video-types';
 import { VIDEO_FORMATS, extractVariantSeeds } from '@/lib/video-types';
 import { Topbar } from '@/components/layout/topbar';
 import { SectionTitle } from '@/components/layout/section-title';
+import { PageHeading } from '@/components/layout/page-heading';
+import { EmptyState } from '@/components/ui/states';
+import { CreativeThumbnail } from '@/components/preview/creative-thumbnail';
 
 function ProduceContent() {
   const searchParams = useSearchParams();
@@ -167,15 +170,24 @@ function ProduceContent() {
     return (
       <div className="min-h-screen bg-nordea-bg">
         <Topbar breadcrumb={['Massproduktion']} />
-        <div className="max-w-md mx-auto text-center py-20 px-4">
-          <Package className="w-12 h-12 text-nordea-text-tertiary mx-auto mb-4" />
-          <h2 className="nordea-display text-xl text-nordea-deep mb-2">Ingen mall vald</h2>
-          <p className="text-nordea-text-tertiary mb-6">
-            Välj en mall från biblioteket för att starta massproduktion.
-          </p>
-          <Link href="/templates" className="nordea-btn nordea-btn-primary">
-            Gå till mallbiblioteket
-          </Link>
+        <div className="px-8 py-8 max-w-[1400px] mx-auto">
+          <PageHeading
+            eyebrow="Skala"
+            title="Massproduktion"
+            description="Utgå från en godkänd mall och kombinera rubriker, brödtexter och CTA:er över flera format. Varje kombination blir en renderad video."
+          />
+          <div className="nordea-card">
+            <EmptyState
+              icon={Package}
+              title="Välj en mall att utgå från"
+              description="Massproduktionen startar från en mall i biblioteket. Spara en video som mall i Motion Studio om biblioteket är tomt."
+              action={
+                <Link href="/templates" className="nordea-btn nordea-btn-primary">
+                  Till mallarna
+                </Link>
+              }
+            />
+          </div>
         </div>
       </div>
     );
@@ -205,7 +217,9 @@ function ProduceContent() {
 
           {/* Vald mall */}
           <div className="nordea-card p-3.5 mb-6 flex items-center gap-3.5">
-            <div className="nordea-placeholder-stripe w-20 h-12">mall</div>
+            <div className="w-20 h-12 rounded-md overflow-hidden bg-nordea-blue-soft flex items-center justify-center shrink-0">
+              <CreativeThumbnail config={template.config} playOnHover={false} rounded="rounded-none" className="h-full" />
+            </div>
             <div className="flex-1">
               <div className="nordea-eyebrow text-[10px] mb-1">Mall</div>
               <div className="text-sm font-medium text-nordea-text">{template.name}</div>

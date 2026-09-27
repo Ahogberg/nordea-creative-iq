@@ -201,7 +201,7 @@ export default function PersonasPage() {
   return (
     <div className="min-h-screen bg-nordea-bg">
       <Topbar
-        breadcrumb={['Målgrupper', 'Personas']}
+        breadcrumb={['Personas']}
         right={
           <button type="button" onClick={openCreate} className="nordea-btn nordea-btn-cobalt">
             <Plus className="w-4 h-4" /> Skapa persona

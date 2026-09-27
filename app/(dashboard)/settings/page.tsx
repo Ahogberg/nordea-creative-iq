@@ -19,6 +19,8 @@ import { Save, User, Globe, Bell, Shield, Key, Languages } from 'lucide-react';
 import { toast } from 'sonner';
 import { nordicMarkets } from '@/lib/constants/markets';
 import { getUserPrefs, saveUserPrefs } from '@/lib/campaigns';
+import { Topbar } from '@/components/layout/topbar';
+import { PageHeading } from '@/components/layout/page-heading';
 
 function getStoredUser(): { email: string; fullName: string } {
   if (typeof window === 'undefined') return { email: '', fullName: '' };
@@ -70,11 +72,14 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Inställningar</h1>
-        <p className="text-gray-500 mt-1">Hantera din profil och appinställningar</p>
-      </div>
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar breadcrumb={['System', 'Inställningar']} />
+      <div className="px-8 py-8 max-w-3xl mx-auto space-y-6">
+      <PageHeading
+        eyebrow="System"
+        title="Inställningar"
+        description="Din profil, språk i gränssnittet och vilka marknader nytt innehåll lokaliseras till."
+      />
 
       {/* Profile */}
       <Card className="border-0 shadow-sm">
@@ -260,6 +265,7 @@ export default function SettingsPage() {
           <Save className="w-4 h-4 mr-2" />
           Spara inställningar
         </Button>
+      </div>
       </div>
     </div>
   );

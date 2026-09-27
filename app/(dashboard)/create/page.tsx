@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
   Layers,
 } from "lucide-react";
+import { Topbar } from "@/components/layout/topbar";
 
 interface Shortcut {
   id: string;
@@ -24,29 +25,29 @@ const SHORTCUTS: Shortcut[] = [
   {
     id: "copy",
     icon: Type,
-    title: "Annontext",
-    description: "Skriv rubriker, brödtext och CTA:er",
+    title: "Copy Studio",
+    description: "Rubriker, brödtext och CTA:er i Nordeas ton",
     mode: "copy",
   },
   {
     id: "video",
     icon: Video,
-    title: "Video",
-    description: "Skapa motion graphics med scen-baserad editor",
+    title: "Motion Studio",
+    description: "Video i scener, med AI-chatt bredvid",
     mode: "video",
   },
   {
     id: "analyze",
     icon: ImageIcon,
-    title: "Analysera annons",
-    description: "Persona-feedback på text och bild",
+    title: "Ad Studio",
+    description: "Granska en annons med personas och uppmärksamhetskarta",
     mode: "analyze",
   },
   {
     id: "brief",
     icon: FileText,
     title: "Från brief",
-    description: "Importera brief → komplett kampanj",
+    description: "Idé eller brief → strategi och kampanj",
     mode: "brief",
   },
   {
@@ -81,7 +82,8 @@ export default function CreatePage() {
   };
 
   return (
-    <div className="main-content">
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar breadcrumb={["Skapa"]} />
       <div className="max-w-4xl mx-auto py-12 px-4">
         <div className="text-center mb-12">
           <h1 className="nordea-display text-4xl text-nordea-deep mb-3">

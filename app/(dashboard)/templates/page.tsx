@@ -19,6 +19,7 @@ import type { Template } from '@/lib/video-types';
 import { Topbar } from '@/components/layout/topbar';
 import { CreativeThumbnail } from '@/components/preview/creative-thumbnail';
 import { SectionTitle } from '@/components/layout/section-title';
+import { PageHeading } from '@/components/layout/page-heading';
 import { NordeaBadge } from '@/components/ui/nordea-badge';
 import { FormatChip } from '@/components/ui/format-chip';
 
@@ -122,14 +123,13 @@ export default function TemplatesPage() {
       />
 
       <div className="px-8 py-7 max-w-[1400px] mx-auto">
-        {/* Hero */}
-        <div className="mb-6">
-          <h1 className="nordea-display text-3xl text-nordea-deep">Mallbibliotek</h1>
-          <div className="text-sm text-nordea-text-tertiary mt-1">
-            {templates.length} varumärkesgodkända layouter
-            {favorites.length > 0 && ` · ${favorites.length} favoriter`}
-          </div>
-        </div>
+        <PageHeading
+          eyebrow="Bibliotek"
+          title="Mallar"
+          description={`${templates.length} varumärkesgodkända ${templates.length === 1 ? 'layout' : 'layouter'}${
+            favorites.length > 0 ? ` · ${favorites.length} favoriter` : ''
+          } — utgångspunkten för massproduktion.`}
+        />
 
         {/* Filter row */}
         <div className="flex gap-2.5 mb-6 items-center flex-wrap">

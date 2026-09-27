@@ -141,7 +141,7 @@ function BrandLibrary() {
                     active ? "border-nordea-blue ring-2 ring-nordea-blue/20" : "border-nordea-hairline hover:border-nordea-border-emphasis"
                   }`}
                 >
-                  <div className="aspect-square bg-nordea-blue flex items-center justify-center p-6">
+                  <div className="aspect-square bg-nordea-bg flex items-center justify-center p-6">
                     {/* eslint-disable-next-line @next/next/no-img-element -- lokala SVG:er, ingen optimering behövs */}
                     <img src={a.thumbnail_url} alt="" className="max-w-full max-h-full object-contain" />
                   </div>
@@ -160,7 +160,7 @@ function BrandLibrary() {
       <div className="nordea-card p-5 lg:sticky lg:top-6">
         {selected ? (
           <>
-            <div className="aspect-[4/3] rounded-lg bg-nordea-blue flex items-center justify-center p-8 mb-4">
+            <div className="aspect-[4/3] rounded-lg bg-nordea-bg border border-nordea-hairline flex items-center justify-center p-8 mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element -- lokala SVG:er */}
               <img src={selected.url} alt={selected.name} className="max-w-full max-h-full object-contain" />
             </div>

@@ -13,6 +13,7 @@ import {
   Eye,
   Loader2,
 } from "lucide-react";
+import { Topbar } from "@/components/layout/topbar";
 import type { CreativeBrief, BriefStatus } from "@/lib/brief/types";
 
 type StatusFilter = "all" | BriefStatus;
@@ -98,7 +99,8 @@ export default function BriefEntryPage() {
   };
 
   return (
-    <div className="main-content">
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar breadcrumb={["Skapa", "Från brief"]} />
       <div className="max-w-5xl mx-auto py-12 px-6">
         <div className="text-center mb-12">
           <h1 className="nordea-display text-4xl text-nordea-deep mb-3 tracking-tight">

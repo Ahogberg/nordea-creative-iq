@@ -226,8 +226,8 @@ export default function CampaignPlannerPage() {
 
       <div className="px-8 py-7 max-w-[1400px] mx-auto">
         <PageHeading
-          eyebrow="Mediaplanering · Sverige"
-          title="Kampanjplanerare"
+          eyebrow="Verktyg · Sverige"
+          title="Mediaplanering"
           description="Fördela budgeten över kanaler och se prognosen för räckvidd, frekvens och klick direkt."
           right={
             <SegmentedTabs<Tab>
