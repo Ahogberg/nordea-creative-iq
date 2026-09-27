@@ -165,7 +165,7 @@ export default function CampaignPage({ params }: PageProps) {
         <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-5 items-start">
           <StrategyCard brief={brief} />
 
-          <div className="space-y-5">
+          <div className="space-y-5 min-w-0">
             <section className="nordea-card p-5">
               <DeliverableHeader
                 icon={Film}

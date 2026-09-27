@@ -89,6 +89,27 @@ export async function POST(
       .eq("created_by", ownerId)
       .maybeSingle();
 
+    // Kampanjer från före video_config har videon i sin mall — flytta in den
+    // i stället för att låta AI:n skriva över det användaren redan sett.
+    if (existing && !existing.video_config && existing.template_ids?.[0] && !regenerate) {
+      const { data: template } = await supabase
+        .from("templates")
+        .select("config")
+        .eq("id", existing.template_ids[0])
+        .eq("user_id", ownerId)
+        .maybeSingle();
+      if (template?.config) {
+        const { data } = await supabase
+          .from("campaigns")
+          .update({ video_config: template.config })
+          .eq("id", existing.id)
+          .eq("created_by", ownerId)
+          .select()
+          .single();
+        return NextResponse.json({ campaign: data ?? { ...existing, video_config: template.config }, created: false });
+      }
+    }
+
     if (existing?.video_config && !regenerate) {
       return NextResponse.json({ campaign: existing, created: false });
     }
