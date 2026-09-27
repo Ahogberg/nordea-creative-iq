@@ -172,9 +172,7 @@ export function Stage() {
                 Inga scener än — beskriv din video i chatten
               </div>
             )}
-            {frameSize.width > 0 && !isDrafting && (
-              <CanvasOverlay frameWidth={frameSize.width} frameHeight={frameSize.height} />
-            )}
+            {frameSize.width > 0 && !isDrafting && <CanvasOverlay />}
             {showSafe && frameSize.width > 0 && (
               <SafeZoneOverlay config={config} frameWidth={frameSize.width} frameHeight={frameSize.height} />
             )}

@@ -3,7 +3,7 @@ import { AbsoluteFill, useCurrentFrame, delayRender, continueRender } from "remo
 import { Lottie, LottieAnimationData } from "@remotion/lottie";
 import { fadeSlideUp, fadeIn } from "../utils";
 import { colors, fonts } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import { getLottieUrl } from "../lottie-library";
 import type { LottieScene as LottieSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
@@ -147,10 +147,10 @@ export const LottieSceneComponent: React.FC<{
         )}
       </div>
 
-      {headlineNode && isInline(scene, "headline") && headlineNode}
+      {inlineElement(scene, "headline", headlineNode)}
       {headlineNode && positionedElement(scene, "headline", headlineNode)}
 
-      {captionNode && isInline(scene, "caption") && captionNode}
+      {inlineElement(scene, "caption", captionNode)}
       {captionNode && positionedElement(scene, "caption", captionNode)}
     </AbsoluteFill>
   );

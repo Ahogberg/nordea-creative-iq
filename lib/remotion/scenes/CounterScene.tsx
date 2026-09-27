@@ -3,7 +3,7 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, fadeIn, s2f } from "../utils";
 import { fonts } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import type { CounterScene as CounterSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { CountingNumber } from "../animations/CountingNumber";
@@ -110,9 +110,9 @@ export const CounterSceneComponent: React.FC<{
         position: "relative",
       }}
     >
-      {isInline(scene, "label") && labelNode}
-      {isInline(scene, "value") && valueNode}
-      {isInline(scene, "description") && descNode}
+      {inlineElement(scene, "label", labelNode)}
+      {inlineElement(scene, "value", valueNode)}
+      {inlineElement(scene, "description", descNode)}
 
       {positionedElement(scene, "label", labelNode)}
       {positionedElement(scene, "value", valueNode)}

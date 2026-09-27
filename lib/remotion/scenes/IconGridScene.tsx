@@ -3,7 +3,7 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, s2f } from "../utils";
 import { colors, fonts } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import type { IconGridScene as IconGridSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
 
@@ -52,7 +52,7 @@ export const IconGridSceneComponent: React.FC<{
         position: "relative",
       }}
     >
-      {isInline(scene, "title") && titleNode}
+      {inlineElement(scene, "title", titleNode)}
       {positionedElement(scene, "title", titleNode)}
 
       <div

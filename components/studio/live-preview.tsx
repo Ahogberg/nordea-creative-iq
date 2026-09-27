@@ -136,12 +136,7 @@ export function LivePreview() {
           }}
         >
           <MotionPlayer key={previewKey} config={config} loop />
-          {frameSize.width > 0 && (
-            <CanvasOverlay
-              frameWidth={frameSize.width}
-              frameHeight={frameSize.height}
-            />
-          )}
+          {frameSize.width > 0 && <CanvasOverlay />}
         </div>
         )}
       </div>

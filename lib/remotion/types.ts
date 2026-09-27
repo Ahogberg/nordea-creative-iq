@@ -27,6 +27,9 @@ export interface ElementTransform {
   anchorX?: number; // 0 = left edge of element, 0.5 = center, 1 = right edge
   anchorY?: number; // 0 = top, 0.5 = middle, 1 = bottom
   z?: number; // layering for assets / multi-element scenes
+  // Bredd som andel av bildens bredd. Sätts när ett element lyfts ur
+  // scenens layout, så att texten radbryts precis som innan det flyttades.
+  width?: number;
 }
 
 export const DEFAULT_ELEMENT_TRANSFORM: ElementTransform = {

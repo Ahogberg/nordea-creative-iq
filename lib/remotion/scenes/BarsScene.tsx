@@ -3,7 +3,7 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { useSafeArea } from "../safe-area";
 import { barGrow, fadeSlideUp, fadeIn, s2f } from "../utils";
 import { colors, fonts } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import type { BarsScene as BarsSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
 
@@ -52,7 +52,7 @@ export const BarsSceneComponent: React.FC<{
         position: "relative",
       }}
     >
-      {titleNode && isInline(scene, "title") && titleNode}
+      {inlineElement(scene, "title", titleNode)}
       {titleNode && positionedElement(scene, "title", titleNode)}
 
       {/* Bars container */}

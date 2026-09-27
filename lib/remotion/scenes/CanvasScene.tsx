@@ -22,7 +22,7 @@ import { useSceneTheme } from "../theme";
 import { RichText } from "../rich-text";
 import { StaggeredText } from "../animations/StaggeredText";
 import { fadeSlideUp } from "../utils";
-import { resolveBackground } from "../scene-utils";
+import { resolveBackground, inlineElement, positionedElement } from "../scene-utils";
 
 const FPS = 30;
 
@@ -283,8 +283,11 @@ const IllustrationLayout: React.FC<{
         gap: 36 * scale,
       }}
     >
-      {illustrationFirst ? drawing : text}
-      {illustrationFirst ? text : drawing}
+      {inlineElement(scene, illustrationFirst ? "illustration" : "headline", illustrationFirst ? drawing : text)}
+      {inlineElement(scene, illustrationFirst ? "headline" : "illustration", illustrationFirst ? text : drawing)}
+
+      {positionedElement(scene, "illustration", drawing)}
+      {positionedElement(scene, "headline", text)}
     </AbsoluteFill>
   );
 };

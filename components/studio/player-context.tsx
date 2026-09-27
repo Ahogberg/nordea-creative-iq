@@ -66,6 +66,11 @@ export function StudioPlayerProvider({ children }: { children: React.ReactNode }
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }
 
+/** Som useStudioPlayer, men null utanför Motion Studio (t.ex. mastervyn). */
+export function useOptionalStudioPlayer(): PlayerControls | null {
+  return useContext(PlayerContext);
+}
+
 export function useStudioPlayer(): PlayerControls {
   const ctx = useContext(PlayerContext);
   if (!ctx) throw new Error("useStudioPlayer måste användas inom StudioPlayerProvider");

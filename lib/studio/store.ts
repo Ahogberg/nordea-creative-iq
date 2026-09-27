@@ -157,6 +157,8 @@ interface StudioState {
   selectKeyframe: (kf: SelectedKeyframe | null) => void;
   /** Ändrar ett lager i en canvas-scen via en ren funktion (lib/studio/layer-edits). */
   updateLayer: (sceneIndex: number, layerId: string, fn: (layer: MotionLayer) => MotionLayer) => void;
+  /** Ersätter (eller lägger till) ett lager i en canvas-scen. */
+  putLayer: (sceneIndex: number, layer: MotionLayer) => void;
 
   selectedSceneIndex: number | null;
   previewKey: number;
@@ -200,6 +202,10 @@ interface StudioState {
     elementId: string,
     patch: Partial<ElementTransform>
   ) => void;
+  /** Låser flera element på sina nuvarande platser i ett steg (se CanvasOverlay). */
+  pinElements: (sceneIndex: number, transforms: Record<string, ElementTransform>) => void;
+  /** Lägger tillbaka ett element i scenens standardlayout. */
+  resetElementTransform: (sceneIndex: number, elementId: string) => void;
   addAssetToScene: (sceneIndex: number, asset: SceneAsset) => void;
   removeAssetFromScene: (sceneIndex: number, assetId: string) => void;
   updateAssetTransform: (
@@ -308,6 +314,20 @@ export const useStudioStore = create<StudioState>()(
         scenes[sceneIndex] = {
           ...scene,
           layers: scene.layers.map((l) => (l.id === layerId ? fn(l) : l)),
+        };
+        return { config: { ...state.config, scenes } };
+      }),
+    putLayer: (sceneIndex, layer) =>
+      set((state) => {
+        const scene = state.config.scenes[sceneIndex];
+        if (!scene || scene.type !== "canvas") return state;
+        const layers = scene.layers ?? [];
+        const scenes = [...state.config.scenes];
+        scenes[sceneIndex] = {
+          ...scene,
+          layers: layers.some((l) => l.id === layer.id)
+            ? layers.map((l) => (l.id === layer.id ? layer : l))
+            : [...layers, layer],
         };
         return { config: { ...state.config, scenes } };
       }),
@@ -446,6 +466,32 @@ export const useStudioStore = create<StudioState>()(
             ...(scene.elementTransforms ?? {}),
             [elementId]: next,
           },
+        } as Scene;
+        return { config: { ...state.config, scenes } };
+      }),
+
+    pinElements: (sceneIndex, transforms) =>
+      set((state) => {
+        const scenes = [...state.config.scenes];
+        const scene = scenes[sceneIndex];
+        if (!scene) return state;
+        scenes[sceneIndex] = {
+          ...scene,
+          elementTransforms: { ...transforms, ...(scene.elementTransforms ?? {}) },
+        } as Scene;
+        return { config: { ...state.config, scenes } };
+      }),
+
+    resetElementTransform: (sceneIndex, elementId) =>
+      set((state) => {
+        const scenes = [...state.config.scenes];
+        const scene = scenes[sceneIndex];
+        if (!scene?.elementTransforms?.[elementId]) return state;
+        const rest = { ...scene.elementTransforms };
+        delete rest[elementId];
+        scenes[sceneIndex] = {
+          ...scene,
+          elementTransforms: Object.keys(rest).length > 0 ? rest : undefined,
         } as Scene;
         return { config: { ...state.config, scenes } };
       }),

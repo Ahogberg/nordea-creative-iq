@@ -159,6 +159,8 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
         const { startFrame, durationFrames } = timings[i];
         return (
           <Sequence key={i} from={startFrame} durationInFrames={durationFrames}>
+            {/* data-scene: studion mäter elementen per scen för att kunna flytta dem. */}
+            <AbsoluteFill data-scene={i}>
             <SceneThemeContext.Provider value={sceneTheme(scene)}>
             <SceneTransition
               startFrame={0}
@@ -171,6 +173,7 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
               {renderSceneAssets(scene, width / 1080)}
             </SceneTransition>
             </SceneThemeContext.Provider>
+            </AbsoluteFill>
           </Sequence>
         );
       })}

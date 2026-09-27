@@ -3,7 +3,7 @@ import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { useSafeArea } from "../safe-area";
 import { fadeSlideUp } from "../utils";
 import { colors, fonts, headlineScale } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import type { CtaScene as CtaSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
@@ -120,9 +120,9 @@ export const CtaSceneComponent: React.FC<{
         position: "relative",
       }}
     >
-      {isInline(scene, "headline") && headlineNode}
-      {isInline(scene, "subtitle") && subtitleNode}
-      {isInline(scene, "button") && buttonNode}
+      {inlineElement(scene, "headline", headlineNode)}
+      {inlineElement(scene, "subtitle", subtitleNode)}
+      {inlineElement(scene, "button", buttonNode)}
 
       {positionedElement(scene, "headline", headlineNode)}
       {subtitleNode && positionedElement(scene, "subtitle", subtitleNode)}

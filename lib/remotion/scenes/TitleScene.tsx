@@ -3,7 +3,7 @@ import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, fadeIn } from "../utils";
 import { colors, fonts, headlineScale } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import type { TitleScene as TitleSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
@@ -116,9 +116,9 @@ export const TitleSceneComponent: React.FC<{
         position: "relative",
       }}
     >
-      {showLine && isInline(scene, "line") && lineNode}
-      {isInline(scene, "headline") && headlineNode}
-      {isInline(scene, "subtitle") && subtitleNode}
+      {showLine && inlineElement(scene, "line", lineNode)}
+      {inlineElement(scene, "headline", headlineNode)}
+      {inlineElement(scene, "subtitle", subtitleNode)}
 
       {showLine && positionedElement(scene, "line", lineNode)}
       {positionedElement(scene, "headline", headlineNode)}

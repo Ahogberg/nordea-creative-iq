@@ -76,6 +76,34 @@ export function propsAt(layer: MotionLayer, t: number): LayerProperty[] {
   return LAYER_PROPERTIES.filter((p) => (layer.keyframes[p] ?? []).some((k) => same(k.t, t)));
 }
 
+/**
+ * Flyttar hela lagret (px i designskala) — rörelsen behålls, bara läget
+ * förskjuts. Saknar en axel keyframes får den en fast förskjutning.
+ */
+export function offsetLayer(layer: MotionLayer, dx: number, dy: number): MotionLayer {
+  const shift = (frames: Keyframe[] | undefined, d: number): Keyframe[] | undefined => {
+    if (Math.abs(d) < 0.5) return frames;
+    if (!frames || frames.length === 0) return [{ t: 0, v: round(d, 1) }];
+    return frames.map((k) => ({ ...k, v: round(k.v + d, 1) }));
+  };
+  const keyframes = { ...layer.keyframes };
+  const x = shift(layer.keyframes.x, dx);
+  const y = shift(layer.keyframes.y, dy);
+  if (x) keyframes.x = x;
+  if (y) keyframes.y = y;
+  return { ...layer, keyframes };
+}
+
+/** Skalar hela lagret med en faktor — skalrörelsen behålls. */
+export function scaleLayer(layer: MotionLayer, factor: number): MotionLayer {
+  const frames = layer.keyframes.scale;
+  const scale =
+    !frames || frames.length === 0
+      ? [{ t: 0, v: round(factor, 3) }]
+      : frames.map((k) => ({ ...k, v: round(k.v * factor, 3) }));
+  return { ...layer, keyframes: { ...layer.keyframes, scale } };
+}
+
 export function easeAt(layer: MotionLayer, t: number): KeyframeEase {
   for (const p of LAYER_PROPERTIES) {
     const k = (layer.keyframes[p] ?? []).find((f) => same(f.t, t));
