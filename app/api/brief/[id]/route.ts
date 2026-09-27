@@ -40,7 +40,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     // Id och ägare ändras aldrig via PUT.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const { id: _id, created_by: _owner, created_at: _created, ...updates } = body ?? {};
 
     const db = await requireDb();

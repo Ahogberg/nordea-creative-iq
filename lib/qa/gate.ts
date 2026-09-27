@@ -6,7 +6,6 @@
 
 import type {
   QAReport,
-  QAStatus,
   RunQARequest,
   ProductCategory,
 } from "./types";
@@ -14,7 +13,7 @@ import { runPersonaJury } from "./persona-jury";
 import { runToVScorer } from "./tov-scorer";
 import { runComplianceCheck } from "./compliance";
 import { runHeatmapPrediction } from "./heatmap";
-import { DEFAULT_THRESHOLDS } from "./thresholds";
+import { scoreQA } from "./scoring";
 import { detectProductFromText } from "../product-detection";
 
 type ReportPayload = Omit<QAReport, "id" | "created_at">;
@@ -56,57 +55,12 @@ export async function runQAGate(request: RunQARequest): Promise<ReportPayload> {
     }),
   ]);
 
-  const weights = DEFAULT_THRESHOLDS.weights;
-  const heatmap_score = heatmap?.attention_score ?? 75; // copy-only baseline
-
-  const total_score = Math.round(
-    persona_jury.aggregate_score * weights.persona +
-      tov.weighted_score * weights.tov +
-      compliance.score * weights.compliance +
-      heatmap_score * weights.heatmap
-  );
-
-  // Status: blocking compliance always wins
-  let status: QAStatus;
-  if (compliance.blocking_count > 0) {
-    status = "fail";
-  } else if (total_score >= DEFAULT_THRESHOLDS.pass) {
-    status = "pass";
-  } else if (total_score >= DEFAULT_THRESHOLDS.warn) {
-    status = "warn";
-  } else {
-    status = "fail";
-  }
-
-  const blocking_issues: string[] = [];
-  const warnings: string[] = [];
-  const suggestions: string[] = [];
-
-  for (const check of compliance.checks) {
-    if (check.passed) continue;
-    const text = check.fix_suggestion
-      ? `${check.rule_label}: ${check.detail}. ${check.fix_suggestion}`
-      : `${check.rule_label}: ${check.detail}`;
-    if (check.severity === "blocking") blocking_issues.push(text);
-    else if (check.severity === "warning") warnings.push(text);
-  }
-
-  for (const ex of tov.examples) {
-    suggestions.push(`[ToV/${ex.pillar}] ${ex.issue} → ${ex.suggestion}`);
-  }
-
-  // Suggestions from the lowest-scoring persona (most actionable feedback)
-  const sortedPersonas = [...persona_jury.scores].sort(
-    (a, b) => a.weighted_score - b.weighted_score
-  );
-  const lowest = sortedPersonas[0];
-  if (lowest) {
-    for (const obj of lowest.objections.slice(0, 3)) {
-      suggestions.push(`[${lowest.persona_name}] ${obj}`);
-    }
-  }
-
-  if (heatmap) warnings.push(...heatmap.warnings);
+  const { status, total_score, blocking_issues, warnings, suggestions } = scoreQA({
+    persona_jury,
+    tov,
+    compliance,
+    heatmap,
+  });
 
   return {
     status,

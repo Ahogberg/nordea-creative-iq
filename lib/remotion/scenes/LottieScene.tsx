@@ -31,11 +31,12 @@ export const LottieSceneComponent: React.FC<{
 
   const [handle] = useState(() => delayRender("Loading Lottie animation"));
   const [animationData, setAnimationData] = useState<LottieAnimationData | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [fetchError, setLoadError] = useState<string | null>(null);
+  // Saknad URL är ett fel i sig — härlett, så effekten inte behöver sätta state.
+  const loadError = url ? fetchError : "Ingen animation-URL angiven";
 
   useEffect(() => {
     if (!url) {
-      setLoadError("Ingen animation-URL angiven");
       continueRender(handle);
       return;
     }

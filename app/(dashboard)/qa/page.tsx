@@ -364,7 +364,7 @@ function Report({ run }: { run: RunDetail }) {
                       </span>
                     </div>
                     <div className="text-[11px] text-nordea-text-secondary italic leading-relaxed">
-                      &ldquo;{p.reaction_quote}&rdquo;
+                      &rdquo;{p.reaction_quote}&rdquo;
                     </div>
                   </div>
                 );

@@ -41,7 +41,7 @@ function getStoredUser(): { email: string; fullName: string } {
 
 export default function SettingsPage() {
   const [fullName, setFullName] = useState(() => getStoredUser().fullName);
-  const [email, setEmail] = useState(() => getStoredUser().email);
+  const [email] = useState(() => getStoredUser().email);
   const [department, setDepartment] = useState('Marketing');
   const [language, setLanguage] = useState('sv');
   const [notifications, setNotifications] = useState(true);
@@ -49,6 +49,9 @@ export default function SettingsPage() {
   const [autoLocalizeMarkets, setAutoLocalizeMarkets] = useState<string[]>([]);
 
   useEffect(() => {
+    // localStorage finns bara i webbläsaren: läses efter hydrering så att
+    // server- och klientrenderingen börjar lika.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAutoLocalizeMarkets(getUserPrefs().autoLocalizeMarkets);
   }, []);
 

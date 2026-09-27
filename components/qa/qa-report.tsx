@@ -144,7 +144,7 @@ export function QAReportView({
                 </div>
               </div>
               <p className="text-xs text-white/60 italic mb-3">
-                "{score.reaction_quote}"
+                &rdquo;{score.reaction_quote}&rdquo;
               </p>
               <div className="grid grid-cols-3 gap-2 text-xs text-white/50 mb-3">
                 <div>Hook {score.hook_score}/10</div>

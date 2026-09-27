@@ -109,6 +109,23 @@ export function compileCanvasComponentWithScope(
   return compileComponent(compiledJs, { ...buildScope(), ...overrides } as ScopeRecord);
 }
 
+// Kompilerade scener per källkod. Begränsad storlek så att en lång session
+// med många AI-omskrivningar inte växer obegränsat.
+const COMPILE_CACHE = new Map<string, SceneComponent | null>();
+const COMPILE_CACHE_MAX = 64;
+
+function compileCached(compiledJs: string): SceneComponent | null {
+  const hit = COMPILE_CACHE.get(compiledJs);
+  if (hit !== undefined) return hit;
+  const compiled = compileComponent(compiledJs, buildScope());
+  if (COMPILE_CACHE.size >= COMPILE_CACHE_MAX) {
+    const oldest = COMPILE_CACHE.keys().next().value;
+    if (oldest !== undefined) COMPILE_CACHE.delete(oldest);
+  }
+  COMPILE_CACHE.set(compiledJs, compiled);
+  return compiled;
+}
+
 function compileComponent(compiledJs: string, scope: ScopeRecord): SceneComponent | null {
   try {
     const names = Object.keys(scope);
@@ -138,10 +155,9 @@ export const CanvasSceneComponent: React.FC<{
   const scale = width / 1080;
   const safe = useSafeArea();
 
-  const SceneComponent = useMemo(() => {
-    if (!scene.compiledJs) return null;
-    return compileComponent(scene.compiledJs, buildScope());
-  }, [scene.compiledJs]);
+  // Samma kod ger samma komponent (modulcache), så React ser en stabil typ
+  // mellan renderingar och miniatyrer delar på kompileringen.
+  const SceneComponent = scene.compiledJs ? compileCached(scene.compiledJs) : null;
 
   const layout = scene.headline ? (scene.illustrationLayout ?? "illustration-top") : "fill";
   const layers = useMemo(() => ({ layers: scene.layers ?? [], scale }), [scene.layers, scale]);
@@ -162,6 +178,7 @@ export const CanvasSceneComponent: React.FC<{
       drawing ?? (
         <CanvasErrorBoundary scale={scale}>
           <LayersContext.Provider value={layers}>
+            {/* eslint-disable-next-line react-hooks/static-components -- komponenten kommer ur compileCached(): samma källkod ger samma referens */}
             {SceneComponent && <SceneComponent width={width} height={height} scale={scale} safe={safe} />}
           </LayersContext.Provider>
         </CanvasErrorBoundary>
@@ -191,6 +208,7 @@ export const CanvasSceneComponent: React.FC<{
           <CanvasErrorBoundary scale={scale}>
             <LayersContext.Provider value={layers}>
               {SceneComponent && (
+                // eslint-disable-next-line react-hooks/static-components -- stabil referens ur compileCached()
                 <SceneComponent width={width} height={illustrationHeight} scale={scale} safe={NO_INSETS} />
               )}
             </LayersContext.Provider>

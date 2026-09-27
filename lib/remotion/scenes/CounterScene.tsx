@@ -9,7 +9,6 @@ import { DEFAULT_MOTION_CONFIG } from "../types";
 import { CountingNumber } from "../animations/CountingNumber";
 import { useSceneTheme } from "../theme";
 
-const FPS = 30;
 
 /**
  * Element IDs for per-element transforms: "label", "value", "description"

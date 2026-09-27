@@ -157,7 +157,7 @@ export function StockSearch({ onSelect }: StockSearchProps) {
 
       {!loading && !error && results.length === 0 && query && (
         <div className="text-sm text-white/40 text-center py-8">
-          Inga resultat för "{query}". Prova andra sökord.
+          Inga resultat för &rdquo;{query}&rdquo;. Prova andra sökord.
         </div>
       )}
     </div>
