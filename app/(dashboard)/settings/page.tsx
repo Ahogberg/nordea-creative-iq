@@ -77,7 +77,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-nordea-bg">
       <Topbar breadcrumb={['System', 'Inställningar']} />
-      <div className="px-8 py-8 max-w-3xl mx-auto space-y-6">
+      <div className="px-8 py-8 max-w-[1400px] mx-auto space-y-6 *:max-w-3xl">
       <PageHeading
         eyebrow="System"
         title="Inställningar"

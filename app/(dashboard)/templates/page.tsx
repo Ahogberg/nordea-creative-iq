@@ -126,9 +126,13 @@ export default function TemplatesPage() {
         <PageHeading
           eyebrow="Bibliotek"
           title="Mallar"
-          description={`${templates.length} varumärkesgodkända ${templates.length === 1 ? 'layout' : 'layouter'}${
-            favorites.length > 0 ? ` · ${favorites.length} favoriter` : ''
-          } — utgångspunkten för massproduktion.`}
+          description={
+            templates.length === 0
+              ? 'Varumärkesgodkända layouter — utgångspunkten för massproduktion.'
+              : `${templates.length} varumärkesgodkända ${templates.length === 1 ? 'layout' : 'layouter'}${
+                  favorites.length > 0 ? ` · ${favorites.length} favoriter` : ''
+                } — utgångspunkten för massproduktion.`
+          }
         />
 
         {/* Filter row */}
