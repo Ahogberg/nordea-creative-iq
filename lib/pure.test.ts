@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { campaignStatus, formatRelative } from "./campaign-status";
 import { greetingName, userDisplay } from "./auth/user-display";
 import { summarize } from "./audience/aggregate";
+import { videoExportAvailability } from "./render/availability";
 
 describe("campaignStatus", () => {
   it("ger etikett och ton per status", () => {
@@ -57,5 +58,17 @@ describe("summarize", () => {
 
   it("tom lista ger nollor i stället för NaN", () => {
     expect(summarize([])).toEqual({ mean: 0, min: 0, max: 0, sd: 0, n: 0 });
+  });
+});
+
+describe("videoExportAvailability", () => {
+  it("renderar lokalt som standard", () => {
+    expect(videoExportAvailability({})).toEqual({ available: true });
+  });
+
+  it("säger nej på Vercel, när det är avstängt och för Lambda", () => {
+    expect(videoExportAvailability({ VERCEL: "1" }).available).toBe(false);
+    expect(videoExportAvailability({ RENDER_BACKEND: "disabled" }).available).toBe(false);
+    expect(videoExportAvailability({ RENDER_BACKEND: "LAMBDA" }).available).toBe(false);
   });
 });

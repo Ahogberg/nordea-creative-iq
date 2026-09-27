@@ -13,7 +13,6 @@ import {
   Package,
   CheckCircle2,
   AlertCircle,
-  Eye,
   ArrowRight,
   Rocket,
   Copy as CopyIcon,
@@ -25,11 +24,15 @@ import { SectionTitle } from '@/components/layout/section-title';
 import { PageHeading } from '@/components/layout/page-heading';
 import { EmptyState } from '@/components/ui/states';
 import { CreativeThumbnail } from '@/components/preview/creative-thumbnail';
+import { RenderNotice } from '@/components/ui/render-notice';
+import { useVideoExportAvailability } from '@/lib/render/use-availability';
+import { toast } from 'sonner';
 
 function ProduceContent() {
   const searchParams = useSearchParams();
   const templateId = searchParams.get('template');
 
+  const renderAvailability = useVideoExportAvailability();
   const [template, setTemplate] = useState<Template | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -115,11 +118,11 @@ function ProduceContent() {
         setActiveJob(job as ProductionJob);
       } else {
         const { error } = await res.json().catch(() => ({ error: 'Okänt fel' }));
-        alert(`Kunde inte starta produktion: ${error}`);
+        toast.error('Produktionen kunde inte starta', { description: error });
       }
     } catch (error) {
       console.error('Error starting production:', error);
-      alert('Kunde inte starta produktion. Försök igen.');
+      toast.error('Produktionen kunde inte starta', { description: 'Försök igen om en stund.' });
     } finally {
       setIsProducing(false);
     }
@@ -420,10 +423,13 @@ function ProduceContent() {
             </div>
           </div>
 
+          {renderAvailability?.available === false && (
+            <RenderNotice reason={renderAvailability.reason} className="mb-3" />
+          )}
           <button
             type="button"
             onClick={handleProduce}
-            disabled={isProducing || totalVideos === 0}
+            disabled={isProducing || totalVideos === 0 || renderAvailability?.available === false}
             className="nordea-btn nordea-btn-primary nordea-btn-lg nordea-btn-full"
           >
             {isProducing ? (
@@ -432,13 +438,6 @@ function ProduceContent() {
               <Rocket className="w-4 h-4" />
             )}
             {isProducing ? 'Startar produktion...' : `Producera ${totalVideos} videor`}
-          </button>
-          <button
-            type="button"
-            className="nordea-btn nordea-btn-ghost nordea-btn-sm nordea-btn-full"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            Förhandsgranska alla {totalVideos} miniatyrer
           </button>
         </div>
       </div>

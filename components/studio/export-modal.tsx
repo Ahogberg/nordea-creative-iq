@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { X, Download, Loader2, Check, AlertCircle } from "lucide-react";
+import { RenderNotice } from "@/components/ui/render-notice";
+import { useVideoExportAvailability } from "@/lib/render/use-availability";
 import {
   useStudioStore,
   ASPECT_RATIOS,
@@ -25,6 +27,7 @@ export function ExportModal({ open, onClose }: ExportModalProps) {
   const config = useStudioStore((s) => s.config);
   const currentAspect = config.format;
 
+  const renderAvailability = useVideoExportAvailability();
   const [selectedFormats, setSelectedFormats] = useState<Set<AspectRatio>>(
     new Set([currentAspect])
   );
@@ -246,6 +249,10 @@ export function ExportModal({ open, onClose }: ExportModalProps) {
           )}
         </div>
 
+        {!job && renderAvailability?.available === false && (
+          <RenderNotice reason={renderAvailability.reason} className="mx-5 mb-1" />
+        )}
+
         {!job && (
           <div className="flex items-center justify-end gap-2 p-5 border-t border-nordea-hairline">
             <button
@@ -258,7 +265,7 @@ export function ExportModal({ open, onClose }: ExportModalProps) {
             <button
               type="button"
               onClick={handleExport}
-              disabled={formatCount === 0}
+              disabled={formatCount === 0 || renderAvailability?.available === false}
               className="nordea-btn nordea-btn-primary nordea-btn-sm"
             >
               <Download className="w-4 h-4" />

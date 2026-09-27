@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireDb } from "@/lib/supabase/db";
+import { videoExportAvailability, renderUnavailableBody } from "@/lib/render/availability";
 import { calculateTotalVideos } from '@/lib/video-types';
 import { doProduction } from '@/lib/production/worker';
 
@@ -38,6 +39,11 @@ export async function POST(request: Request) {
     const db = await requireDb();
     if ("response" in db) return db.response;
     const { supabase, ownerId } = db;
+    // Rendera bara där det går — annars ett tydligt besked innan något skapas.
+    const render = videoExportAvailability();
+    if (!render.available) {
+      return NextResponse.json(renderUnavailableBody(render.reason), { status: 503 });
+    }
     const body = await request.json();
 
     if (!body?.template_id) {
