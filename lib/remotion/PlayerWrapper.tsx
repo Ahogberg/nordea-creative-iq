@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Player } from "@remotion/player";
+import { Player, type PlayerRef } from "@remotion/player";
 import { DynamicVideo } from "./DynamicVideo";
 import { FORMAT_PRESETS } from "./styles";
 import type { VideoConfig } from "./types";
@@ -15,6 +15,8 @@ interface PlayerWrapperProps {
   controls?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  /** Ger tillgång till spelaren (play/paus, sökning, bildrutehändelser). */
+  playerRef?: React.Ref<PlayerRef>;
 }
 
 export const MotionPlayer: React.FC<PlayerWrapperProps> = ({
@@ -24,6 +26,7 @@ export const MotionPlayer: React.FC<PlayerWrapperProps> = ({
   controls = false,
   className,
   style,
+  playerRef,
 }) => {
   const format = FORMAT_PRESETS[config.format] || FORMAT_PRESETS.story;
   const totalDuration = useMemo(
@@ -36,6 +39,7 @@ export const MotionPlayer: React.FC<PlayerWrapperProps> = ({
 
   return (
     <Player
+      ref={playerRef}
       component={DynamicVideo}
       inputProps={{ config }}
       durationInFrames={Math.max(totalDuration, 1)}

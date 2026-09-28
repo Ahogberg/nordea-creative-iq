@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
+import { videoExportAvailability, renderUnavailableBody } from "@/lib/render/availability";
 import { doProduction } from "@/lib/production/worker";
 import {
   calculateTotalVideos,
@@ -27,7 +28,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { config, formats, name } = RequestSchema.parse(body);
 
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
+    // Rendera bara där det går — annars ett tydligt besked innan något skapas.
+    const render = videoExportAvailability();
+    if (!render.available) {
+      return NextResponse.json(renderUnavailableBody(render.reason), { status: 503 });
+    }
 
     const templateName =
       name?.trim() ||
@@ -36,7 +44,7 @@ export async function POST(request: Request) {
     const { data: template, error: templateError } = await supabase
       .from("templates")
       .insert({
-        user_id: "default-user",
+        user_id: ownerId,
         name: templateName,
         description: "[Studio export] auto-generated for one-off render",
         config,
@@ -60,7 +68,7 @@ export async function POST(request: Request) {
     const { data: job, error: jobError } = await supabase
       .from("production_jobs")
       .insert({
-        user_id: "default-user",
+        user_id: ownerId,
         template_id: template.id,
         name: templateName,
         variants,

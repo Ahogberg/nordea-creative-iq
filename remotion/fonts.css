@@ -1,61 +1,61 @@
 /* Nordea Sans fonts for Remotion server-side rendering.
-   Paths are relative to the Remotion bundle's public dir. */
+   Relativa sökvägar så att webpack buntar filerna (absoluta /fonts/…\n   går inte att lösa i Remotions css-loader). */
 
 /* ---------- Nordea Sans Large ---------- */
 @font-face {
   font-family: 'Nordea Sans Large';
-  src: url('/fonts/nordea-sans-large/NordeaSansLarge-Light.woff2') format('woff2'),
-       url('/fonts/nordea-sans-large/NordeaSansLarge-Light.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-large/NordeaSansLarge-Light.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-large/NordeaSansLarge-Light.woff') format('woff');
   font-weight: 300; font-style: normal;
 }
 @font-face {
   font-family: 'Nordea Sans Large';
-  src: url('/fonts/nordea-sans-large/NordeaSansLarge-Regular.woff2') format('woff2'),
-       url('/fonts/nordea-sans-large/NordeaSansLarge-Regular.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-large/NordeaSansLarge-Regular.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-large/NordeaSansLarge-Regular.woff') format('woff');
   font-weight: 400; font-style: normal;
 }
 @font-face {
   font-family: 'Nordea Sans Large';
-  src: url('/fonts/nordea-sans-large/NordeaSansLarge-Medium.woff2') format('woff2'),
-       url('/fonts/nordea-sans-large/NordeaSansLarge-Medium.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-large/NordeaSansLarge-Medium.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-large/NordeaSansLarge-Medium.woff') format('woff');
   font-weight: 500; font-style: normal;
 }
 @font-face {
   font-family: 'Nordea Sans Large';
-  src: url('/fonts/nordea-sans-large/NordeaSansLarge-Bold.woff2') format('woff2'),
-       url('/fonts/nordea-sans-large/NordeaSansLarge-Bold.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-large/NordeaSansLarge-Bold.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-large/NordeaSansLarge-Bold.woff') format('woff');
   font-weight: 700; font-style: normal;
 }
 @font-face {
   font-family: 'Nordea Sans Large';
-  src: url('/fonts/nordea-sans-large/NordeaSansLarge-Black.woff2') format('woff2'),
-       url('/fonts/nordea-sans-large/NordeaSansLarge-Black.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-large/NordeaSansLarge-Black.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-large/NordeaSansLarge-Black.woff') format('woff');
   font-weight: 900; font-style: normal;
 }
 
 /* ---------- Nordea Sans Small ---------- */
 @font-face {
   font-family: 'Nordea Sans Small';
-  src: url('/fonts/nordea-sans-small/NordeaSansSmall-Light.woff2') format('woff2'),
-       url('/fonts/nordea-sans-small/NordeaSansSmall-Light.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-small/NordeaSansSmall-Light.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-small/NordeaSansSmall-Light.woff') format('woff');
   font-weight: 300; font-style: normal;
 }
 @font-face {
   font-family: 'Nordea Sans Small';
-  src: url('/fonts/nordea-sans-small/NordeaSansSmall-Regular.woff2') format('woff2'),
-       url('/fonts/nordea-sans-small/NordeaSansSmall-Regular.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-small/NordeaSansSmall-Regular.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-small/NordeaSansSmall-Regular.woff') format('woff');
   font-weight: 400; font-style: normal;
 }
 @font-face {
   font-family: 'Nordea Sans Small';
-  src: url('/fonts/nordea-sans-small/NordeaSansSmall-Medium.woff2') format('woff2'),
-       url('/fonts/nordea-sans-small/NordeaSansSmall-Medium.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-small/NordeaSansSmall-Medium.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-small/NordeaSansSmall-Medium.woff') format('woff');
   font-weight: 500; font-style: normal;
 }
 @font-face {
   font-family: 'Nordea Sans Small';
-  src: url('/fonts/nordea-sans-small/NordeaSansSmall-Bold.woff2') format('woff2'),
-       url('/fonts/nordea-sans-small/NordeaSansSmall-Bold.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-small/NordeaSansSmall-Bold.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-small/NordeaSansSmall-Bold.woff') format('woff');
   font-weight: 700; font-style: normal;
 }
 
@@ -63,13 +63,13 @@
    to the Small variant (used for body/UI). */
 @font-face {
   font-family: 'Nordea Sans';
-  src: url('/fonts/nordea-sans-small/NordeaSansSmall-Regular.woff2') format('woff2'),
-       url('/fonts/nordea-sans-small/NordeaSansSmall-Regular.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-small/NordeaSansSmall-Regular.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-small/NordeaSansSmall-Regular.woff') format('woff');
   font-weight: 400; font-style: normal;
 }
 @font-face {
   font-family: 'Nordea Sans';
-  src: url('/fonts/nordea-sans-small/NordeaSansSmall-Bold.woff2') format('woff2'),
-       url('/fonts/nordea-sans-small/NordeaSansSmall-Bold.woff') format('woff');
+  src: url('../public/fonts/nordea-sans-small/NordeaSansSmall-Bold.woff2') format('woff2'),
+       url('../public/fonts/nordea-sans-small/NordeaSansSmall-Bold.woff') format('woff');
   font-weight: 700; font-style: normal;
 }

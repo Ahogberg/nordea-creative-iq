@@ -1,0 +1,90 @@
+{
+  "ad_id": "9a635d11-128b-4aa3-8e4d-babba8900add",
+  "source_files": ["9a635d11-128b-4aa3-8e4d-babba8900add.mp4"],
+  "kind": "video",
+  "aspect_ratio": "4:5",
+  "product": "mortgage",
+  "layout": {
+    "archetype_hint": "illustration-center-rubrik-under / rubrik-med-slider",
+    "description": "Tre scener på en och samma ljusblå, enfärgade bakgrund med Nordea-logotypen fast överst i mitten under hela filmen. Scen 1 och 3: en isometrisk husillustration i mitten (ca 40–45 % av bildytan), centrerad rubrik (och i scen 1 en underrubrik) i nedre tredjedelen. Scen 2 är rent typografisk/UI-grafisk: centrerad rubrik i tre rader i övre halvan och under den en förenklad 'slider' (etikett, linje med rund knopp, tre skalvärden) som illustrerar kontantinsats. Ingen CTA-knapp, ingen URL, ingen disclaimer.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 3, "notes": "Mörkblå ordbild, ca 25 % av bredden, ca 8 % ned från överkanten. Fast i alla scener." },
+      { "element": "illustration", "position": "center", "approx_area_pct": 40, "notes": "Isometriskt hus med skugga, scen 1 (0–5 s) och scen 3 (10,5–15 s). I scen 3 är huset mindre och något högre upp." },
+      { "element": "headline", "position": "bottom-center", "approx_area_pct": 8, "notes": "Scen 1: 'Förstagångsköpare?' på ca 75 % höjd. Scen 3: två rader på ca 70 % höjd." },
+      { "element": "subline", "position": "bottom-center", "approx_area_pct": 4, "notes": "Scen 1: en rad direkt under rubriken, regular." },
+      { "element": "headline", "position": "top-center", "approx_area_pct": 18, "notes": "Scen 2: tre rader centrerat, ca 27–45 % höjd." },
+      { "element": "icon", "position": "center", "approx_area_pct": 15, "notes": "Scen 2: slider-grafik (etikett 'Kontantinsats' vänsterställd, horisontell linje, rund knopp, skalvärden 0 / 300 000 / 600 000) på ca 55–73 % höjd." }
+    ]
+  },
+  "color": {
+    "background": ["#E5EFFB"],
+    "text": ["#00007F"],
+    "accents": ["#1D00EA", "#90CDF9", "#0D9EF7", "#57AEF5", "#FBD9CA", "#FFFFFF"],
+    "notes": "Bakgrunden är en mycket ljus, kall blå (uppmätt #E5EFFB) — inte vit och inte någon av paletten; ljus variant av blått. Text och logotyp är mörk marinblå, uppmätt ca #000070–#00007F i glyferna, alltså mörkare än #0000A0 men ljusare än #00005E. Husets tak är en klar, nästan violett blå (#1D00EA) som tydligt avviker från Nordea Blue — mer mättad/elektrisk. Väggarna är ljusblå (#90CDF9) och klarblå (#0D9EF7), skorsten mellanblå (#57AEF5), fönster vita. Mynten och hjärtat är persika (uppmätt #F9D3CA, toppyta #FCE4E0) ≈ #FBD9CA. Skuggan under huset är gråblå (#D1D9EC). Ingen turkos CTA-färg förekommer. Svag horisontell banding i bakgrunden (kompression)."
+  },
+  "typography": {
+    "headline": { "font": "NordeaSansLarge", "weight": "bold", "case": "sentence", "approx_size_pct_of_height": 5.5, "max_lines": 3, "color": "#00007F" },
+    "body": { "font": "NordeaSansSmall", "weight": "regular", "case": "sentence", "approx_size_pct_of_height": 3.5, "max_lines": 1, "color": "#00007F" },
+    "notes": "Alla rubriker (\"Förstagångsköpare?\", \"Nu sänks kravet på kontantinsats för dig som köper bostad\", \"Räkna på hur mycket du har råd att köpa för\") är i ett enda fett snitt, ingen blandning av vikter inom rubriken. Underrubriken \"Så här får du råd att köpa bostad\" är regular. I slidern är etiketten \"Kontantinsats\" i medium/semibold och skalvärdena i regular, mindre (ca 2,5 % av höjden). All text centrerad utom slider-etiketten som är vänsterställd mot linjens startpunkt. Sentence case genomgående."
+  },
+  "imagery": {
+    "type": "isometric_illustration",
+    "illustration": {
+      "projection": "isometric",
+      "angle_deg": 30,
+      "shading": "flat",
+      "outline": "none",
+      "palette": ["#1D00EA", "#90CDF9", "#0D9EF7", "#57AEF5", "#FFFFFF", "#D1D9EC", "#FBD9CA", "#FCE4E0"],
+      "detail_level": "low",
+      "people": "none",
+      "motifs": ["hus med sadeltak", "skorsten", "takfönster med spröjs", "rundbågad dörr", "mynt", "hjärta som rök ur skorstenen"],
+      "composition": "Ett enda objekt (hus) centrerat, sett snett ovanifrån i isometrisk vy, gavel åt vänster och långsida åt höger. En mjuk, platt gråblå skuggyta på marken under och till höger. Sekundära objekt (två mynt, ett hjärta) placeras intill huset: mynten till höger om husets bas, hjärtat ovanför taket vid skorstenen.",
+      "description": "Platt isometrisk illustration utan konturer. Varje yta har en egen solid ton (tak mörk elektrisk blå, gavel ljusblå, långsida klarblå, en tunn mellanblå kant på takfoten) — ingen gradient, ingen textur, skuggning sker enbart genom tonval per plan. Små detaljer i mörkblått: dörrkarm, fönsterkarm med tjockleksyta. Mynten är tjocka persikafärgade cylindrar (ellips med kantyta i något mörkare persika). Hjärtat är ett extruderat persika-hjärta med tjocklek, som en rökpuff. Enkel, leksaksaktig geometri, låg detaljnivå."
+    }
+  },
+  "motion": {
+    "duration_s": 15.1,
+    "hook_first_2s": "Huset och logotypen står redan i bild i första rutan (ingen tom start). Rubriken 'Förstagångsköpare?' tonar in vid ~0,25 s (halvtransparent) och är fullt synlig vid 0,5 s; underrubriken tonar in vid ~1,0 s och är fast vid 1,25 s. Vid 1,25 s faller ett persikafärgat mynt in uppifrån till höger om huset och landar vid husets bas till 1,5 s; ett andra mynt faller in från övre högra hörnet (syns vid 2,0 s nära logotypen) och landar delvis ovanpå det första (3,0 s). Hooken är alltså fråga-rubrik + 'myntregn' kring ett hus.",
+    "sequence": [
+      { "t_start": 0, "element": "logo", "animation": "Står stilla överst i mitten från första rutan till sista; ingen egen animation." },
+      { "t_start": 0, "t_end": 5.3, "element": "illustration", "animation": "Isometriskt hus står stilla i mitten från första rutan (ingen synlig uppbyggnad i rutorna)." },
+      { "t_start": 0.25, "t_end": 0.5, "element": "headline", "animation": "'Förstagångsköpare?' tonar in på plats (opacitet ca 60 % vid 0,25 s, full vid 0,5 s). Ingen synlig förflyttning." },
+      { "t_start": 1.0, "t_end": 1.25, "element": "subline", "animation": "'Så här får du råd att köpa bostad' tonar in på plats på samma sätt." },
+      { "t_start": 1.25, "t_end": 1.5, "element": "illustration", "animation": "Mynt 1 faller in uppifrån (syns ovanför taket vid 1,25 s) och landar på marken till höger om huset vid 1,5 s." },
+      { "t_start": 2.0, "t_end": 3.0, "element": "illustration", "animation": "Mynt 2 faller in från övre högra hörnet (vid logotypens höjd vid 2,0 s) och landar lutat ovanpå mynt 1 vid 3,0 s." },
+      { "t_start": 4.5, "t_end": 5.5, "element": "illustration", "animation": "Hus, mynt, rubrik och underrubrik tonar ut samtidigt (ca 30 % opacitet vid 5,0 s); logotypen står kvar." },
+      { "t_start": 5.5, "t_end": 6.0, "element": "headline", "animation": "Scen 2: 'Nu sänks kravet på kontantinsats för dig som köper bostad' fullt synlig vid 6,0 s; inkommandet ligger mellan rutorna 5 och 6 s (troligen intoning)." },
+      { "t_start": 6.0, "t_end": 9.0, "element": "icon", "animation": "Slider 'Kontantinsats': knoppen står vid 0 vid 6,0 s, har glidit till ca 575 000 vid 7,0 s, backar till ca 450 000 vid 8,0 s och landar på 300 000 vid 9,0 s. Linje och skalvärden står stilla." },
+      { "t_start": 9.5, "t_end": 10.5, "element": "headline", "animation": "Scen 2 tonar ut förskjutet: rubriken är nästan borta vid 10,0 s medan etikett, slider och skalvärden fortfarande är ca 50 % synliga — rubriken lämnar först." },
+      { "t_start": 10.5, "t_end": 11.0, "element": "illustration", "animation": "Scen 3: huset är tillbaka, mindre och något högre upp än i scen 1; rubrik 'Räkna på hur mycket du har råd att köpa för' fullt synlig vid 11,0 s. Hur de kom in syns inte (mellan 10 och 11 s)." },
+      { "t_start": 11.0, "t_end": 13.1, "element": "illustration", "animation": "Ett persika-hjärta stiger upp bakom taket vid skorstenen som en rökpuff: halvtransparent och delvis dolt av taket vid 11,0 s, större och högre vid 12,0 s, helt opakt vid 13,0–13,1 s." },
+      { "t_start": 13.1, "t_end": 14.6, "element": "illustration", "animation": "Hjärtat fortsätter uppåt och tonar bort (spöklikt vid 13,6 s, nästan borta vid 14,1 s)." },
+      { "t_start": 14.6, "t_end": 15.05, "element": "headline", "animation": "Hus och rubrik tonar ut; i sista rutan (15,05 s) står bara bakgrund och logotyp kvar (sannolikt loop-punkt tillbaka till början)." }
+    ],
+    "logo_reveal": "Ingen reveal — logotypen står stilla överst i mitten i varje ruta från 0 s till 15,05 s.",
+    "text_animation": "All text tonar in som hela block på plats (ingen ord-för-ord-stagger och ingen synlig glidning i rutorna). Rubrik först, underrubrik ca 0,75 s senare. Utgångar är intoningar i omvänd ordning; i scen 2 lämnar rubriken före slidern (förskjuten uttoning).",
+    "cta_reveal": "Ingen CTA-knapp. Sista scenens rubrik 'Räkna på hur mycket du har råd att köpa för' fungerar som uppmaning och kommer in som vanlig rubrik (intoning mellan 10 och 11 s).",
+    "transitions": "Scenbyten via uttoning till tom bakgrund (bara logotypen kvar) och intoning av nästa scen — ingen hård klipp, ingen slide. Bakgrundsfärgen byts aldrig.",
+    "illustration_animation": "Huset i sig animeras inte (varken uppbyggnad, skalning eller rotation syns i rutorna). Rörelsen ligger i sekundära objekt: mynt som faller in uppifrån och landar vid huset, och ett hjärta som stiger ur skorstenen som rök och tonar bort. Slidern i scen 2 är en UI-liknande animation där knoppen glider fram och tillbaka.",
+    "pacing": "calm",
+    "end_card": "Inget separat end card med CTA/URL. Sista scenen är hus + 'Räkna på hur mycket du har råd att köpa för'; sista rutan är tom ljusblå bakgrund med endast logotypen."
+  },
+  "copy": {
+    "headline": "Förstagångsköpare?",
+    "body": "Så här får du råd att köpa bostad / Nu sänks kravet på kontantinsats för dig som köper bostad / Kontantinsats 0 300 000 600 000",
+    "cta": "Räkna på hur mycket du har råd att köpa för",
+    "pattern": "Fråga till målgruppen ('Förstagångsköpare?') + löfte ('Så här får du råd att köpa bostad') → nyhet med datavisualisering (sänkt krav på kontantinsats, slider) → mjuk uppmaning att räkna själv. Ingen disclaimer."
+  },
+  "observations": [
+    "Produkten (bolån/bostadsköp, 'mortgage') är härledd från innehållet (förstagångsköpare, kontantinsats, köpa bostad) — manifestet saknar produkt/kanal/år.",
+    "Ljus variant: ljusblå bakgrund (#E5EFFB) med mörkblå text/logotyp i stället för Nordeas blå bakgrund med vit text. Textfärgen är mörkare än #0000A0.",
+    "Tre-scensstruktur på 15 s: hook (fråga + illustration) → faktabudskap med UI-animation (slider) → uppmaning med samma illustration (återkoppling till scen 1).",
+    "Samma hus återanvänds i scen 1 och 3, men mindre och förskjutet i scen 3 — ger kontinuitet utan att bara upprepa.",
+    "Slidern är en förenklad, platt UI-komponent (linje + rund knopp, skalvärden i kronor utan 'kr') — en kalkylatormetafor snarare än ett diagram. Knoppens rörelse (0 → nästan max → 300 000) tolkas inte i copy; det framgår inte av rutorna vad exakt värdena betyder.",
+    "Ingen person, inget foto, ingen CTA-knapp, ingen URL och ingen disclaimer — trots att budskapet handlar om kontantinsatskrav.",
+    "Allt kan byggas med enfärgad bakgrund + vektorgrafik. Det en renderare utan illustrationsstöd inte kan återskapa: isometriska objekt med flera toner per plan, objekt som faller in och landar, samt ett hjärta som stiger och tonar bort bakom taket (maskning mot takkanten).",
+    "Rutan vid 15,05 s är tom förutom logotypen, vilket tyder på att filmen är gjord för att loopa (början har huset redan i bild, så loopen är inte sömlös)."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

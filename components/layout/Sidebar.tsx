@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
+import type { UserDisplay } from '@/lib/auth/user-display';
 
 interface NavItem {
   name: string;
@@ -78,7 +79,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-export function Sidebar() {
+export function Sidebar({ user }: { user: UserDisplay }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -135,11 +136,11 @@ export function Sidebar() {
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0000A0]">
             <div className="w-9 h-9 rounded-lg bg-[#0000A0] flex items-center justify-center text-white text-sm font-medium shrink-0">
-              AH
+              {user.initials}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-gray-900 truncate">Andreas H.</p>
-              <p className="text-xs text-gray-500 truncate">Nordea Marketing</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+              <p className="text-xs text-gray-500 truncate">{user.email || 'Nordea Marketing'}</p>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" className="w-56">

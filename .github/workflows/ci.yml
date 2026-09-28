@@ -1,0 +1,32 @@
+# Kontroller på varje push och pull request: typer, lint och enhetstester.
+# Bygget körs av Vercel på samma PR; här fångas det bygget hoppar över
+# (next.config.ts har ignoreBuildErrors eftersom Next 16:s typkontroll
+# tar slut på minne i bygget).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Typer
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Enhetstester
+        run: npm run test

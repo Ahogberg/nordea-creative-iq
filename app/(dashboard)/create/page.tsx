@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
   Layers,
 } from "lucide-react";
+import { Topbar } from "@/components/layout/topbar";
 
 interface Shortcut {
   id: string;
@@ -24,29 +25,29 @@ const SHORTCUTS: Shortcut[] = [
   {
     id: "copy",
     icon: Type,
-    title: "Annontext",
-    description: "Skriv rubriker, brödtext och CTA:er",
+    title: "Copy Studio",
+    description: "Rubriker, brödtext och CTA:er i Nordeas ton",
     mode: "copy",
   },
   {
     id: "video",
     icon: Video,
-    title: "Video",
-    description: "Skapa motion graphics med scen-baserad editor",
+    title: "Motion Studio",
+    description: "Video i scener, med AI-chatt bredvid",
     mode: "video",
   },
   {
     id: "analyze",
     icon: ImageIcon,
-    title: "Analysera annons",
-    description: "Persona-feedback på text och bild",
+    title: "Ad Studio",
+    description: "Granska en annons med personas och uppmärksamhetskarta",
     mode: "analyze",
   },
   {
     id: "brief",
     icon: FileText,
     title: "Från brief",
-    description: "Importera brief → komplett kampanj",
+    description: "Idé eller brief → strategi och kampanj",
     mode: "brief",
   },
   {
@@ -81,7 +82,8 @@ export default function CreatePage() {
   };
 
   return (
-    <div className="main-content">
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar breadcrumb={["Skapa"]} />
       <div className="max-w-4xl mx-auto py-12 px-4">
         <div className="text-center mb-12">
           <h1 className="nordea-display text-4xl text-nordea-deep mb-3">
@@ -111,7 +113,7 @@ export default function CreatePage() {
               type="button"
               onClick={handleGenerate}
               disabled={!prompt.trim() || isGenerating}
-              className="absolute bottom-4 right-4 w-10 h-10 bg-nordea-teal hover:bg-nordea-teal-hover text-nordea-deep rounded-xl flex items-center justify-center disabled:opacity-30 transition-colors"
+              className="absolute bottom-4 right-4 w-10 h-10 bg-nordea-blue hover:bg-[#000080] text-white rounded-xl flex items-center justify-center disabled:opacity-30 transition-colors"
               title="Generera (⌘+Enter)"
             >
               <Sparkles className="w-5 h-5" />
@@ -140,7 +142,7 @@ export default function CreatePage() {
                 onClick={() => handleShortcut(s.mode)}
                 className="group bg-white border border-nordea-border rounded-xl p-5 text-left hover:border-nordea-blue/30 hover:shadow-md transition-all"
               >
-                <div className="w-10 h-10 bg-nordea-teal/10 text-nordea-teal rounded-lg flex items-center justify-center mb-4 group-hover:bg-nordea-teal/15">
+                <div className="w-10 h-10 bg-nordea-blue-soft text-nordea-blue rounded-lg flex items-center justify-center mb-4">
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="flex items-start justify-between mb-1">

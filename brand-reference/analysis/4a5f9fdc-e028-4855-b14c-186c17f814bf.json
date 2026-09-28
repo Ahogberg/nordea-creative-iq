@@ -1,0 +1,79 @@
+{
+  "ad_id": "4a5f9fdc-e028-4855-b14c-186c17f814bf",
+  "source_files": ["4a5f9fdc-e028-4855-b14c-186c17f814bf.mp4"],
+  "kind": "video",
+  "aspect_ratio": "9:16",
+  "layout": {
+    "archetype_hint": "liten-illustration-vanster-over-centrerad-text + färgbyte-via-illustration",
+    "description": "Enfärgad grafisk bakgrund hela filmen, inget foto. Logga top-center ca 17 % ned. En liten illustrerad färgburk (ca 16 % av bredden) ligger vänsterställd strax ovanför mitten (ca 31–43 % höjd), med vänsterkanten i linje med rubrikens vänsterkant. Rubriken är centrerad direkt under burken (ca 50 %). Nedre ca 45 % av ytan är tom. Scen 1 är blå med vit text; färg rinner ut ur burken, täcker hela bilden och gör bakgrunden persikofärgad. Scen 2 har samma layout men blå logga/text på persika och en tre-radig brödtext i stället för rubriken (ca 45–55 %).",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 2, "notes": "Ordmärke ca 29 % av bredden, ca 17 % ned. Vit på blått, blått på persika." },
+      { "element": "illustration", "position": "middle-left", "approx_area_pct": 4, "notes": "Färgburk ca 31–43 % höjd, x ca 13–28 %. Vid färgflödet växer en pöl ut från burken och täcker till slut hela bilden." },
+      { "element": "headline", "position": "center", "approx_area_pct": 5, "notes": "Scen 1: en rad centrerad, ca 50 % höjd." },
+      { "element": "body", "position": "center", "approx_area_pct": 9, "notes": "Scen 2: tre rader centrerade, ca 45–55 % höjd." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0", "#F3B9AB"],
+    "text": ["#FFFFFF", "#0000A0"],
+    "accents": ["#F3B9AB", "#16A3FB", "#E3F4FE"],
+    "notes": "Scen 1: Nordea-blå (mäts #01009A–#000091 i JPEG, tolkad som #0000A0) med vit logga och vit rubrik. Scen 2: persika — men tydligt mörkare och mer mättad/laxrosa än palettens #FBD9CA; uppmätt #F3B9AB konsekvent över flera rutor, därför anges det faktiska värdet. På persikan är logga och brödtext Nordea-blå #0000A0. Färgburken: ljust isblå kropp #E3F4FE, klarblå kant #16A3FB (inte i Nordeas palett), persikofärgad färg inuti och som droppe på utsidan, vit högdager-rand. Färgen i burken och pölen är exakt samma persika som scen 2:s bakgrund — färgbytet är berättelsen."
+  },
+  "typography": {
+    "headline": { "font": "NordeaSansLarge", "weight": "bold", "case": "sentence", "approx_size_pct_of_height": 4, "max_lines": 1, "color": "#FFFFFF" },
+    "body": { "font": "NordeaSansLarge", "weight": "regular", "case": "sentence", "approx_size_pct_of_height": 3.5, "max_lines": 3, "color": "#0000A0" },
+    "notes": "Rubriken 'Dags att renovera?' är helt i bold. Brödtexten i scen 2 blandar regular och bold i samma mening: 'Det finns många **alternativ** för att **finansiera** din renovering.' — nyckelorden fetade. Brödtexten är nästan lika stor som rubriken och fungerar som 'svar' på frågan; teckensnittet ser ut som samma familj som rubriken (NordeaSansLarge regular/bold), men kan vara NordeaSansSmall — osäkert i den storleken."
+  },
+  "imagery": {
+    "type": "flat_illustration",
+    "illustration": {
+      "projection": "perspective",
+      "angle_deg": 20,
+      "shading": "flat",
+      "outline": "none",
+      "palette": ["#E3F4FE", "#16A3FB", "#F3B9AB", "#FFFFFF", "#0000A0"],
+      "detail_level": "low",
+      "people": "none",
+      "motifs": ["färgburk", "färgpöl", "färgdroppe", "renovering"],
+      "composition": "En ensam liten ikon-lik illustration vänsterställd ovanför rubriken, mycket negativ yta runt. Illustrationen blir sedan övergången: pölen expanderar över hela bilden.",
+      "description": "Öppen färgburk sedd lätt ovanifrån (ca 20°, enkel perspektivvy — inte isometrisk): cylinder i isblått med en klarblå oval kant, persikofärgad färg synlig i öppningen och en rinnande droppe längs utsidan, en vertikal vit högdager-rand till vänster, och en liten gråviolett skuggellips under burken. Inga konturer, platt färgläggning med max två toner per yta. Pölen är en organisk, rundad platt persikofärgad form med en ljusare reflexlinje, plus små separata droppar. I scen 2 har burkens insida blivit mörkblå (#0000A0) — färgen har 'runnit ut'."
+    }
+  },
+  "motion": {
+    "duration_s": 6.12,
+    "hook_first_2s": "Blå platta med bara loggan i första rutan; vid 0,25 s står färgburken och frågan 'Dags att renovera?' redan i bild. Från 0,5 s rinner persikofärgad färg ut under burken och pölen växer stadigt — vid 1,5–2,0 s täcker den rubriken och halva bilden. Hooken är rörelsen: färgen som väller ut.",
+    "sequence": [
+      { "t_start": 0, "element": "logo", "animation": "Vit logga top-center syns från första rutan; statisk position hela filmen. Byter färg till blått när bakgrunden blir persika." },
+      { "t_start": 0, "t_end": 0.25, "element": "illustration", "animation": "Färgburken dyker upp mellan 0 och 0,25 s (fullt synlig vid 0,25 s, hur den kommer in syns inte — pop/snabb fade)." },
+      { "t_start": 0, "t_end": 0.25, "element": "headline", "animation": "'Dags att renovera?' dyker upp samtidigt med burken, full opacitet redan vid 0,25 s." },
+      { "t_start": 0.5, "t_end": 1.25, "element": "illustration", "animation": "En persikofärgad pöl + två små droppar växer fram under burken (vid 0,5 s liten, vid 1,25 s större och sammanflytande)." },
+      { "t_start": 1.25, "t_end": 2, "element": "illustration", "animation": "Pölen expanderar organiskt åt höger/nedåt och glider in över rubriken (rubriken ligger bakom pölen, burken framför) — vid 2,0 s täcker den ca halva bildytan." },
+      { "t_start": 2, "t_end": 3, "element": "illustration", "animation": "Pölen fyller hela bilden — vid 3,0 s är bakgrunden persika och bara en vågformad blå rest syns i överkanten (flytande 'wipe' uppåt)." },
+      { "t_start": 2, "t_end": 3, "element": "body", "animation": "Scen 2-texten 'Det finns många alternativ för att finansiera din renovering.' står på plats vid 3,0 s; in-animationen syns inte mellan rutorna." },
+      { "t_start": 3, "t_end": 6.12, "element": "body", "animation": "Allt står stilla till slutet: persika bakgrund, blå logga, burk (nu med blå insida) och brödtext. Ingen ut-animation i rutorna." }
+    ],
+    "logo_reveal": "Ingen reveal — loggan finns från första rutan och ligger kvar på samma plats; färgen växlar från vit till blå i samband med bakgrundsbytet.",
+    "text_animation": "Rubriken är på plats redan vid 0,25 s (ingen synlig stagger). Övergången till scen 2 sker genom att pölen täcker rubriken; brödtexten finns sedan på plats. Exakt in-rörelse för text kan inte avgöras från rutorna.",
+    "cta_reveal": "Ingen CTA, ingen URL.",
+    "transitions": "Illustrationsdriven vätske-wipe: färgpölen växer ut från burken och fyller hela ytan, vilket byter bakgrund blå → persika (0,5–3,0 s). Ingen klipp- eller crossfade-övergång.",
+    "illustration_animation": "Burken står still; färgen 'spills' i form av en växande organisk blob med droppar, som blir hela bakgrunden. Burkens insida byter färg från persika till blå när färgen har runnit ut.",
+    "pacing": "calm",
+    "end_card": "Persika bakgrund #F3B9AB, blå logga top-center, färgburken kvar vänster, brödtext i blått med fetade nyckelord centrerat. Ingen CTA, URL eller disclaimer. Hålls ca 3 s."
+  },
+  "copy": {
+    "headline": "Dags att renovera?",
+    "body": "Det finns många alternativ för att finansiera din renovering.",
+    "pattern": "Fråga + svar: behovsfråga som rubrik ('Dags att renovera?'), sedan ett lugnt rådgivande svar med nyckelorden fetade. Ingen uppmaning."
+  },
+  "observations": [
+    "Produkt ej satt: annonsen handlar om finansiering av renovering men nämner inga produkter ('många alternativ') — kan vara lån, bolånehöjning eller sparande. Manifestet saknar data.",
+    "Bakgrunden är helt grafisk (enfärgad) — inget foto eller film. Allt kan i princip byggas med enfärgade plattor + vektorillustration.",
+    "Det ovanliga är att illustrationen själv driver scenövergången: en organisk vätskeform expanderar och blir nästa bakgrund. En renderare med bara klipp/crossfade/slide kan inte återskapa detta; det kräver en maskad form-morf (blob som skalar/morfar) eller Lottie.",
+    "Persikan (#F3B9AB) avviker tydligt från den dokumenterade #FBD9CA — antingen en annan variant av Nordeas persika eller komprimering; alla rutor ger samma värde.",
+    "Illustrationen är inte isometrisk utan en enkel frontal perspektivvy med lätt ovanifrån-vinkel, platt färgläggning utan konturer; den klarblå kanten #16A3FB är en färg utanför kärnpaletten.",
+    "Ingen CTA, URL eller juridisk text — ren awareness/behovsväckare.",
+    "Lugnt tempo: två budskap på 6 s, varav ca 3 s statiskt slutläge."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

@@ -1,0 +1,94 @@
+{
+  "ad_id": "7711d667-f7d0-4741-853f-92c5e77617a8",
+  "source_files": ["7711d667-f7d0-4741-853f-92c5e77617a8.mp4"],
+  "kind": "video",
+  "aspect_ratio": "4:5",
+  "product": "cards",
+  "year": 2026,
+  "layout": {
+    "archetype_hint": "rubrik-overst-produkt-mitt + isometrisk-illustration-rubrik-nederst + disclaimer-med-varningsband",
+    "description": "Tre scener på enfärgad Nordea-blå bakgrund, logga top-center (ca 7 % ned) hela tiden. Scen 1 (0–ca 2,5 s): rubrik i en rad centrerad högt upp (ca 22 %), underrubrik direkt under (ca 30 %), två utskurna kreditkort (guld framför, silver bakom, båda lätt roterade) centrerade i nedre halvan (ca 42–87 %). Scen 2 (ca 2,5–5,2 s): isometrisk illustration av flygplan, tåg och buss i blå toner i mitten (ca 17–65 %), rubrik i två rader centrerad under (ca 67–81 %). Scen 3 (ca 5,2–7 s): räntedisclaimer centrerad på blått (ca 34–56 %) och ett vitt band längst ned (nedre ca 20 %) med rött varningstriangel-ikon och Konsumentverkets 'Att låna kostar pengar!'-text i svart.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 3, "notes": "Vit ordmärke ca 29 % av bredden, ca 7 % ned; statisk i alla tre scener." },
+      { "element": "headline", "position": "top-center", "approx_area_pct": 6, "notes": "Scen 1: 'Res smart i sommar' en rad, ca 22 % höjd, nästan full bredd." },
+      { "element": "subline", "position": "top-center", "approx_area_pct": 3, "notes": "Scen 1: 'Betala med ditt kreditkort', ca 30 % höjd." },
+      { "element": "photo", "position": "center", "approx_area_pct": 30, "notes": "Scen 1: två utskurna produktbilder/renderingar av kreditkort med mjuk skugga på blått." },
+      { "element": "illustration", "position": "center", "approx_area_pct": 35, "notes": "Scen 2: isometriska fordon (flyg, tåg, buss) diagonalt arrangerade." },
+      { "element": "headline", "position": "bottom-center", "approx_area_pct": 9, "notes": "Scen 2: 'Få reseförsäkring / för familjen', ca 67–81 % höjd." },
+      { "element": "disclaimer", "position": "center", "approx_area_pct": 20, "notes": "Scen 3: räntedisclaimer, vit på blått." },
+      { "element": "disclaimer", "position": "bottom-center", "approx_area_pct": 20, "notes": "Scen 3: vitt fullbreddsband (nedre ca 20 %) med röd varningstriangel uppe till vänster och svart text." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0", "#FFFFFF"],
+    "text": ["#FBEDE8", "#FFFFFF", "#000000"],
+    "accents": ["#3D9BF5", "#0300ED", "#A5CEFC", "#8D0310"],
+    "notes": "Bakgrund Nordea-blå (mäts #010094 i JPEG, tolkad som #0000A0). Rubrikerna ('Res smart i sommar' och 'Få reseförsäkring för familjen') är ljust persika/krämfärgade (glyfkärnor ca #FBEDE8, tydligt varmare än den vita loggan); underrubriken ser också lätt krämig ut. Disclaimern på blått är vit. Scen 3 har ett rent vitt band (#FFFFFF) med svart text och en mörkröd varningstriangel (ca #8D0310) — enda stället med rött/svart, styrt av Konsumentverkets varningskrav. Korten: guld (ca #C9A06A–#E0BD8A) och silver (ca #C8C8CC) med Mastercard-logga i rött/orange. Illustrationen är monokrom blå: klarblå sidor #0300ED, ljusare blå toppar #3D9BF5, ljusblå fönster #A5CEFC, mörkare skugga ca #00007A."
+  },
+  "typography": {
+    "headline": { "font": "NordeaSansLarge", "weight": "bold", "case": "sentence", "approx_size_pct_of_height": 6, "max_lines": 2, "color": "#FBEDE8" },
+    "body": { "font": "NordeaSansSmall", "weight": "regular", "case": "sentence", "approx_size_pct_of_height": 3.3, "max_lines": 1, "color": "#FFFFFF" },
+    "notes": "Scen 1-rubriken 'Res smart i sommar' är helt bold. Scen 2-rubriken blandar vikter: 'Få' regular + 'reseförsäkring' bold på rad 1, 'för familjen' regular på rad 2 — nyckelordet fetat, samma storlek. Underrubriken regular, ca 55 % av rubrikstorleken. Räntedisclaimern: 'Gäller Nordea Gold' bold + brödtext regular, ca 2,8 % av höjden, centrerad. Varningsbandet: 'Att låna kostar pengar!' bold + resten regular, svart, vänsterställd, ca 1,7 % av höjden (typsnittet ser ut som NordeaSansSmall men kan vara ett systemtypsnitt — osäkert)."
+  },
+  "imagery": {
+    "type": "mixed",
+    "photo": {
+      "subject": "Två kreditkort som utskurna produktbilder/renderingar: ett guldfärgat Mastercard ('gold') framför och ett silverfärgat ('premium') bakom, båda med Nordeas stapelmönster präglat på kortytan, chip och kontaktlös-symbol. Placerade på Nordea-blå platta med mjuk skugga.",
+      "mood": "Premium, rent, produktfokuserat.",
+      "lighting": "Jämnt studioljus med mjuk metallisk gradient över korten och diffus skugga under; inga miljöelement."
+    },
+    "illustration": {
+      "projection": "isometric",
+      "angle_deg": 30,
+      "shading": "cel",
+      "outline": "none",
+      "palette": ["#0000A0", "#0300ED", "#3D9BF5", "#A5CEFC", "#FBEDE8"],
+      "detail_level": "medium",
+      "people": "none",
+      "motifs": ["flygplan", "tåg", "buss", "resa", "transport"],
+      "composition": "Tre fordon arrangerade diagonalt längs isometriska axlar från övre vänster till nedre höger: flygplan upptill vänster (flygande, snett uppåt vänster), långt tvådelat tåg i mitten, buss nedanför till höger. Mycket luft runt, rubriken under.",
+      "description": "Isometriska fordon (ca 30°) i ton-i-ton-blått på blå bakgrund: varje volym har en ljus topp (#3D9BF5), mättad klarblå sida (#0300ED) och mörkare front/skugga, utan konturlinjer. Fönster är ljusblå rektanglar (#A5CEFC) med diagonala vita reflexstreck. Små detaljer: takluckor, dörrar, strålkastare som persikofärgade/vita prickar, bussens destinationsskylt i persika. Flygplanet är en platt silhuett i ljusblå toner med en rad små mörkblå fönsterprickar och svag skugga. Mjuka mörkare skuggor under fordonen. Ren, modern vektorstil, medelhög detaljnivå, inga människor."
+    }
+  },
+  "motion": {
+    "duration_s": 7,
+    "hook_first_2s": "Första rutan är blå med bara loggan; vid 0,25 s står rubriken 'Res smart i sommar' och två staplade kort i bild, vid 0,5 s har korten fläkt ut sida vid sida, och vid 0,75 s har underrubriken 'Betala med ditt kreditkort' kommit in. Hooken är produkten (guld- och silverkort) som öppnar sig som en solfjäder.",
+    "sequence": [
+      { "t_start": 0, "element": "logo", "animation": "Statisk vit logga top-center i alla scener." },
+      { "t_start": 0, "t_end": 0.25, "element": "headline", "animation": "'Res smart i sommar' på plats redan vid 0,25 s med full opacitet (snabb in-animation eller pop — syns inte)." },
+      { "t_start": 0.25, "t_end": 0.5, "element": "photo", "animation": "Korten ligger först staplade (guldkortet framför och roterat, silverkortet bakom) och fläktar ut till sida vid sida mellan 0,25 och 0,5 s — guldkortet glider åt vänster, silverkortet åt höger, båda behåller lätt lutning." },
+      { "t_start": 0.5, "t_end": 0.75, "element": "subline", "animation": "'Betala med ditt kreditkort' dyker upp under rubriken (troligen fade)." },
+      { "t_start": 0.75, "t_end": 2.5, "element": "photo", "animation": "Scen 1 står stilla till minst 2,0 s." },
+      { "t_start": 2.5, "t_end": 3, "element": "illustration", "animation": "Scenbyte till isometrisk illustration mellan 2,0 och 3,0 s; typen av övergång syns inte. Vid 3,0 s står tåget i mitten och bussen till höger, rubriken 'Få reseförsäkring för familjen' är redan på plats." },
+      { "t_start": 3, "t_end": 4, "element": "illustration", "animation": "Flygplanet har flugit in uppe till vänster vid 4,0 s (fanns inte vid 3,0 s) och bussen har kört åt vänster längs sin isometriska axel (från x ca 80 % till ca 66 %) — fordon som rör sig in på plats längs axlarna. Tåget står still." },
+      { "t_start": 4.5, "t_end": 5.2, "element": "headline", "animation": "Rubriken glider ut åt vänster — vid 5,0 s är den delvis utanför vänsterkanten (slide-out left); illustrationen står kvar." },
+      { "t_start": 5.2, "t_end": 5.5, "element": "disclaimer", "animation": "Byte till disclaimer-scen (blå med vitt varningsband längst ned) mellan 5,0 och 5,5 s; troligen klipp efter att rubriken glidit ut. Står stilla till slutet." },
+      { "t_start": 5.5, "t_end": 7, "element": "disclaimer", "animation": "Räntedisclaimer + konsumentkreditvarning hålls statiskt i ca 1,5 s till filmens slut." }
+    ],
+    "logo_reveal": "Ingen reveal; statisk top-center genom alla scener.",
+    "text_animation": "Rubrik och underrubrik kommer in snabbt i början (inom 0,25 respektive 0,75 s, troligen fade). Scen 2-rubriken lämnar genom att glida ut åt vänster. Ingen ord-för-ord-stagger observerad.",
+    "cta_reveal": "Ingen CTA-knapp eller URL.",
+    "transitions": "Scen 1 → 2 mellan 2,0 och 3,0 s (typ syns inte). Scen 2 → 3: rubriken glider ut åt vänster (ca 4,5–5,2 s) följt av byte till disclaimer-scen — slide-ut + troligen klipp.",
+    "illustration_animation": "Korten fläktar ut från en stapel (0,25–0,5 s). I illustrationsscenen rör sig fordonen in längs isometriska axlar: bussen kör in från höger, flygplanet flyger in uppe till vänster; tåget ser statiskt ut i rutorna.",
+    "pacing": "medium",
+    "end_card": "Disclaimer-scen: Nordea-blått med vit logga, 'Gäller Nordea Gold' + räntevillkor centrerat, och ett vitt band längst ned med röd varningstriangel och svart konsumentkreditvarning. Ingen CTA."
+  },
+  "copy": {
+    "headline": "Res smart i sommar / Få reseförsäkring för familjen",
+    "body": "Betala med ditt kreditkort",
+    "disclaimer": "Gäller Nordea Gold\nRörlig kreditränta 14,50 % (effektiv ränta 17,02 %) med Vardagspaketet. Vid månadsavgift 45 kr, e-faktura och 50 000 kr nyttjad kredit med 12 mån återbetalning blir totalt belopp 56 465 kr. Årsränta per 2026-03-10.\n\nAtt låna kostar pengar! Om du inte kan betala tillbaka skulden i tid riskerar du en betalningsanmärkning. Det kan leda till svårigheter att få hyra bostad, teckna abonnemang och få nya lån. För stöd, vänd dig till budget- och skuldrådgivningen i din kommun. Kontaktuppgifter finns på konsumentverket.se",
+    "pattern": "Säsongsuppmaning + produkt ('Res smart i sommar' / 'Betala med ditt kreditkort') följt av en förmån med nyckelordet fetat ('Få reseförsäkring för familjen'); avslutas med obligatorisk räntedisclaimer och konsumentkreditvarning. Följer tonalitetsregeln att skriva 'kreditkort', inte 'kort'."
+  },
+  "observations": [
+    "Produkten är härledd från innehållet: kreditkort (Nordea Gold, 'Betala med ditt kreditkort', kreditränta) → 'cards'. Reseförsäkringen är en kortförmån, inte en egen produkt.",
+    "År 2026 är härlett från disclaimern ('Årsränta per 2026-03-10').",
+    "Bakgrunden är enfärgad Nordea-blå i alla scener (plus vitt varningsband i sista) — ingen foto- eller filmbakgrund.",
+    "Korten är utskurna produktbilder/renderingar på färgplatta (inte illustration): fotorealistisk metallyta, chip, präglat stapelmönster, Mastercard-logga, mjuk skugga. En renderare som bara har enfärgade scener behöver kunna placera en utskuren PNG och animera två lager (fläkta ut: position + rotation).",
+    "Illustrationsscenen är isometrisk (ca 30°) och monokrom i blåskalan — en ton-i-ton-stil där illustrationen smälter in i den blå bakgrunden. Rörelse längs isometriska axlar (buss som kör in, flyg som flyger in) kräver att delar av illustrationen animeras separat — kan inte göras med en platt stillbild.",
+    "Konsumentkreditvarningen visas som ett vitt band längst ned med röd varningstriangel och svart text — ett avvikande färgblock som bryter mot den blå designen och sannolikt är ett lagkrav som alltid ska med på kreditannonser.",
+    "Rubriker i ljust persika/krämfärg (#FBEDE8), inte rent vitt — samma behandling som i 76b3ac7a.",
+    "Tre budskap på 7 s ger ett rappare tempo än de andra annonserna; ingen CTA eller URL."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

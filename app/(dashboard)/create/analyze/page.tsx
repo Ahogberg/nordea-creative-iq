@@ -67,6 +67,10 @@ interface PersonaReaction {
   suggestion?: string;
   firstNoticed?: string;
   sawVisual?: boolean;
+  /** Exempelsvar (ingen AI-nyckel) — inte en riktig simulering. */
+  mock?: boolean;
+  /** Personan kunde inte svara — visas som fel, inte som en siffra. */
+  error?: string;
 }
 
 interface ChatMessage {
@@ -442,21 +446,25 @@ export default function AdStudioPage() {
           productCategory: product.category,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Personan kunde inte svara');
       setPersonaReaction({
-        impression: data.firstImpression || 'Intressant annons.',
-        wouldClick: data.wouldClick || 50,
+        impression: data.firstImpression || '',
+        wouldClick: data.wouldClick,
         objections: data.objections || [],
         whatWorked: data.whatWorked || undefined,
         suggestion: data.suggestion || undefined,
         firstNoticed: data.firstNoticed || undefined,
         sawVisual: data.sawVisual === true,
+        mock: data.simulation === 'mock',
       });
-    } catch {
+    } catch (err) {
+      // Inget påhittat svar vid fel — visa felet.
       setPersonaReaction({
-        impression: `Som ${selectedPersona.name.toLowerCase()} tycker jag att annonsen har ett tydligt budskap, men jag saknar konkret information om villkor och nästa steg.`,
-        wouldClick: 68,
-        objections: ['Vad kostar det?', 'Vad händer när jag klickar?'],
+        impression: '',
+        wouldClick: 0,
+        objections: [],
+        error: err instanceof Error ? err.message : 'Personan kunde inte svara',
       });
     } finally {
       setIsLoadingReaction(false);
@@ -702,8 +710,19 @@ export default function AdStudioPage() {
                 </div>
               )}
 
-              {personaReaction && selectedPersona && !isLoadingReaction && (
+              {personaReaction?.error && !isLoadingReaction && (
+                <div className="rounded-xl border border-nordea-rose/20 bg-nordea-rose-soft px-4 py-3 text-[13px] text-nordea-rose">
+                  Ingen reaktion: {personaReaction.error}
+                </div>
+              )}
+
+              {personaReaction && !personaReaction.error && selectedPersona && !isLoadingReaction && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  {personaReaction.mock && (
+                    <div className="text-[11px] font-medium text-nordea-amber bg-nordea-amber-soft rounded-md px-2.5 py-1.5">
+                      Exempelsvar — AI-nyckel saknas, detta är ingen simulering
+                    </div>
+                  )}
                   <div className="relative rounded-xl bg-nordea-bg px-4 py-3.5">
                     <Quote className="absolute -top-2 left-3 w-4 h-4 text-nordea-blue" />
                     <p className="text-[13px] text-nordea-text leading-relaxed">{personaReaction.impression}</p>

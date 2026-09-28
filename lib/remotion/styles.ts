@@ -69,6 +69,71 @@ export function getDimensions(
   };
 }
 
+// ── LOGGA ──
+// Uppmätt i Nordeas annonser (brand-reference/, 18 videor): ordmärkets bredd
+// i andel av bildbredden och glyfernas överkant i andel av bildhöjden.
+// Huvudklustret per format; 16:9 saknar underlag och är härlett ur 1:1.
+export const LOGO_ASPECT = 567 / 118; // public/images/nordea-logo-neg.png, tight bbox
+export const LOGO_LAYOUT: Record<keyof typeof FORMAT_PRESETS, { widthPct: number; topPct: number }> = {
+  story: { widthPct: 0.285, topPct: 0.157 },
+  vertical: { widthPct: 0.289, topPct: 0.048 },
+  feed: { widthPct: 0.231, topPct: 0.059 },
+  landscape: { widthPct: 0.13, topPct: 0.059 },
+};
+
+function formatFor(width: number, height: number): keyof typeof FORMAT_PRESETS {
+  const r = height / width;
+  if (r >= 1.6) return "story";
+  if (r >= 1.15) return "vertical";
+  if (r >= 0.8) return "feed";
+  return "landscape";
+}
+
+/** Loggans storlek och läge i px för en bildyta. `bottom` = underkant. */
+export function logoBox(width: number, height: number) {
+  const { widthPct, topPct } = LOGO_LAYOUT[formatFor(width, height)];
+  const w = width * widthPct;
+  const top = height * topPct;
+  return { width: w, top, bottom: top + w / LOGO_ASPECT };
+}
+
+/** Där innehållet under loggan kan börja (px): loggans underkant + luft. */
+export function contentTop(width: number, height: number): number {
+  return logoBox(width, height).bottom + height * 0.03;
+}
+
+// Fri marginal nertill, i andel av bildhöjden. 9:16: annonserna håller nedre
+// ca 20 % tomt (där ligger appens gränssnitt i stories/reels). Övriga format:
+// annonsernas lägsta text ligger runt 92 % av höjden.
+const BOTTOM_SAFE: Record<keyof typeof FORMAT_PRESETS, number> = {
+  story: 0.2,
+  vertical: 0.06,
+  feed: 0.06,
+  landscape: 0.06,
+};
+
+export interface SafeInsets {
+  /** Fri yta överst (px) — loggan plus luft. */
+  top: number;
+  /** Fri yta nertill (px) — formatets marginal eller juridisk text. */
+  bottom: number;
+}
+
+/**
+ * Säker yta för scenernas innehåll: under loggan och ovanför formatets
+ * nedre marginal eller den juridiska texten (det som ligger högst).
+ */
+export function safeInsets(
+  width: number,
+  height: number,
+  opts: { showLogo?: boolean; legalReserve?: number } = {}
+): SafeInsets {
+  const top = opts.showLogo === false ? height * 0.06 : contentTop(width, height);
+  const legal = opts.legalReserve ? opts.legalReserve + height * 0.02 : 0;
+  const bottom = Math.max(BOTTOM_SAFE[formatFor(width, height)] * height, legal);
+  return { top: Math.round(top), bottom: Math.round(bottom) };
+}
+
 // ── SAFE AREA ──
 export const safeArea = {
   top: 300,

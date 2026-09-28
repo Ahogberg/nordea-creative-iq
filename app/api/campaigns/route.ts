@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const auth = await requireUser();
-    if ("response" in auth) return auth.response;
-    const { supabase } = auth;
+    const db = await requireDb();
+    if ("response" in db) return db.response;
 
-    const { data, error } = await supabase
+    let query = db.supabase
       .from("campaigns")
       .select(
-        "id, name, status, brief_id, template_ids, master_creative_ids, created_at, updated_at"
+        "id, name, status, brief_id, template_ids, master_creative_ids, video_config, display_set, created_at, updated_at"
       )
-      .order("updated_at", { ascending: false });
+      .eq("created_by", db.ownerId);
+    const briefId = new URL(request.url).searchParams.get("brief_id");
+    if (briefId) query = query.eq("brief_id", briefId);
+    const { data, error } = await query.order("updated_at", { ascending: false }).limit(100);
 
     if (error) throw error;
     return NextResponse.json({ campaigns: data ?? [] });

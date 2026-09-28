@@ -18,12 +18,16 @@ import type {
   LogoConfig,
   ElementTransform,
   SceneAsset,
+  MotionLayer,
 } from "@/lib/remotion/types";
 import {
   DEFAULT_VIDEO_CONFIG,
   DEFAULT_MOTION_CONFIG,
   DEFAULT_ELEMENT_TRANSFORM,
 } from "@/lib/remotion/types";
+import { describeChanges } from "./describe-changes";
+import type { AudienceCompareResponse, AudienceTestResponse } from "@/lib/audience/types";
+import type { DisplaySet } from "@/lib/display/types";
 
 export type AspectRatio = VideoConfig["format"]; // 'story' | 'feed' | 'landscape' | 'vertical'
 
@@ -57,8 +61,113 @@ export interface Variant {
   full_config: VideoConfig;
 }
 
+// ── Chatt ──
+// Varje AI-svar sparar configen före ändringen så att det senaste svaret
+// kan ångras.
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  /** Hela texten som skickades till AI:n, när bubblan visar en kortare etikett. */
+  prompt?: string;
+  status: "pending" | "done" | "error";
+  /** Korta etiketter för vad som ändrades (describeChanges). */
+  changes?: string[];
+  /** Configen innan svaret tillämpades — för Ångra. */
+  before?: VideoConfig;
+  undone?: boolean;
+  /** Användarens text som svaret gäller — för Försök igen. */
+  retryText?: string;
+  startedAt?: number;
+  /** Självgranskningen av resultatet (körs automatiskt efter varje ändring). */
+  review?: ChatReview;
+  /** Fokusgruppstest eller före/efter-jämförelse. */
+  audience?: ChatAudience;
+}
+
+export type ChatAudience =
+  | { kind: "test"; status: "pending" | "done" | "error"; data?: AudienceTestResponse; error?: string }
+  | { kind: "compare"; status: "pending" | "done" | "error"; data?: AudienceCompareResponse; error?: string };
+
+export interface ChatReviewIssue {
+  severity: "error" | "warning" | "info";
+  message: string;
+  fixed: boolean;
+  source: "regel" | "visuell";
+}
+
+export interface ChatReview {
+  status: "pending" | "done" | "error";
+  issues?: ChatReviewIssue[];
+  /** Stillbilderna som granskades. */
+  frames?: Array<{ sceneIndex: number; seconds: number; src: string }>;
+  /** Rättningar tillämpades på videon. */
+  applied?: boolean;
+  /** Visuell granskning gjordes (annars bara regelkontroll). */
+  visual?: boolean;
+  /** Varför den visuella granskningen inte kördes, om den försöktes. */
+  visualError?: string | null;
+  error?: string;
+}
+
+export type InspectorTab = "scene" | "style" | "motion" | "assets" | "variants";
+
+/** Markerad keyframe i lagerspåret (alla egenskaper vid tiden t). */
+export interface SelectedKeyframe {
+  sceneIndex: number;
+  layerId: string;
+  t: number;
+}
+
 interface StudioState {
   config: VideoConfig;
+
+  // Chatt (Motion Studio-layouten)
+  messages: ChatMessage[];
+  isChatBusy: boolean;
+  /** Första utkastet genereras (från ?prompt) — scenen visar ett vänteläge. */
+  isDrafting: boolean;
+  inspectorTab: InspectorTab | null;
+  setInspectorTab: (tab: InspectorTab | null) => void;
+  startFromPrompt: (prompt: string) => Promise<void>;
+  /** `display` visas i bubblan i stället för en lång genererad text. */
+  sendChatMessage: (text: string, display?: string) => Promise<void>;
+  undoMessage: (id: string) => void;
+  retryMessage: (id: string) => Promise<void>;
+  clearChat: () => void;
+  /** Kör fokusgruppen på videon som den ser ut nu. */
+  runAudienceTest: () => Promise<void>;
+  /** Före (svarets `before`) mot nu: vilken version föredrar personorna? */
+  compareWithBefore: (messageId: string) => Promise<void>;
+  /** Skickar fokusgruppens invändningar till AI:n som en ändringsbegäran. */
+  fixFromAudience: (messageId: string) => Promise<void>;
+
+  // Displaypaketet (samma budskap i displayformat) — överlever byte av vy.
+  display: DisplaySet | null;
+  setDisplay: (display: DisplaySet | null) => void;
+
+  /** Kampanjen som öppnats i studion (?campaign=) — video och display sparas dit. */
+  campaign: { id: string; name: string } | null;
+  campaignSave: "idle" | "saving" | "saved" | "error";
+  /** Inläsningen av kampanjen — studion visas först när den är klar. */
+  campaignLoad: { id: string; status: "loading" | "error"; message?: string } | null;
+
+  // Ångra/gör om — video och displaypaket (se "Historik" längst ned).
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
+  /** Tömmer historiken, t.ex. när en ny video eller kampanj har laddats. */
+  clearHistory: () => void;
+
+  // Lager och keyframes
+  selectedKeyframe: SelectedKeyframe | null;
+  selectKeyframe: (kf: SelectedKeyframe | null) => void;
+  /** Ändrar ett lager i en canvas-scen via en ren funktion (lib/studio/layer-edits). */
+  updateLayer: (sceneIndex: number, layerId: string, fn: (layer: MotionLayer) => MotionLayer) => void;
+  /** Ersätter (eller lägger till) ett lager i en canvas-scen. */
+  putLayer: (sceneIndex: number, layer: MotionLayer) => void;
+
   selectedSceneIndex: number | null;
   previewKey: number;
   isRendering: boolean;
@@ -101,6 +210,10 @@ interface StudioState {
     elementId: string,
     patch: Partial<ElementTransform>
   ) => void;
+  /** Låser flera element på sina nuvarande platser i ett steg (se CanvasOverlay). */
+  pinElements: (sceneIndex: number, transforms: Record<string, ElementTransform>) => void;
+  /** Lägger tillbaka ett element i scenens standardlayout. */
+  resetElementTransform: (sceneIndex: number, elementId: string) => void;
   addAssetToScene: (sceneIndex: number, asset: SceneAsset) => void;
   removeAssetFromScene: (sceneIndex: number, assetId: string) => void;
   updateAssetTransform: (
@@ -113,6 +226,125 @@ interface StudioState {
 export const useStudioStore = create<StudioState>()(
   subscribeWithSelector((set, get) => ({
     config: DEFAULT_VIDEO_CONFIG,
+
+    messages: [],
+    isChatBusy: false,
+    isDrafting: false,
+    inspectorTab: null,
+
+    setInspectorTab: (tab) => set({ inspectorTab: tab }),
+
+    startFromPrompt: async (prompt) => {
+      if (get().isChatBusy) return;
+      set({ isDrafting: true });
+      await runChatTurn(prompt, "/api/studio/initial-prompt");
+      set({ isDrafting: false });
+    },
+
+    sendChatMessage: async (text, display) => {
+      if (get().isChatBusy || !text.trim()) return;
+      await runChatTurn(text.trim(), "/api/motion-generate", display);
+    },
+
+    retryMessage: async (id) => {
+      const all = get().messages;
+      const idx = all.findIndex((m) => m.id === id);
+      const msg = all[idx];
+      if (!msg?.retryText || get().isChatBusy) return;
+      const question = all[idx - 1];
+      const display = question?.role === "user" && question.prompt ? question.content : undefined;
+      // Ta bort det misslyckade svaret och frågan, skicka om.
+      set((s) => ({
+        messages: s.messages.filter(
+          (m, i, all) => m.id !== id && !(m.role === "user" && all[i + 1]?.id === id)
+        ),
+      }));
+      await runChatTurn(msg.retryText, "/api/motion-generate", display);
+    },
+
+    undoMessage: (id) =>
+      set((state) => {
+        const msg = state.messages.find((m) => m.id === id);
+        if (!msg?.before || msg.undone) return state;
+        return {
+          config: msg.before,
+          selectedSceneIndex: clampScene(state.selectedSceneIndex, msg.before),
+          selectedElementId: null,
+          messages: state.messages.map((m) => (m.id === id ? { ...m, undone: true } : m)),
+        };
+      }),
+
+    clearChat: () => set({ messages: [] }),
+
+    runAudienceTest: async () => {
+      if (get().isChatBusy) return;
+      const config = get().config;
+      await runAudienceTurn(
+        "Testa i fokusgrupp",
+        { kind: "test", status: "pending" },
+        "/api/studio/audience-test",
+        { config }
+      );
+    },
+
+    compareWithBefore: async (messageId) => {
+      const msg = get().messages.find((m) => m.id === messageId);
+      if (!msg?.before || get().isChatBusy) return;
+      await runAudienceTurn(
+        "Jämför före och efter i fokusgruppen",
+        { kind: "compare", status: "pending" },
+        "/api/studio/audience-compare",
+        { a: msg.before, b: get().config }
+      );
+    },
+
+    fixFromAudience: async (messageId) => {
+      const msg = get().messages.find((m) => m.id === messageId);
+      if (msg?.audience?.kind !== "test" || !msg.audience.data) return;
+      await get().sendChatMessage(audienceFixPrompt(msg.audience.data), "Rätta det fokusgruppen invände mot");
+    },
+
+    display: null,
+    setDisplay: (display) => set({ display }),
+
+    campaign: null,
+    campaignSave: "idle",
+    campaignLoad: null,
+
+    canUndo: false,
+    canRedo: false,
+    undo: () => stepHistory("undo"),
+    redo: () => stepHistory("redo"),
+    clearHistory: () => clearHistory(),
+
+    selectedKeyframe: null,
+    selectKeyframe: (kf) => set({ selectedKeyframe: kf }),
+
+    updateLayer: (sceneIndex, layerId, fn) =>
+      set((state) => {
+        const scene = state.config.scenes[sceneIndex];
+        if (!scene || scene.type !== "canvas" || !scene.layers) return state;
+        const scenes = [...state.config.scenes];
+        scenes[sceneIndex] = {
+          ...scene,
+          layers: scene.layers.map((l) => (l.id === layerId ? fn(l) : l)),
+        };
+        return { config: { ...state.config, scenes } };
+      }),
+    putLayer: (sceneIndex, layer) =>
+      set((state) => {
+        const scene = state.config.scenes[sceneIndex];
+        if (!scene || scene.type !== "canvas") return state;
+        const layers = scene.layers ?? [];
+        const scenes = [...state.config.scenes];
+        scenes[sceneIndex] = {
+          ...scene,
+          layers: layers.some((l) => l.id === layer.id)
+            ? layers.map((l) => (l.id === layer.id ? layer : l))
+            : [...layers, layer],
+        };
+        return { config: { ...state.config, scenes } };
+      }),
     selectedSceneIndex: 0,
     previewKey: 0,
     isRendering: false,
@@ -179,13 +411,16 @@ export const useStudioStore = create<StudioState>()(
 
     setIsRendering: (rendering) => set({ isRendering: rendering }),
 
-    loadConfig: (config) =>
+    loadConfig: (config) => {
       set({
         config: { ...config, motion: config.motion ?? DEFAULT_MOTION_CONFIG },
         selectedSceneIndex: config.scenes.length > 0 ? 0 : null,
         selectedElementId: null,
         previewKey: 0,
-      }),
+      });
+      // En annan video — det finns inget att ångra tillbaka till.
+      clearHistory();
+    },
 
     // ── Variants ────────────────────────────────────────────────────────
     generateVariants: async () => {
@@ -252,6 +487,32 @@ export const useStudioStore = create<StudioState>()(
         return { config: { ...state.config, scenes } };
       }),
 
+    pinElements: (sceneIndex, transforms) =>
+      set((state) => {
+        const scenes = [...state.config.scenes];
+        const scene = scenes[sceneIndex];
+        if (!scene) return state;
+        scenes[sceneIndex] = {
+          ...scene,
+          elementTransforms: { ...transforms, ...(scene.elementTransforms ?? {}) },
+        } as Scene;
+        return { config: { ...state.config, scenes } };
+      }),
+
+    resetElementTransform: (sceneIndex, elementId) =>
+      set((state) => {
+        const scenes = [...state.config.scenes];
+        const scene = scenes[sceneIndex];
+        if (!scene?.elementTransforms?.[elementId]) return state;
+        const rest = { ...scene.elementTransforms };
+        delete rest[elementId];
+        scenes[sceneIndex] = {
+          ...scene,
+          elementTransforms: Object.keys(rest).length > 0 ? rest : undefined,
+        } as Scene;
+        return { config: { ...state.config, scenes } };
+      }),
+
     addAssetToScene: (sceneIndex, asset) =>
       set((state) => {
         const scenes = [...state.config.scenes];
@@ -294,6 +555,264 @@ export const useStudioStore = create<StudioState>()(
   }))
 );
 
+// ── Chatt: en tur mot AI:n ──
+
+function clampScene(index: number | null, config: VideoConfig): number | null {
+  if (config.scenes.length === 0) return null;
+  if (index === null) return 0;
+  return Math.min(index, config.scenes.length - 1);
+}
+
+let messageSeq = 0;
+const newId = () => `msg-${Date.now()}-${++messageSeq}`;
+
+/**
+ * Skickar en fråga till AI:n och tillämpar svaret.
+ *  - /api/studio/initial-prompt: första utkastet från en brief ({ config })
+ *  - /api/motion-generate: ändringar i en befintlig video ({ config, message })
+ * Tidigare lyckade fråga/svar-par skickas som historik.
+ */
+async function runChatTurn(text: string, endpoint: string, display?: string) {
+  const { getState, setState } = useStudioStore;
+  const before = getState().config;
+  const selected = getState().selectedSceneIndex;
+
+  const userMsg: ChatMessage = {
+    id: newId(),
+    role: "user",
+    content: display ?? text,
+    prompt: display ? text : undefined,
+    status: "done",
+  };
+  const reply: ChatMessage = {
+    id: newId(),
+    role: "assistant",
+    content: "",
+    status: "pending",
+    retryText: text,
+    startedAt: Date.now(),
+  };
+  setState((s) => ({ messages: [...s.messages, userMsg, reply], isChatBusy: true }));
+
+  const patchReply = (patch: Partial<ChatMessage>) =>
+    setState((s) => ({
+      messages: s.messages.map((m) => (m.id === reply.id ? { ...m, ...patch } : m)),
+    }));
+
+  try {
+    const isInitial = endpoint.endsWith("initial-prompt");
+    const history = completedTurns(getState().messages);
+    // Vald scen följer med så att "gör den här scenen …" fungerar.
+    const prompt =
+      !isInitial && selected !== null && before.scenes.length > 1
+        ? `${text}\n\n(Användaren har scen ${selected + 1} markerad i editorn.)`
+        : text;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        isInitial ? { prompt } : { prompt, currentConfig: before, history }
+      ),
+    });
+    const data = (await res.json().catch(() => null)) as {
+      config?: VideoConfig | null;
+      message?: string;
+      error?: string;
+    } | null;
+    if (!res.ok || !data) throw new Error(data?.error || data?.message || "AI:n svarade med ett fel");
+
+    if (data.config) {
+      const next = { ...data.config, motion: data.config.motion ?? DEFAULT_MOTION_CONFIG };
+      const changes = describeChanges(before, next);
+      setState((s) => ({
+        config: next,
+        selectedSceneIndex: clampScene(s.selectedSceneIndex, next),
+        selectedElementId: null,
+      }));
+      patchReply({
+        status: "done",
+        content:
+          (isInitial ? undefined : data.message) ??
+          `Här är ett första utkast med ${next.scenes.length} scener. Beskriv vad du vill ändra.`,
+        changes: isInitial ? undefined : changes,
+        before,
+        review: { status: "pending" },
+      });
+      // Videon syns direkt; granskningen körs efteråt och rättar tydliga fel.
+      await reviewTurn(reply.id, next, text);
+    } else {
+      // Bara ett svar, ingen ändring (t.ex. en fråga).
+      patchReply({ status: "done", content: data.message ?? "Klart." });
+    }
+  } catch (err) {
+    patchReply({
+      status: "error",
+      content: err instanceof Error ? err.message : "Något gick fel",
+    });
+  } finally {
+    setState({ isChatBusy: false });
+  }
+}
+
+/**
+ * Självgranskning: regelkontroll + AI som tittar på renderade stillbilder.
+ * Rättningar tillämpas bara om videon inte ändrats under tiden.
+ */
+async function reviewTurn(messageId: string, reviewed: VideoConfig, request: string) {
+  const { getState, setState } = useStudioStore;
+  const patchReview = (review: ChatReview, extra: Partial<ChatMessage> = {}) =>
+    setState((s) => ({
+      messages: s.messages.map((m) => (m.id === messageId ? { ...m, ...extra, review } : m)),
+    }));
+
+  try {
+    const res = await fetch("/api/studio/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config: reviewed, request }),
+    });
+    const data = (await res.json().catch(() => null)) as {
+      issues?: ChatReviewIssue[];
+      fixedConfig?: VideoConfig | null;
+      frames?: ChatReview["frames"];
+      visual?: boolean;
+      visualError?: string | null;
+      error?: string;
+    } | null;
+    if (!res.ok || !data) throw new Error(data?.error || "Granskningen misslyckades");
+
+    const fixed = data.fixedConfig;
+    const stillSame = getState().config === reviewed;
+    let applied = false;
+    let extra: Partial<ChatMessage> = {};
+    if (fixed && stillSame) {
+      const next = { ...fixed, motion: fixed.motion ?? DEFAULT_MOTION_CONFIG };
+      setState((s) => ({ config: next, selectedSceneIndex: clampScene(s.selectedSceneIndex, next) }));
+      applied = true;
+      const msg = getState().messages.find((m) => m.id === messageId);
+      if (msg?.changes) extra = { changes: [...new Set([...msg.changes, ...describeChanges(reviewed, next)])].slice(0, 8) };
+    }
+    patchReview(
+      {
+        status: "done",
+        issues: data.issues ?? [],
+        frames: data.frames ?? [],
+        applied,
+        visual: !!data.visual,
+        visualError: data.visualError ?? null,
+      },
+      extra
+    );
+  } catch (err) {
+    patchReview({ status: "error", error: err instanceof Error ? err.message : "Granskningen misslyckades" });
+  }
+}
+
+// ── Fokusgrupp i chatten ──
+
+async function runAudienceTurn(
+  label: string,
+  initial: ChatAudience,
+  endpoint: string,
+  payload: Record<string, unknown>
+) {
+  const { setState } = useStudioStore;
+  const userMsg: ChatMessage = { id: newId(), role: "user", content: label, status: "done" };
+  const reply: ChatMessage = {
+    id: newId(),
+    role: "assistant",
+    content: "",
+    status: "pending",
+    startedAt: Date.now(),
+    audience: initial,
+  };
+  setState((s) => ({ messages: [...s.messages, userMsg, reply], isChatBusy: true }));
+  const patchReply = (patch: Partial<ChatMessage>) =>
+    setState((s) => ({ messages: s.messages.map((m) => (m.id === reply.id ? { ...m, ...patch } : m)) }));
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = (await res.json().catch(() => null)) as
+      | (AudienceTestResponse & AudienceCompareResponse & { error?: string })
+      | null;
+    if (!res.ok || !data) throw new Error(data?.error || "Fokusgruppen kunde inte köras");
+    if (initial.kind === "test") {
+      patchReply({ status: "done", content: audienceTestSummary(data), audience: { kind: "test", status: "done", data } });
+    } else {
+      patchReply({
+        status: "done",
+        content: audienceCompareSummary(data),
+        audience: { kind: "compare", status: "done", data },
+      });
+    }
+  } catch (err) {
+    const error = err instanceof Error ? err.message : "Fokusgruppen kunde inte köras";
+    patchReply({ status: "error", content: error, audience: { ...initial, status: "error", error } });
+  } finally {
+    setState({ isChatBusy: false });
+  }
+}
+
+/** Kort text som hamnar i chatthistoriken, så att AI:n vet vad panelen tyckte. */
+function audienceTestSummary(d: AudienceTestResponse): string {
+  const score = d.weightSource ? d.summary.weighted : d.summary.unweighted;
+  const objections = d.personas.flatMap((p) => p.objections?.slice(0, 1) ?? []).slice(0, 4);
+  return `Fokusgruppen (simulerad): ${score} % klickvilja, ${d.summary.clickers} av ${d.summary.responded} skulle klicka.${
+    objections.length ? ` Invändningar: ${objections.join("; ")}.` : ""
+  }`;
+}
+
+function audienceCompareSummary(d: AudienceCompareResponse): string {
+  const b = d.summary.weightedPreferB;
+  const verdict = b > 55 ? "föredrar den nya versionen" : b < 45 ? "föredrar versionen före ändringen" : "ser ingen tydlig skillnad";
+  return `Fokusgruppen (simulerad) ${verdict}: ${b} % för den nya, ${100 - b} % för den gamla.`;
+}
+
+/** Ändringsbegäran byggd på fokusgruppens svar — svagaste segmenten först. */
+export function audienceFixPrompt(d: AudienceTestResponse): string {
+  const answered = d.personas
+    .filter((p) => p.wouldClick)
+    .sort((a, b) => (a.wouldClick?.mean ?? 0) - (b.wouldClick?.mean ?? 0));
+  const lines = answered.slice(0, 4).map((p) => {
+    const parts = [
+      p.objections?.length ? `invänder: ${p.objections.slice(0, 2).join("; ")}` : "",
+      p.dropOff ? `slutar titta: ${p.dropOff}` : "",
+      p.suggestion ? `föreslår: ${p.suggestion}` : "",
+    ].filter(Boolean);
+    return `- ${p.name} (${p.wouldClick?.mean} %): ${parts.join(" · ")}`;
+  });
+  return [
+    "Fokusgruppen reagerade så här på videon:",
+    ...lines,
+    "",
+    "Förbättra videon utifrån de invändningar som återkommer, inom Nordeas ramar. Behåll idén och det som fungerar. Hitta inte på räntor, priser eller andra siffror som inte redan finns i videon — saknas fakta, lägg hellre till en tydlig väg vidare (t.ex. läs mer eller boka möte).",
+  ].join("\n");
+}
+
+/** Lyckade fråga/svar-par som historik till AI:n (senaste tio meddelandena). */
+function completedTurns(messages: ChatMessage[]) {
+  const turns: Array<{ role: "user" | "assistant"; content: string }> = [];
+  for (let i = 0; i < messages.length - 1; i++) {
+    const q = messages[i];
+    const a = messages[i + 1];
+    if (q.role === "user" && a.role === "assistant" && a.status === "done" && !a.undone) {
+      turns.push({ role: "user", content: q.prompt ?? q.content }, { role: "assistant", content: a.content });
+      i++;
+    }
+  }
+  return turns.slice(-10);
+}
+
+// Utvecklingsläge: storen nås från webbläsarkonsolen för felsökning och test.
+if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+  (window as unknown as { __studioStore?: typeof useStudioStore }).__studioStore = useStudioStore;
+}
+
 // ── Debounced preview re-render ──
 // 1.5s after the last config mutation, bump previewKey so the Remotion
 // Player re-mounts with the new props. Avoids per-keystroke render thrash.
@@ -330,6 +849,104 @@ useStudioStore.subscribe(
   (isDragging) => {
     if (!isDragging) {
       setTimeout(() => useStudioStore.getState().triggerRender(), 100);
+    }
+  }
+);
+
+// ── Historik: ångra / gör om ──
+// Varje ändring av videon eller displaypaketet sparar läget innan den i en
+// stack. Ändringar som kommer tätt (skrivande, pilsteg) blir ett steg, och en
+// hel dragning på videon blir ett steg. Ångra/gör om sparas till kampanjen
+// som vanligt (campaign-sync lyssnar på config och display).
+
+interface Snapshot {
+  config: VideoConfig;
+  display: DisplaySet | null;
+}
+
+const HISTORY_LIMIT = 100;
+const COALESCE_MS = 700;
+
+let past: Snapshot[] = [];
+let future: Snapshot[] = [];
+let applyingHistory = false;
+let lastChangeAt = 0;
+let dragRecorded = false;
+
+function publishHistory() {
+  const { canUndo, canRedo } = useStudioStore.getState();
+  const next = { canUndo: past.length > 0, canRedo: future.length > 0 };
+  if (next.canUndo !== canUndo || next.canRedo !== canRedo) useStudioStore.setState(next);
+}
+
+function clearHistory() {
+  past = [];
+  future = [];
+  lastChangeAt = 0;
+  dragRecorded = false;
+  publishHistory();
+}
+
+function recordChange(before: Snapshot) {
+  if (applyingHistory) return;
+  const now = Date.now();
+  if (useStudioStore.getState().isDragging) {
+    // Hela dragningen är ett steg: bara läget innan första ändringen sparas.
+    if (!dragRecorded) {
+      dragRecorded = true;
+      past.push(before);
+    }
+  } else if (now - lastChangeAt > COALESCE_MS) {
+    past.push(before);
+  }
+  if (past.length > HISTORY_LIMIT) past.shift();
+  lastChangeAt = now;
+  future = [];
+  publishHistory();
+}
+
+function stepHistory(direction: "undo" | "redo") {
+  const from = direction === "undo" ? past : future;
+  const to = direction === "undo" ? future : past;
+  const target = from.pop();
+  if (!target) return;
+  const state = useStudioStore.getState();
+  to.push({ config: state.config, display: state.display });
+  applyingHistory = true;
+  useStudioStore.setState({
+    config: target.config,
+    display: target.display,
+    selectedSceneIndex: clampScene(state.selectedSceneIndex, target.config),
+  });
+  applyingHistory = false;
+  // Nästa ändring efter ett ångra blir alltid ett eget steg.
+  lastChangeAt = 0;
+  publishHistory();
+}
+
+useStudioStore.subscribe(
+  (state) => state.config,
+  (_config, prevConfig) => recordChange({ config: prevConfig, display: useStudioStore.getState().display }),
+  { equalityFn: Object.is }
+);
+
+useStudioStore.subscribe(
+  (state) => state.display,
+  (display, prevDisplay) => {
+    // Displaystudion skapar paketet från videon när den öppnas — det är
+    // ingen ändring man vill ångra.
+    if (prevDisplay === null && display !== null) return;
+    recordChange({ config: useStudioStore.getState().config, display: prevDisplay });
+  },
+  { equalityFn: Object.is }
+);
+
+useStudioStore.subscribe(
+  (state) => state.isDragging,
+  (isDragging) => {
+    if (!isDragging) {
+      dragRecorded = false;
+      lastChangeAt = 0;
     }
   }
 );

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb, type Db } from "@/lib/supabase/db";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 import {
   NORDEA_BRAND_CONTEXT,
@@ -64,13 +64,15 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { briefId, answers } = RequestSchema.parse(body);
+    const db = await requireDb();
+    if ("response" in db) return db.response;
 
     const startTime = Date.now();
 
     if (!client) {
       const strategy = getMockStrategy();
       // Persist mock too so the rest of the flow works in dev without keys.
-      await persistStrategy(briefId, strategy);
+      await persistStrategy(db, briefId, strategy);
       return NextResponse.json({ strategy, mock: true });
     }
 
@@ -97,10 +99,9 @@ export async function POST(request: Request) {
 
     const strategy = JSON.parse(jsonMatch[0]);
 
-    await persistStrategy(briefId, strategy);
+    await persistStrategy(db, briefId, strategy);
 
     await logGeneration({
-      user_id: "default-user",
       kind: "text",
       provider: "claude",
       model: CLAUDE_MODEL,
@@ -139,15 +140,15 @@ const STRATEGY_COLUMNS = [
 ] as const;
 
 async function persistStrategy(
+  { supabase, ownerId }: Db,
   briefId: string,
   strategy: Record<string, unknown>
 ) {
-  const supabase = await createClient();
   const safeFields: Record<string, unknown> = {};
   for (const col of STRATEGY_COLUMNS) {
     if (col in strategy) safeFields[col] = strategy[col];
   }
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("creative_briefs")
     .update({
       ...safeFields,
@@ -156,8 +157,11 @@ async function persistStrategy(
       status: "in_review",
       updated_at: new Date().toISOString(),
     })
-    .eq("id", briefId);
+    .eq("id", briefId)
+    .eq("created_by", ownerId)
+    .select("id");
   if (error) throw new Error(`DB update failed: ${error.message}`);
+  if (!data?.length) throw new Error("Briefen hittades inte");
 }
 
 function getMockStrategy() {

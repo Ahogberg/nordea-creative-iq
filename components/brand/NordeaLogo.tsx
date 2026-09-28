@@ -42,7 +42,10 @@ export function NordeaLogo({
   withProductName = false,
   className = "",
 }: NordeaLogoProps) {
-  const [resolvedSrc, setResolvedSrc] = useState<string | null | "checking">("checking");
+  // Resultatet knyts till varianten det gäller; en ny variant ger "checking"
+  // tills filen är hittad (ingen setState direkt i effekten).
+  const [resolved, setResolved] = useState<{ variant: string; src: string | null } | null>(null);
+  const resolvedSrc: string | null | "checking" = resolved?.variant === variant ? resolved.src : "checking";
 
   useEffect(() => {
     let cancelled = false;
@@ -51,16 +54,15 @@ export function NordeaLogo({
     const tryNext = (idx: number) => {
       if (cancelled) return;
       if (idx >= candidates.length) {
-        setResolvedSrc(null);
+        setResolved({ variant, src: null });
         return;
       }
       const img = new Image();
-      img.onload = () => !cancelled && setResolvedSrc(candidates[idx]);
+      img.onload = () => !cancelled && setResolved({ variant, src: candidates[idx] });
       img.onerror = () => tryNext(idx + 1);
       img.src = candidates[idx];
     };
 
-    setResolvedSrc("checking");
     tryNext(0);
 
     return () => {

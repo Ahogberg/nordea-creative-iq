@@ -8,6 +8,7 @@ import { CanvasOverlay } from "./canvas-overlay";
 import { FeedMockup } from "@/components/preview/feed-mockup";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import type { VideoConfig } from "@/lib/remotion/types";
+import { stripRichText } from "@/lib/remotion/rich-text";
 
 type PreviewMode = "canvas" | "feed";
 
@@ -16,9 +17,10 @@ function captionFrom(config: VideoConfig) {
   const title = config.scenes.find((s) => s.type === "title");
   const cta = config.scenes.find((s) => s.type === "cta");
   const buttonText = cta && cta.type === "cta" ? cta.buttonText : undefined;
+  const plain = (t?: string) => (t ? stripRichText(t) : undefined);
   return {
-    headline: title && title.type === "title" ? title.headline : undefined,
-    body: title && title.type === "title" ? title.subtitle : undefined,
+    headline: title && title.type === "title" ? plain(title.headline) : undefined,
+    body: title && title.type === "title" ? plain(title.subtitle) : undefined,
     cta: buttonText
       ? buttonText.charAt(0).toUpperCase() + buttonText.slice(1).toLowerCase()
       : "Läs mer",
@@ -134,12 +136,7 @@ export function LivePreview() {
           }}
         >
           <MotionPlayer key={previewKey} config={config} loop />
-          {frameSize.width > 0 && (
-            <CanvasOverlay
-              frameWidth={frameSize.width}
-              frameHeight={frameSize.height}
-            />
-          )}
+          {frameSize.width > 0 && <CanvasOverlay />}
         </div>
         )}
       </div>

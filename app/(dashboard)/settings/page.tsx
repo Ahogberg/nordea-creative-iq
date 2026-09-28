@@ -19,6 +19,8 @@ import { Save, User, Globe, Bell, Shield, Key, Languages } from 'lucide-react';
 import { toast } from 'sonner';
 import { nordicMarkets } from '@/lib/constants/markets';
 import { getUserPrefs, saveUserPrefs } from '@/lib/campaigns';
+import { Topbar } from '@/components/layout/topbar';
+import { PageHeading } from '@/components/layout/page-heading';
 
 function getStoredUser(): { email: string; fullName: string } {
   if (typeof window === 'undefined') return { email: '', fullName: '' };
@@ -39,7 +41,7 @@ function getStoredUser(): { email: string; fullName: string } {
 
 export default function SettingsPage() {
   const [fullName, setFullName] = useState(() => getStoredUser().fullName);
-  const [email, setEmail] = useState(() => getStoredUser().email);
+  const [email] = useState(() => getStoredUser().email);
   const [department, setDepartment] = useState('Marketing');
   const [language, setLanguage] = useState('sv');
   const [notifications, setNotifications] = useState(true);
@@ -47,6 +49,9 @@ export default function SettingsPage() {
   const [autoLocalizeMarkets, setAutoLocalizeMarkets] = useState<string[]>([]);
 
   useEffect(() => {
+    // localStorage finns bara i webbläsaren: läses efter hydrering så att
+    // server- och klientrenderingen börjar lika.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAutoLocalizeMarkets(getUserPrefs().autoLocalizeMarkets);
   }, []);
 
@@ -70,11 +75,14 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Inställningar</h1>
-        <p className="text-gray-500 mt-1">Hantera din profil och appinställningar</p>
-      </div>
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar breadcrumb={['System', 'Inställningar']} />
+      <div className="px-8 py-8 max-w-[1400px] mx-auto space-y-6 *:max-w-3xl">
+      <PageHeading
+        eyebrow="System"
+        title="Inställningar"
+        description="Din profil, språk i gränssnittet och vilka marknader nytt innehåll lokaliseras till."
+      />
 
       {/* Profile */}
       <Card className="border-0 shadow-sm">
@@ -260,6 +268,7 @@ export default function SettingsPage() {
           <Save className="w-4 h-4 mr-2" />
           Spara inställningar
         </Button>
+      </div>
       </div>
     </div>
   );

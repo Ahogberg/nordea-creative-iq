@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Download, Loader2, Check, AlertCircle } from "lucide-react";
+import { RenderNotice } from "@/components/ui/render-notice";
+import { useVideoExportAvailability } from "@/lib/render/use-availability";
 import { FORMATS, type FormatId } from "@/lib/brand/safe-zones";
 import type { VideoConfig } from "@/lib/remotion/types";
 
@@ -29,6 +31,7 @@ export function ExportAllModal({
   onClose,
   variants,
 }: ExportAllModalProps) {
+  const renderAvailability = useVideoExportAvailability();
   const [selectedFormats, setSelectedFormats] = useState<Set<FormatId>>(
     new Set(variants.map((v) => v.format))
   );
@@ -240,6 +243,10 @@ export function ExportAllModal({
           )}
         </div>
 
+        {!job && renderAvailability?.available === false && (
+          <RenderNotice reason={renderAvailability.reason} className="mx-5 mb-1" />
+        )}
+
         {!job && (
           <div className="flex items-center justify-end gap-2 p-5 border-t border-nordea-hairline">
             <button
@@ -252,7 +259,7 @@ export function ExportAllModal({
             <button
               type="button"
               onClick={handleExport}
-              disabled={selectedFormats.size === 0}
+              disabled={selectedFormats.size === 0 || renderAvailability?.available === false}
               className="nordea-btn nordea-btn-primary nordea-btn-sm"
             >
               <Download className="w-4 h-4" />

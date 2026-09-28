@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb, type Db } from "@/lib/supabase/db";
+import { aiErrorMessage } from "@/lib/ai/error-message";
 import { logGeneration } from "@/lib/ai/providers/cost-tracker";
 import {
   DEFAULT_MOTION_CONFIG,
   type VideoConfig,
 } from "@/lib/remotion/types";
 import { withVisualGrammar } from "@/lib/brand/visual-grammar";
+import { withMotionCapabilities } from "@/lib/remotion/prompt-capabilities";
+import { compileCanvasScenes } from "@/lib/remotion/compile";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -25,7 +28,9 @@ VideoConfig-schemat:
   "format": "story" | "feed" | "landscape" | "vertical",
   "backgroundColor": "#0000A0",  // eller "#FFFFFF" för ljus variant — text blir då automatiskt Nordea Blue
   "accentColor": "#40BFA3",
-  "scenes": [ ...3-5 scener... ],
+  "headlineColor"?: "#FBD9CA",
+  "legal"?: { "riskNote"?: "...", "creditWarning"?: { "fromSeconds"?: 0 } },
+  "scenes": [ ...2-4 scener... ],
   "showLogo": true,
   "totalDurationSeconds": <summan av durationSeconds>,
   "motion": {
@@ -37,216 +42,251 @@ VideoConfig-schemat:
   }
 }
 
-Scen-typer:
-- title:    { "type": "title", "durationSeconds": 2-3, "headline": "...", "subtitle"?: "...", "alignment"?: "center"|"left" }
-- counter:  { "type": "counter", "durationSeconds": 2-4, "label": "VERSALER", "fromValue": 0, "toValue": <tal>, "suffix"?: " kr" }
-- cta:      { "type": "cta", "durationSeconds": 2-3, "headline": "...", "buttonText": "VERSALER", "subtitle"?: "..." }
-- highlight-number: { "type": "highlight-number", "durationSeconds": 2-3, "number": "...", "label": "..." }
-- text-reveal: { "type": "text-reveal", "durationSeconds": 3-4, "lines": ["...","..."] }
+Scentyper: se SCENKATALOG nedan. Utgå från layout-arketyperna och rörelserecepten i NORDEAS VISUELLA GRAMMATIK längst ned när briefen inte säger något annat — egna idéer och fri animation (canvas) är välkomna inom varumärkets fasta ramar.
 
 REGLER:
-- Använd strategins big_idea som ledtanke för title-scen
+- Använd strategins big_idea som ledtanke för första scenen (illustrationsscen eller titel)
 - Plocka EN av strategins key_messages för rubriker (välj den som passar valt format bäst)
-- Använd EN av desired_action / CTAs som CTA-scen
+- Använd EN av desired_action som avslut: URL eller mjuk uppmaning i ett textkort (cta-scen bara om strategin kräver en knapp)
+- Kreditprodukter: legal.creditWarning och en terms-scen. Sparande: legal.riskNote.
 - Om recommended_formats finns: använd första format-värdet
 - totalDurationSeconds = exakt summan
 - Behåll Nordea brand-tone
 
 Returnera ENDAST giltig JSON för VideoConfig.`;
 
+// En kampanj per brief. Finns den redan returneras den som den är — sidan
+// genererar alltså inte om vid varje besök. { regenerate: true } skriver en ny
+// video till samma kampanj (och samma mall/master) i stället för att skapa nya.
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: briefId } = await params;
+    const body = (await request.json().catch(() => null)) as { regenerate?: boolean } | null;
+    const regenerate = body?.regenerate === true;
 
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const { data: brief, error: briefError } = await supabase
       .from("creative_briefs")
       .select("*")
       .eq("id", briefId)
+      .eq("created_by", ownerId)
       .single();
 
     if (briefError || !brief) {
       return NextResponse.json({ error: "Brief not found" }, { status: 404 });
     }
 
-    const startTime = Date.now();
-
-    let config: VideoConfig;
-
-    if (!client) {
-      config = buildMockConfig(brief);
-    } else {
-      const response = await client.messages.create({
-        model: CLAUDE_MODEL,
-        max_tokens: 4000,
-        system: withVisualGrammar(CONFIG_PROMPT),
-        messages: [
-          {
-            role: "user",
-            content: `Strategi för kampanjen:\n${JSON.stringify(
-              {
-                big_idea: brief.big_idea,
-                insight: brief.insight,
-                tension: brief.tension,
-                key_messages: brief.key_messages,
-                value_props: brief.value_props,
-                desired_action: brief.desired_action,
-                tone_of_voice: brief.tone_of_voice,
-                recommended_formats: brief.recommended_formats,
-              },
-              null,
-              2
-            )}\n\nGenerera en VideoConfig som passar.`,
-          },
-        ],
-      });
-
-      const text =
-        response.content[0]?.type === "text" ? response.content[0].text : "";
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("No JSON in Claude response");
-
-      config = JSON.parse(jsonMatch[0]) as VideoConfig;
-      if (!config.motion) config.motion = DEFAULT_MOTION_CONFIG;
-      config.totalDurationSeconds = config.scenes.reduce(
-        (sum, s) => sum + (s.durationSeconds || 0),
-        0
-      );
-
-      await logGeneration({
-        user_id: "default-user",
-        kind: "video",
-        provider: "claude",
-        model: CLAUDE_MODEL,
-        prompt: "brief_to_campaign",
-        params: { brief_id: briefId },
-        cost_usd: 0.015,
-        latency_ms: Date.now() - startTime,
-        status: "success",
-      });
-    }
-
-    // Always save as a regular template (lives on main since Sprint 3 — safe).
-    const templateName = brief.title || "Kampanj från brief";
-    const { data: template, error: templateError } = await supabase
-      .from("templates")
-      .insert({
-        user_id: "default-user",
-        name: templateName,
-        description: `[Från brief] ${brief.big_idea?.slice(0, 200) || ""}`,
-        config,
-        is_favorite: false,
-      })
-      .select()
-      .single();
-
-    if (templateError) throw templateError;
-
-    // Try Master Creative (Sprint 9) — if the table is missing because that
-    // sprint hasn't merged yet, treat as a soft miss and continue. The user
-    // still gets a template + campaign row.
-    let masterId: string | null = null;
-    try {
-      const sourceFormat =
-        Array.isArray(brief.recommended_formats) &&
-        brief.recommended_formats.length > 0
-          ? brief.recommended_formats[0]
-          : config.format;
-      const { data: master, error: masterError } = await supabase
-        .from("master_creatives")
-        .insert({
-          name: templateName,
-          source_format: sourceFormat,
-          master_config: config,
-          created_by: "default-user",
-        })
-        .select()
-        .single();
-      if (!masterError && master) {
-        masterId = master.id;
-      }
-    } catch {
-      // Sprint 9 not deployed — fine.
-    }
-
-    // Upsert the campaign row — if a campaign for this brief already exists,
-    // add the new template/master to the existing arrays rather than creating a
-    // duplicate. On conflict we target brief_id (unique per brief).
-    const existingCampaign = await supabase
+    const { data: existing } = await supabase
       .from("campaigns")
-      .select("id, template_ids, master_creative_ids")
+      .select("*")
       .eq("brief_id", briefId)
+      .eq("created_by", ownerId)
       .maybeSingle();
 
-    let campaign: Record<string, unknown>;
-    let campaignError: { message: string } | null = null;
-
-    if (existingCampaign.data) {
-      const prev = existingCampaign.data;
-      const templateIds = [
-        ...new Set([...(prev.template_ids ?? []), template.id]),
-      ];
-      const masterIds = masterId
-        ? [...new Set([...(prev.master_creative_ids ?? []), masterId])]
-        : prev.master_creative_ids ?? [];
-      const { data: updated, error: updateErr } = await supabase
-        .from("campaigns")
-        .update({
-          template_ids: templateIds,
-          master_creative_ids: masterIds,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", prev.id)
-        .select()
-        .single();
-      campaign = updated as Record<string, unknown>;
-      campaignError = updateErr;
-    } else {
-      const { data: inserted, error: insertErr } = await supabase
-        .from("campaigns")
-        .insert({
-          name: templateName,
-          brief_id: briefId,
-          master_creative_ids: masterId ? [masterId] : [],
-          template_ids: [template.id],
-          production_job_ids: [],
-          status: "draft",
-          created_by: "default-user",
-        })
-        .select()
-        .single();
-      campaign = inserted as Record<string, unknown>;
-      campaignError = insertErr;
+    // Kampanjer från före video_config har videon i sin mall — flytta in den
+    // i stället för att låta AI:n skriva över det användaren redan sett.
+    if (existing && !existing.video_config && existing.template_ids?.[0] && !regenerate) {
+      const { data: template } = await supabase
+        .from("templates")
+        .select("config")
+        .eq("id", existing.template_ids[0])
+        .eq("user_id", ownerId)
+        .maybeSingle();
+      if (template?.config) {
+        const { data } = await supabase
+          .from("campaigns")
+          .update({ video_config: template.config })
+          .eq("id", existing.id)
+          .eq("created_by", ownerId)
+          .select()
+          .single();
+        return NextResponse.json({ campaign: data ?? { ...existing, video_config: template.config }, created: false });
+      }
     }
 
-    if (campaignError) throw campaignError;
+    if (existing?.video_config && !regenerate) {
+      return NextResponse.json({ campaign: existing, created: false });
+    }
 
-    // Flip brief status so it stops showing up under "Pågående briefer".
+    const config = await generateConfig(brief, briefId);
+    const name = brief.title || "Kampanj från brief";
+
+    // En mall och en master per kampanj — uppdateras vid omgenerering.
+    const templateId = await upsertTemplate(db, existing?.template_ids?.[0] ?? null, name, brief, config);
+    const masterId = await upsertMaster(db, existing?.master_creative_ids?.[0] ?? null, name, brief, config);
+
+    let campaign: Record<string, unknown> | null = null;
+    if (existing) {
+      const { data, error } = await supabase
+        .from("campaigns")
+        .update({
+          video_config: config,
+          template_ids: [templateId],
+          master_creative_ids: masterId ? [masterId] : [],
+        })
+        .eq("id", existing.id)
+        .eq("created_by", ownerId)
+        .select()
+        .single();
+      if (error) throw error;
+      campaign = data;
+    } else {
+      const { data, error } = await supabase
+        .from("campaigns")
+        .insert({
+          name,
+          brief_id: briefId,
+          video_config: config,
+          master_creative_ids: masterId ? [masterId] : [],
+          template_ids: [templateId],
+          production_job_ids: [],
+          status: "draft",
+          created_by: ownerId,
+        })
+        .select()
+        .single();
+      if (error?.code === "23505") {
+        // Två flikar samtidigt: den andra hann skapa kampanjen — använd den.
+        const { data: winner } = await supabase
+          .from("campaigns")
+          .select("*")
+          .eq("brief_id", briefId)
+          .eq("created_by", ownerId)
+          .single();
+        return NextResponse.json({ campaign: winner, created: false });
+      }
+      if (error) throw error;
+      campaign = data;
+    }
+
+    // Briefen är använd — den visas inte längre under "Pågående briefer".
     await supabase
       .from("creative_briefs")
       .update({ status: "used", updated_at: new Date().toISOString() })
-      .eq("id", briefId);
+      .eq("id", briefId)
+      .eq("created_by", ownerId);
 
-    return NextResponse.json({
-      campaign,
-      template_id: template.id,
-      master_id: masterId,
-      config,
-    });
+    return NextResponse.json({ campaign, created: true });
   } catch (error) {
     console.error("[brief:generate-campaign] error:", error);
     return NextResponse.json(
-      {
-        error: "Failed to generate campaign",
-        message: error instanceof Error ? error.message : "Unknown",
-      },
+      { error: aiErrorMessage(error, "Kampanjen kunde inte skapas") },
       { status: 500 }
     );
   }
+}
+
+async function generateConfig(brief: Record<string, unknown>, briefId: string): Promise<VideoConfig> {
+  if (!client) return buildMockConfig(brief);
+  const startTime = Date.now();
+  const response = await client.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 12000,
+    system: withVisualGrammar(withMotionCapabilities(CONFIG_PROMPT)),
+    messages: [
+      {
+        role: "user",
+        content: `Strategi för kampanjen:\n${JSON.stringify(
+          {
+            big_idea: brief.big_idea,
+            insight: brief.insight,
+            tension: brief.tension,
+            key_messages: brief.key_messages,
+            value_props: brief.value_props,
+            desired_action: brief.desired_action,
+            tone_of_voice: brief.tone_of_voice,
+            recommended_formats: brief.recommended_formats,
+          },
+          null,
+          2
+        )}\n\nGenerera en VideoConfig som passar.`,
+      },
+    ],
+  });
+
+  const text = response.content[0]?.type === "text" ? response.content[0].text : "";
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("AI:n svarade inte med en video");
+
+  const config = await compileCanvasScenes(JSON.parse(jsonMatch[0]) as VideoConfig);
+  if (!config.motion) config.motion = DEFAULT_MOTION_CONFIG;
+  config.totalDurationSeconds = config.scenes.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
+
+  await logGeneration({
+    kind: "video",
+    provider: "claude",
+    model: CLAUDE_MODEL,
+    prompt: "brief_to_campaign",
+    params: { brief_id: briefId },
+    cost_usd: 0.015,
+    latency_ms: Date.now() - startTime,
+    status: "success",
+  });
+  return config;
+}
+
+async function upsertTemplate(
+  { supabase, ownerId }: Db,
+  id: string | null,
+  name: string,
+  brief: Record<string, unknown>,
+  config: VideoConfig
+): Promise<string> {
+  const description = `[Från brief] ${typeof brief.big_idea === "string" ? brief.big_idea.slice(0, 200) : ""}`;
+  if (id) {
+    const { data } = await supabase
+      .from("templates")
+      .update({ name, description, config })
+      .eq("id", id)
+      .eq("user_id", ownerId)
+      .select("id")
+      .maybeSingle();
+    if (data) return data.id;
+  }
+  const { data, error } = await supabase
+    .from("templates")
+    .insert({ user_id: ownerId, name, description, config, is_favorite: false })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+async function upsertMaster(
+  { supabase, ownerId }: Db,
+  id: string | null,
+  name: string,
+  brief: Record<string, unknown>,
+  config: VideoConfig
+): Promise<string | null> {
+  const formats = brief.recommended_formats;
+  const sourceFormat = Array.isArray(formats) && typeof formats[0] === "string" ? formats[0] : config.format;
+  if (id) {
+    const { data } = await supabase
+      .from("master_creatives")
+      .update({ name, source_format: sourceFormat, master_config: config, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("created_by", ownerId)
+      .select("id")
+      .maybeSingle();
+    if (data) return data.id;
+  }
+  const { data, error } = await supabase
+    .from("master_creatives")
+    .insert({ name, source_format: sourceFormat, master_config: config, created_by: ownerId })
+    .select("id")
+    .single();
+  if (error) {
+    console.error("[brief:generate-campaign] master kunde inte sparas:", error.message);
+    return null;
+  }
+  return data.id;
 }
 
 function buildMockConfig(brief: Record<string, unknown>): VideoConfig {

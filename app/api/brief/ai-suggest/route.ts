@@ -242,7 +242,6 @@ export async function POST(request: Request) {
     const parsed = JSON.parse(jsonMatch[0]);
 
     await logGeneration({
-      user_id: "default-user",
       kind: "video",
       provider: "claude",
       model: CLAUDE_MODEL,

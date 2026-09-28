@@ -1,14 +1,14 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, fadeIn, s2f } from "../utils";
 import { fonts } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import type { CounterScene as CounterSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { CountingNumber } from "../animations/CountingNumber";
 import { useSceneTheme } from "../theme";
 
-const FPS = 30;
 
 /**
  * Element IDs for per-element transforms: "label", "value", "description"
@@ -22,6 +22,8 @@ export const CounterSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
   const m = motion ?? DEFAULT_MOTION_CONFIG;
 
   const labelAnim = fadeSlideUp(frame, 5, 15, 30);
@@ -103,13 +105,13 @@ export const CounterSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        padding: `0 ${110 * scale}px`,
+        padding: `${safe.top}px ${110 * scale}px ${safe.bottom}px`,
         position: "relative",
       }}
     >
-      {isInline(scene, "label") && labelNode}
-      {isInline(scene, "value") && valueNode}
-      {isInline(scene, "description") && descNode}
+      {inlineElement(scene, "label", labelNode)}
+      {inlineElement(scene, "value", valueNode)}
+      {inlineElement(scene, "description", descNode)}
 
       {positionedElement(scene, "label", labelNode)}
       {positionedElement(scene, "value", valueNode)}

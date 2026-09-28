@@ -3,16 +3,18 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { getPersonaInitials } from '@/lib/persona-library';
+import { cn } from '@/lib/utils';
 
 interface PersonaImageProps {
   name: string;
   imageUrl?: string;
   color?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
 const sizeConfig = {
+  xs: { dimension: 20, text: 'text-[9px]', radius: 'rounded-md' },
   sm: { dimension: 40, text: 'text-sm', radius: 'rounded-lg' },
   md: { dimension: 48, text: 'text-base', radius: 'rounded-xl' },
   lg: { dimension: 64, text: 'text-lg', radius: 'rounded-xl' },
@@ -33,7 +35,7 @@ export function PersonaImage({
   if (!imageUrl || imageError) {
     return (
       <div
-        className={`bg-gradient-to-br ${color} flex items-center justify-center font-semibold text-white shadow-lg ${radius} ${className}`}
+        className={cn(`bg-gradient-to-br ${color} flex items-center justify-center font-semibold text-white shadow-lg ${radius}`, className)}
         style={{ width: dimension, height: dimension }}
       >
         <span className={text}>{initials}</span>
@@ -43,7 +45,7 @@ export function PersonaImage({
 
   return (
     <div
-      className={`relative overflow-hidden shadow-lg ${radius} ${className}`}
+      className={cn(`relative overflow-hidden shadow-lg ${radius}`, className)}
       style={{ width: dimension, height: dimension }}
     >
       <Image

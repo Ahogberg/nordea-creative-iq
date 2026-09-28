@@ -13,6 +13,7 @@
 import path from "node:path";
 import fs from "node:fs/promises";
 import { bundle } from "@remotion/bundler";
+import { withProjectAliases } from "./webpack-override";
 import {
   renderMedia,
   selectComposition,
@@ -36,12 +37,16 @@ export const RENDERS_DIR = path.join(process.cwd(), "public", "renders");
 // ── Bundle cache (module-scoped) ──
 let bundlePromise: Promise<string> | null = null;
 
-async function getBundle(): Promise<string> {
+export async function getBundle(): Promise<string> {
   if (!bundlePromise) {
     bundlePromise = bundle({
       entryPoint: path.join(process.cwd(), "remotion", "index.ts"),
       publicDir: path.join(process.cwd(), "public"),
-      webpackOverride: (config) => config,
+      webpackOverride: withProjectAliases,
+    }).catch((err) => {
+      // Spara inte ett misslyckat försök (t.ex. full disk) — försök igen nästa gång.
+      bundlePromise = null;
+      throw err;
     });
   }
   return bundlePromise;

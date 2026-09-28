@@ -12,7 +12,13 @@ import {
   X,
   RefreshCw,
   Sparkles,
+  Lightbulb,
+  Zap,
+  Mic,
+  Ratio,
+  Radio,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { KeyMessage, ValueProp, Kpi } from "@/lib/brief/types";
 import { defaultPersonas } from "@/lib/constants/personas";
 import { RefinementModal } from "../refinement-modal";
@@ -159,9 +165,8 @@ export function ReviewStage({
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Hero: Big Idea */}
-      <div className="bg-gradient-to-br from-nordea-deep via-nordea-blue to-nordea-blue text-white rounded-3xl p-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-nordea-teal/20 rounded-full blur-3xl -translate-y-32 translate-x-32" />
-        <div className="relative">
+      <div className="bg-nordea-blue text-white rounded-2xl p-8">
+        <div>
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs uppercase tracking-wider text-white/60 font-medium">
               The Big Idea
@@ -187,7 +192,7 @@ export function ReviewStage({
       <div className="grid md:grid-cols-2 gap-4">
         <Card
           label="Insight"
-          emoji="💡"
+          icon={Lightbulb}
           color="teal"
           action={
             <RefineButton onClick={() => setRefineField("insight")} />
@@ -200,7 +205,7 @@ export function ReviewStage({
         </Card>
         <Card
           label="Tension"
-          emoji="⚡"
+          icon={Zap}
           color="amber"
           action={
             <RefineButton onClick={() => setRefineField("tension")} />
@@ -305,7 +310,7 @@ export function ReviewStage({
         {strategy.tone_of_voice && (
           <Card
             label="Tone of Voice"
-            emoji="🎙"
+            icon={Mic}
             action={
               <RefineButton onClick={() => setRefineField("tone_of_voice")} />
             }
@@ -318,7 +323,7 @@ export function ReviewStage({
         )}
         {strategy.recommended_formats &&
           strategy.recommended_formats.length > 0 && (
-            <Card label="Rekommenderade format" emoji="📐">
+            <Card label="Rekommenderade format" icon={Ratio}>
               <div className="flex gap-2 flex-wrap">
                 {strategy.recommended_formats.map((f) => (
                   <span
@@ -336,7 +341,7 @@ export function ReviewStage({
       {/* Channels */}
       {strategy.recommended_channels &&
         strategy.recommended_channels.length > 0 && (
-          <Card label="Kanaler" emoji="📡">
+          <Card label="Kanaler" icon={Radio}>
             <div className="flex gap-2 flex-wrap">
               {strategy.recommended_channels.map((c) => (
                 <span
@@ -480,13 +485,13 @@ function SynthesisLoader() {
 // ─── Helper components ──────────────────────────────────────────────────
 function Card({
   label,
-  emoji,
+  icon: Icon,
   color = "default",
   action,
   children,
 }: {
   label: string;
-  emoji?: string;
+  icon?: LucideIcon;
   color?: "default" | "teal" | "amber";
   action?: React.ReactNode;
   children: React.ReactNode;
@@ -501,7 +506,7 @@ function Card({
     <div className={`border rounded-2xl p-5 ${colorClasses[color]}`}>
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          {emoji && <span className="text-base">{emoji}</span>}
+          {Icon && <Icon className="w-3.5 h-3.5 text-nordea-text-tertiary" />}
           <span className="text-xs font-medium text-nordea-text-tertiary uppercase tracking-wider">
             {label}
           </span>

@@ -1,0 +1,85 @@
+{
+  "ad_id": "e6f84a0f-fc5d-4811-b997-da3f52b52214",
+  "source_files": ["e6f84a0f-fc5d-4811-b997-da3f52b52214.mp4"],
+  "kind": "video",
+  "aspect_ratio": "9:16",
+  "product": "cards",
+  "layout": {
+    "archetype_hint": "logo-topp-rubrik-mitt-illustration-under",
+    "description": "Enfärgad Nordea-blå 9:16-yta. Vit Nordea-logotyp centrerad upptill (ca 16 % från toppen). Under logotypen ligger en något ljusare, mer violett rektangulär panel (ca 89 % av bredden, 53 % av höjden) som INTE är centrerad: den går från vänsterkanten och slutar ca 11 % före högerkanten. Inuti panelen: centrerad rubrik i tre rader (ca 28–41 % av höjden) och under den en platt illustration av ett golfhål (ellips) i nedre delen av panelen (ca 52–69 % av höjden). Nedre tredjedelen av bildytan är tom blå yta. Ingen CTA-knapp, ingen disclaimer.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 2, "notes": "Vit ordmärkeslogotyp, ca 16 % från toppen, ligger precis ovanför panelens överkant." },
+      { "element": "pattern", "position": "center", "approx_area_pct": 47, "notes": "Ljusare violettblå panel (#110A90 uppskattat) från vänsterkanten till ca 89 % av bredden, 17–71 % av höjden. Ser ut som en 1:1-/4:5-komposition med egen bakgrundsfärg som lagts på 9:16-ytan utan att centreras – troligen en produktionsmiss, inte ett avsiktligt designelement." },
+      { "element": "headline", "position": "center", "approx_area_pct": 12, "notes": "Tre centrerade rader, ca 28–41 % av höjden. Två textkort efter varandra (meningen delas upp)." },
+      { "element": "illustration", "position": "bottom-center", "approx_area_pct": 10, "notes": "Golfhål (ljusblå ellips med mörkare blå insida) centrerat i panelens nedre del, ca 52–69 % av höjden. Golfboll rullar in från vänster och faller i hålet." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0", "#110A90"],
+    "text": ["#FBD9CA", "#FFFFFF"],
+    "accents": ["#5096F0", "#2323E6", "#FAF8FF", "#0B0A6E"],
+    "notes": "Ytterbakgrund ligger nära Nordea-blå (#0000A0). Panelen bakom rubrik och illustration är tydligt ljusare/mer violett (ca #110A90) och avviker från paletten – troligen en separat komposition med egen bakgrund som inte matchats mot 9:16-ytan. Rubriktexten är INTE rent vit: den är ljust persika/krämfärgad (nära #FBD9CA), de fetade orden något mer mättat persika än regular-orden. Logotypen är däremot rent vit (#FFFFFF). Illustrationen: hålets kant ljusblå (#5096F0), hålets insida klar mellanblå (#2323E6), golfbollen nästan vit med svag lavendelton (#FAF8FF), bollens skugga mörk marinblå (#0B0A6E). Ingen turkos CTA-färg förekommer."
+  },
+  "typography": {
+    "headline": {
+      "font": "NordeaSansLarge",
+      "weight": "regular",
+      "case": "sentence",
+      "approx_size_pct_of_height": 3.5,
+      "max_lines": 3,
+      "color": "#FBD9CA"
+    },
+    "notes": "Rubriken blandar vikter i samma mening: regular för löptexten och bold för nyckelorden ('Nordea Gold', 'Nordea Premium', 'Hole in one'). Centrerad, tät radavstånd (ca 1,1–1,2). Meningen delas över två textkort, första slutar med komma ('Nordea Premium,') och andra börjar med gemen ('få en …'). Radbrytningen 'Hole in one-' / 'försäkring' bryter vid bindestrecket. Typsnittet ser ut som Nordea Sans (humanistisk grotesk med öppna former); Large-varianten bedömd utifrån rubrikstorleken. Ingen brödtext eller CTA-text finns."
+  },
+  "imagery": {
+    "type": "flat_illustration",
+    "illustration": {
+      "projection": "flat",
+      "shading": "flat",
+      "outline": "none",
+      "palette": ["#5096F0", "#2323E6", "#FAF8FF", "#0B0A6E"],
+      "detail_level": "low",
+      "people": "none",
+      "motifs": ["golfhål", "golfboll"],
+      "composition": "Ett enda motiv centrerat i nedre delen av panelen: golfhålet som en liggande ellips (sett snett uppifrån) och en överdimensionerad golfboll (diameter ca 60 % av hålets bredd) som rullar in från vänster kant och faller ner i hålet. Mycket luft runt motivet.",
+      "description": "Minimalistisk platt vektorillustration utan konturer och utan gradienter. Hålet består av två fyllda ellipser: ljusblå kant/yta och en mörkare mellanblå halvmåne som insida – djupet antyds bara med färgskiftet. Golfbollen är en helt slät, nästan vit cirkel utan dimples eller skuggning, med en platt mörkblå ellipsformad slagskugga under sig medan den rullar. När bollen hamnat i hålet maskeras dess nedre del av hålets främre kant så att bara övre halvan syns – en enkel 2D-maskning som ger illusion av djup. Illustrationen är mer grafisk/ikonisk än de isometriska Nordea-illustrationerna."
+    }
+  },
+  "motion": {
+    "duration_s": 6.13,
+    "hook_first_2s": "Ruta 0 visar bara blå yta, logotyp, den ljusare panelen och ett tomt golfhål – ingen text. Vid 0,25 s står hela första rubriken redan på plats (in inom en kvarts sekund, klipp eller mycket snabb toning). Vid ca 1,0 s rullar en stor vit golfboll in från vänsterkanten mot hålet; den rör sig långsamt och bromsar in genom 2,0 s. Hooken är alltså textdriven, med en liten rörelse (bollen) som bygger förväntan.",
+    "sequence": [
+      { "t_start": 0, "element": "logo", "animation": "Logotypen står stilla på plats från första rutan, ingen intro." },
+      { "t_start": 0, "element": "illustration", "animation": "Tomt golfhål (ellips) syns stilla från första rutan." },
+      { "t_start": 0, "t_end": 0.25, "element": "headline", "animation": "Textkort 1 ('Betala din greenfee med Nordea Gold eller Nordea Premium,') dyker upp komplett inom 0,25 s – klipp eller mycket snabb toning; ingen ord-för-ord-stagger syns." },
+      { "t_start": 0.9, "t_end": 3.0, "element": "illustration", "animation": "Golfbollen rullar in från vänster bildkant (delvis utanför bild vid 1,0 s) mot hålet med tydlig inbromsning: stora steg 1,0–1,5 s, allt mindre steg fram till 3,0 s då den står vid hålets vänstra kant. Platt slagskugga följer med. Rotation går inte att se (bollen saknar mönster)." },
+      { "t_start": 3.0, "t_end": 4.0, "element": "illustration", "animation": "Bollen faller ner i hålet och landar centrerad med nedre halvan maskerad av hålets framkant. Själva fallet ligger mellan rutorna och syns inte." },
+      { "t_start": 3.0, "t_end": 4.0, "element": "headline", "animation": "Textkort 1 byts mot textkort 2 ('få en Hole in one-försäkring värd 2000 kronor.') – bytet sker samtidigt som bollen går i hål. Övergångstypen (klipp/toning) syns inte i rutorna." },
+      { "t_start": 4.0, "t_end": 5.63, "element": "headline", "animation": "Textkort 2 står stilla; illustrationen är stilla med bollen i hålet." },
+      { "t_start": 5.63, "t_end": 6.08, "element": "headline", "animation": "Texten försvinner (toning eller klipp) – sista rutan visar bara logotyp, panel och bollen i hålet, nästan samma bild som ruta 0 fast med bollen i hålet." }
+    ],
+    "logo_reveal": "Ingen – logotypen är statisk och synlig hela filmen.",
+    "text_animation": "Hela textblock byts som kort: första kortet in inom 0,25 s, byte till andra kortet mellan 3 och 4 s, ut i slutet (5,6–6,1 s). Ingen synlig ord- eller radstagger; exakt toning går inte att avgöra från stillbilderna.",
+    "cta_reveal": "Ingen CTA, ingen URL och ingen knapp i filmen.",
+    "transitions": "Inga scenövergångar – samma bakgrund och illustration hela filmen; bara textkortet byts och bollen rör sig.",
+    "illustration_animation": "Ett enda objekt animeras: golfbollen glider in horisontellt från vänster med ease-out (inbromsning) under ca 2 s, faller sedan ner i hålet (masken gör att den 'försvinner ner' bakom hålets framkant). Hålet är statiskt. Bollens rörelse illustrerar ordleken 'Hole in one' och synkas med textbytet.",
+    "pacing": "calm",
+    "end_card": "Inget separat end card – filmen slutar på samma komposition utan text: logotyp, panel och bollen i hålet. Ger en nästan sömlös loop-känsla."
+  },
+  "copy": {
+    "headline": "Betala din greenfee med Nordea Gold eller Nordea Premium, få en Hole in one-försäkring värd 2000 kronor.",
+    "pattern": "En enda mening delad över två textkort: villkor/handling ('Betala … med [produkt]') + belöning ('få en … värd [belopp]'). Fetstil på produktnamn och på förmånen. Ordlek mellan copy och illustration (Hole in one = bollen i hålet)."
+  },
+  "observations": [
+    "Produkten är härledd från innehållet: annonsen säljer kreditkorten Nordea Gold och Nordea Premium via en kortförmån (Hole in one-försäkring vid betalning av greenfee). Satt till 'cards' eftersom erbjudandet kräver kortet; förmånen i sig är en försäkring, så 'insurance' hade också kunnat försvaras.",
+    "Inget årtal eller datum syns i annonsen; year är utelämnat.",
+    "Den ljusare, violettare panelen bakom rubrik och illustration är inte centrerad (flush vänster, luft höger) och har en annan blå än ytterbakgrunden. Det ser ut som en kvadratisk/4:5-komposition som placerats på 9:16-ytan utan anpassning. Bör inte kopieras som regel – men visar att Nordea återanvänder 1:1-material i Story-format.",
+    "Rubrikfärgen är ljust persika/krämfärgad, inte vit – medan logotypen är rent vit. Två olika 'ljusa' färger på samma blå yta.",
+    "Ingen CTA, ingen URL och ingen juridisk text – ren kännedoms-/förmånsannons.",
+    "Illustrationen är extremt enkel (två ellipser + en cirkel + skugga) och helt platt – går att återskapa med vektorformer i en renderare. Det som kräver mer än enfärgad bakgrund + text är maskningen (bollen försvinner bakom hålets framkant) och rörelsebanan med inbromsning.",
+    "Den mindre nedre tredjedelen av 9:16-ytan är helt tom – ingen anpassning av layouten till det högre formatet.",
+    "Bollen är orealistiskt stor i förhållande till hålet – medveten stilisering."
+  ],
+  "confidence": "medium",
+  "analyzed_at": "2026-09-23"
+}

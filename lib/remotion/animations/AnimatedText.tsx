@@ -6,6 +6,13 @@ import {
   isStaggerStyle,
   type TextAnimationStyle,
 } from "./TextAnimations";
+import {
+  hasRichMarkup,
+  parseRichText,
+  renderRichTokens,
+  tokenizeRichText,
+  RICH_REGULAR_WEIGHT,
+} from "../rich-text";
 
 interface Props {
   text: string;
@@ -33,20 +40,29 @@ export const AnimatedText: React.FC<Props> = ({
   const localFrame = frame - startFrame;
   if (localFrame < 0) return null;
 
+  // `**fet**`-markup: löptext i regular, nyckelord i bold.
+  const rich = hasRichMarkup(text);
+  const baseStyle: React.CSSProperties = rich
+    ? { ...fontStyle, fontWeight: RICH_REGULAR_WEIGHT }
+    : { ...fontStyle };
+
   if (isStaggerStyle(style)) {
     const splitMode: "word" | "letter" =
       style === "stagger-word" ? "word" : "letter";
     // Typewriter is character-level too.
-    const pieces = splitTextForStagger(
-      text,
-      style === "typewriter" ? "letter" : splitMode
-    );
+    const pieces = rich
+      ? tokenizeRichText(text, splitMode === "word" && style !== "typewriter" ? "word" : "character")
+      : splitTextForStagger(text, style === "typewriter" ? "letter" : splitMode).map(
+          (t) => [{ text: t, bold: false }]
+        );
+    // Rich-ord bär sitt mellanslag själva; vanliga ord får ett efteråt.
+    const addSpace = !rich && style === "stagger-word";
 
     return (
       <div
         className={className}
         style={{
-          ...fontStyle,
+          ...baseStyle,
           display: "inline-block",
           // Allow line breaks at spaces in stagger-word
           whiteSpace: "pre-wrap",
@@ -70,8 +86,8 @@ export const AnimatedText: React.FC<Props> = ({
                 whiteSpace: "pre",
               }}
             >
-              {piece}
-              {style === "stagger-word" && i < pieces.length - 1 ? " " : null}
+              {renderRichTokens(piece)}
+              {addSpace && i < pieces.length - 1 ? " " : null}
             </span>
           );
         })}
@@ -88,13 +104,14 @@ export const AnimatedText: React.FC<Props> = ({
     <div
       className={className}
       style={{
-        ...fontStyle,
+        ...baseStyle,
         opacity: s.opacity,
         transform: s.transform,
         clipPath: s.clipPath,
+        whiteSpace: "pre-line",
       }}
     >
-      {text}
+      {rich ? renderRichTokens(parseRichText(text)) : text}
     </div>
   );
 };

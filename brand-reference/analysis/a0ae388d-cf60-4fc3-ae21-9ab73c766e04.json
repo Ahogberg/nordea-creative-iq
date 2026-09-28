@@ -1,0 +1,79 @@
+{
+  "ad_id": "a0ae388d-cf60-4fc3-ae21-9ab73c766e04",
+  "source_files": ["a0ae388d-cf60-4fc3-ae21-9ab73c766e04.mp4"],
+  "kind": "video",
+  "aspect_ratio": "9:16",
+  "layout": {
+    "archetype_hint": "penseldrag-avslojar-rubrik / persika-textkort",
+    "description": "Två scener. Scen 1 (0–3 s): Nordea-blå, enfärgad helbild med vit logotyp överst i mitten (ca 17 % ned). En animerad pensel målar två breda persikafärgade diagonala/horisontella stråk över bilden; rubriken 'Dags att renovera?' står centrerad strax under mitten (ca 47–55 % höjd) och syns bara där färgen målats (blå text på persika). Scen 2 (3,5–5,6 s): helt persikafärgad bakgrund, logotypen nu blå på samma plats, och ett centrerat textblock i fyra rader på ca 28–47 % höjd. Nedre halvan är tom i båda scenerna. Ingen CTA, ingen URL, ingen disclaimer.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 2, "notes": "Vit på blått i scen 1, blå på persika i scen 2. Ca 29 % av bredden, ca 17 % ned från överkanten (säkerhetsmarginal för 9:16-gränssnitt)." },
+      { "element": "illustration", "position": "full-bleed", "approx_area_pct": 45, "notes": "Pensel + två målade stråk. Stråk 1 diagonalt från nedre vänster (ca 84 % höjd) till övre höger (ca 11 % höjd), ca 25 % av höjden brett. Stråk 2 nästan horisontellt, lätt lutande, över ca 43–59 % höjd." },
+      { "element": "headline", "position": "center", "approx_area_pct": 6, "notes": "'Dags att renovera?' i två rader, centrerat vid ca 47–55 % höjd." },
+      { "element": "body", "position": "top-center", "approx_area_pct": 10, "notes": "Scen 2: fyra rader centrerat ca 28–47 % höjd." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0", "#FBD9CA"],
+    "text": ["#0000A0", "#FFFFFF"],
+    "accents": ["#0000ED", "#399BF4", "#9FCBFA", "#83C3FF"],
+    "notes": "Blå bakgrund uppmätt #010094 och persika uppmätt #F6D4CB — båda ligger nära paletten (#0000A0 resp. #FBD9CA) och avvikelsen är sannolikt videokodning (samma #010094 mäts i andra Nordea-videor), så paletten används. Persikan ser något rosare ut än #FBD9CA i den här filmen. Logotypen är vit på blått och blir blå på persika. Rubriken 'Dags att renovera?' har exakt samma blå som bakgrunden och syns därför bara ovanpå det målade stråket. Stråken passerar genom halvtransparenta mellantoner (lavendel ca #6E5AA8 och malva ca #C0A5C0) innan de blir helt persika. Penseln: borsthuvud i klar elektrisk blå (#0000ED) med mörkare sidoyta, metallhylsa ljusblå (#9FCBFA), skaft mellanblå (#399BF4) med ljusare högdager (#83C3FF). Ingen turkos."
+  },
+  "typography": {
+    "headline": { "font": "NordeaSansLarge", "weight": "bold", "case": "sentence", "approx_size_pct_of_height": 5, "max_lines": 2, "color": "#0000A0" },
+    "body": { "font": "NordeaSansLarge", "weight": "regular", "case": "sentence", "approx_size_pct_of_height": 4.2, "max_lines": 4, "color": "#0000A0" },
+    "notes": "Scen 1-rubriken är genomgående fet. Scen 2-texten 'Det finns många alternativ för att finansiera din renovering' blandar vikter i samma mening: regular (tunt, nästan light) för de flesta orden och bold för nyckelorden 'alternativ' och 'finansiera'. Samma storlek för båda vikterna. Stort radavstånd, centrerad. Typsnittet ser ut som NordeaSansLarge även i scen 2 eftersom texten är i rubrikstorlek."
+  },
+  "imagery": {
+    "type": "flat_illustration",
+    "illustration": {
+      "projection": "flat",
+      "shading": "cel",
+      "outline": "none",
+      "palette": ["#0000ED", "#399BF4", "#83C3FF", "#9FCBFA", "#FBD9CA"],
+      "detail_level": "low",
+      "people": "none",
+      "motifs": ["målarpensel", "penseldrag/färgstråk"],
+      "composition": "En enda stor pensel (ca 40–50 % av bildbredden) som rör sig över hela bilden och lämnar breda, raka färgstråk med skarpa kanter. Stråken korsar rubriken så att texten hamnar mitt i målad yta.",
+      "description": "Flat vektorillustration i lätt 3/4-vy (borsthuvudet visar en mörkare sidoyta, så viss pseudo-3D). Cel-skuggning: varje del har en bastone, en mörkare skuggton och en ljus avlång högdager på skaftet. Inga konturer. Borsten har tre-fyra korta mörka linjer som antyder strån. Stråken är helt platta rektanglar/parallellogram utan penseltextur — inga fransiga kanter."
+    }
+  },
+  "motion": {
+    "duration_s": 6.1,
+    "hook_first_2s": "Rutan vid 0 s är helt tom blå med vit logotyp. Vid 0,25 s sticker en pensel in från vänsterkanten nedtill; vid 0,5 s är den i vänster mitt, lutad ca 30°. Vid 0,75 s har den svept upp till övre högra hörnet och lämnat ett brett diagonalt stråk; rubriken 'Dags att renover…' syns inuti stråket (maskad — delarna utanför stråket syns inte). Stråket går från halvtransparent lavendel (0,75 s) via malva (1,0 s) till helt persika (1,25 s). Vid 1,5 s kommer penseln tillbaka från högerkanten och målar ett andra, nästan horisontellt stråk från höger till vänster (1,75–2,0 s) som avtäcker hela 'Dags att renovera?'. Stark, rörlig hook där texten bokstavligen målas fram.",
+    "sequence": [
+      { "t_start": 0, "t_end": 0.25, "element": "logo", "animation": "Vit logotyp står stilla på blått redan i första rutan." },
+      { "t_start": 0.25, "t_end": 0.75, "element": "illustration", "animation": "Pensel glider/svänger in från vänsterkanten nedtill (0,25 s), passerar vänster mitt lutad ca 30° (0,5 s) och sveper diagonalt upp till övre högra hörnet (0,75 s)." },
+      { "t_start": 0.75, "t_end": 1.25, "element": "pattern", "animation": "Diagonalt stråk bakom penseln; opaciteten ökar från lavendel/halvtransparent (0,75 s) via malva (1,0 s) till helt persika (1,25 s) — färgen 'torkar in'." },
+      { "t_start": 0.75, "t_end": 2.0, "element": "headline", "animation": "Mask-reveal: 'Dags att renovera?' är blå på blått och syns bara där stråken ligger. Efter stråk 1 är slutet av 'renovera?' fortfarande dolt; stråk 2 avtäcker resten vid 2,0 s." },
+      { "t_start": 1.5, "t_end": 2.0, "element": "illustration", "animation": "Penseln kommer in från högerkanten (1,5 s), passerar över rubriken (1,75 s) och går ut vid vänsterkanten (2,0 s); lämnar ett nästan horisontellt stråk över ca 43–59 % höjd." },
+      { "t_start": 2.0, "t_end": 3.0, "element": "pattern", "animation": "Stråk 2 går från halvtransparent lavendel till helt persika; penselns skaft syns på väg ut nedtill vänster vid 3,0 s." },
+      { "t_start": 3.0, "t_end": 3.9, "element": "logo", "animation": "Övertoning till scen 2: vid 3,0 s håller logotypen på att byta från vit till blå (lavendel mellanton) och rubriken bleknar — hela bilden tonar över till helt persika bakgrund. Exakt hur (övertoning eller att färgen fyller ytan) syns inte i rutorna." },
+      { "t_start": 4.0, "t_end": 5.6, "element": "body", "animation": "'Det finns många alternativ för att finansiera din renovering' står stilla i blått på persika med blå logotyp. Ingen rörelse mellan 4,0 och 5,6 s." },
+      { "t_start": 5.6, "t_end": 6.05, "element": "body", "animation": "Övertoning till blått: vid 6,05 s är bilden nästan helt blå (#1C109A mellanton) med spöklik text — tonar tillbaka mot startrutan (loop)." }
+    ],
+    "logo_reveal": "Ingen reveal — logotypen finns från första rutan. Den byter färg (vit → blå) i övertoningen till persika-scenen vid ca 3 s.",
+    "text_animation": "Scen 1: mask-reveal där texten avtäcks av målade stråk (texten har bakgrundens färg och blir synlig först mot persikan). Scen 2: texten dyker upp via helbildsövertoning, ingen stagger.",
+    "cta_reveal": "Ingen CTA — varken knapp, URL eller uppmaning. Sista scenen är ett påstående.",
+    "transitions": "Scen 1 → 2: övertoning till persika helbild (logotyp och text byter färg samtidigt) vid ca 3,0–3,9 s. Slut: övertoning till blått vid ca 5,6–6,05 s, sannolikt för sömlös loop mot startrutan.",
+    "illustration_animation": "Penseln rör sig som ett objekt längs banor (in från vänster nedtill → upp till höger; in från höger → ut till vänster) med rotation. Färgstråken ritas ut bakom den (wipe) och går sedan från halvtransparent till full opacitet.",
+    "pacing": "fast",
+    "end_card": "Persikafärgat textkort (4–5,6 s): blå logotyp överst, 'Det finns många alternativ för att finansiera din renovering' med 'alternativ' och 'finansiera' i fetstil. Ingen CTA eller URL."
+  },
+  "copy": {
+    "headline": "Dags att renovera?",
+    "body": "Det finns många alternativ för att finansiera din renovering",
+    "pattern": "Fråga till målgruppen ('Dags att renovera?') + lugnande svar med nyckelord i fetstil ('Det finns många alternativ för att finansiera din renovering'). Ingen CTA, ingen disclaimer."
+  },
+  "observations": [
+    "Produkt är inte satt: budskapet gäller finansiering av renovering, vilket kan vara bolån (utökning), privatlån eller sparande — inte entydigt från innehållet. Manifestet saknar produkt/kanal/år.",
+    "Tydligaste exemplet hittills på mask-reveal: rubriken har samma blå som bakgrunden och blir läsbar först när penseln målat persika under den. Motivet (pensel) är direkt kopplat till budskapet (renovera).",
+    "Färgbytet blått → persika är en berättande övergång: stråken 'målar om' bilden, och scen 2 är helt persika som om hela väggen blivit målad.",
+    "Blandade vikter i samma mening i scen 2 (regular + bold på nyckelorden 'alternativ' och 'finansiera').",
+    "9:16 med logotypen på ca 17 % höjd och allt innehåll i övre 60 % — nedre ca 40 % är tom (sannolikt hänsyn till Stories/Reels-gränssnitt).",
+    "Allt kan göras med enfärgad bakgrund + vektorgrafik. En renderare som bara klarar enfärgad bakgrund och statisk text kan INTE återskapa: penselobjektet som rör sig längs en bana med rotation, stråk som ritas ut bakom penseln (wipe), opacitetsramp på stråken, eller texten som bara syns inuti stråken (maskning).",
+    "Sista rutan tonar mot blått, så filmen loopar sannolikt sömlöst tillbaka till den tomma blå startrutan."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

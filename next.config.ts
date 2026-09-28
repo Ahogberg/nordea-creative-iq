@@ -13,7 +13,8 @@ const nextConfig: NextConfig = {
     "@remotion/renderer",
   ],
   // Next 16's in-build TS worker OOMs on this project regardless of NODE_OPTIONS.
-  // We run `tsc --noEmit` separately (CI / pre-push) for type safety.
+  // Typerna kontrolleras i stället av `npm run typecheck` i CI
+  // (.github/workflows/ci.yml) — en PR med typfel blir röd där.
   typescript: { ignoreBuildErrors: true },
 };
 

@@ -10,6 +10,8 @@ import { Progress } from '@/components/ui/progress';
 import { Globe, Sparkles, Copy, Check, ChevronRight } from 'lucide-react';
 import { nordicMarkets } from '@/lib/constants/markets';
 import { cn } from '@/lib/utils';
+import { Topbar } from '@/components/layout/topbar';
+import { PageHeading } from '@/components/layout/page-heading';
 
 interface LocalizedResult {
   market: string;
@@ -144,11 +146,14 @@ export default function LocalizationPage() {
     score >= 85 ? 'text-green-600' : score >= 70 ? 'text-yellow-600' : 'text-red-600';
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Lokalisering</h1>
-        <p className="text-gray-500 mt-1">Anpassa innehåll för nordiska och baltiska marknader</p>
-      </div>
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar breadcrumb={['Lokalisering']} />
+      <div className="px-8 py-8 max-w-[1400px] mx-auto space-y-6">
+      <PageHeading
+        eyebrow="Marknader"
+        title="Lokalisering"
+        description="Anpassa rubrik, brödtext och CTA för Sverige, Danmark, Norge och Finland — med språk, ton och regelverk per marknad."
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input */}
@@ -159,7 +164,7 @@ export default function LocalizationPage() {
               <CardTitle className="text-base">Källmarknad</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {nordicMarkets.map((market) => (
                   <button
                     key={market.id}
@@ -380,6 +385,7 @@ export default function LocalizationPage() {
             })
           )}
         </div>
+      </div>
       </div>
     </div>
   );

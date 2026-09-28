@@ -32,6 +32,10 @@ import {
   Plus,
   Image as ImageIcon,
 } from 'lucide-react';
+import { Topbar } from "@/components/layout/topbar";
+import { PageHeading } from "@/components/layout/page-heading";
+import { PersonaImage } from "@/components/ui/persona-image";
+import { findPersona } from "@/lib/persona-library";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -350,10 +354,13 @@ export default function CopyStudioPage() {
           channel,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      // Fel visas aldrig som en reaktion (routen svarar 502 vid fel).
+      if (!res.ok) throw new Error(data.error || 'Personan kunde inte svara');
       setPersonaReaction(data);
     } catch (e) {
       console.error(e);
+      setPersonaReaction(null);
     }
     setIsLoadingReaction(false);
   };
@@ -420,7 +427,7 @@ export default function CopyStudioPage() {
       <SelectContent>
         {personas.map((p) => (
           <SelectItem key={p.id} value={p.id}>
-            {p.avatar} {p.name}
+            {p.name}
           </SelectItem>
         ))}
         <SelectItem value="create-new" className="text-[#0000A0]">
@@ -434,11 +441,14 @@ export default function CopyStudioPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Copy Studio</h1>
-        <p className="text-gray-500 mt-1">Skapa, förbättra och testa copy med Nordeas Tone of Voice</p>
-      </div>
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar breadcrumb={["Skapa", "Copy Studio"]} />
+      <div className="px-8 py-8 max-w-[1400px] mx-auto space-y-6">
+      <PageHeading
+        eyebrow="Skapa · Annonstext"
+        title="Copy Studio"
+        description="Skapa, förbättra och testa rubriker, brödtext och CTA:er i Nordeas tone of voice."
+      />
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
         <TabsList className="grid w-full max-w-md grid-cols-3">
@@ -716,7 +726,7 @@ export default function CopyStudioPage() {
                 {selectedPersona && (
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">{selectedPersona.avatar}</span>
+                      <PersonaImage name={selectedPersona.name} color={findPersona(selectedPersona.id)?.color ?? findPersona(selectedPersona.name)?.color} size="sm" className="shadow-none" />
                       <div>
                         <p className="font-medium text-sm">{selectedPersona.name}</p>
                         <p className="text-xs text-gray-500">{selectedPersona.age_min}–{selectedPersona.age_max} år</p>
@@ -763,7 +773,7 @@ export default function CopyStudioPage() {
                               <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${msg.role === 'user' ? 'bg-[#0000A0] text-white' : 'bg-gray-100'}`}>
                                 {msg.role === 'persona' && selectedPersona && (
                                   <span className="text-xs font-medium text-gray-500 block mb-0.5">
-                                    {selectedPersona.avatar} {selectedPersona.name}
+                                    {selectedPersona.name}
                                   </span>
                                 )}
                                 {msg.content}
@@ -786,6 +796,7 @@ export default function CopyStudioPage() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

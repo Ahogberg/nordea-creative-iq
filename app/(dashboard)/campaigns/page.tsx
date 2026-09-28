@@ -1,149 +1,136 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Rocket, Plus, Clock, CheckCircle2, Loader2, ArrowRight, Film } from 'lucide-react';
+import { Rocket, Plus, Clock, CheckCircle2, ArrowRight, Film, Clapperboard } from 'lucide-react';
+import { Topbar } from '@/components/layout/topbar';
+import { PageHeading } from '@/components/layout/page-heading';
+import { NordeaBadge } from '@/components/ui/nordea-badge';
+import { EmptyState, ErrorState, CardGridSkeleton } from '@/components/ui/states';
+import { CreativeThumbnail } from '@/components/preview/creative-thumbnail';
+import { campaignStatus, formatRelative } from '@/lib/campaign-status';
 import type { Campaign } from '@/lib/brief/types';
 
-const STATUS_CONFIG: Record<Campaign['status'], { label: string; className: string }> = {
-  draft: { label: 'Utkast', className: 'bg-gray-100 text-gray-700' },
-  in_review: { label: 'Under granskning', className: 'bg-yellow-100 text-yellow-700' },
-  approved: { label: 'Godkänd', className: 'bg-green-100 text-green-700' },
-  live: { label: 'Live', className: 'bg-blue-100 text-blue-700' },
-};
-
-function formatRelative(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'just nu';
-  if (m < 60) return `${m} min sedan`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h} h sedan`;
-  const d = Math.floor(h / 24);
-  return `${d} d sedan`;
-}
-
 export default function CampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [campaigns, setCampaigns] = useState<Campaign[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
     fetch('/api/campaigns')
-      .then((r) => {
-        if (!r.ok) throw new Error('Kunde inte hämta kampanjer');
-        return r.json();
+      .then(async (r) => {
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(body.error ?? 'Kampanjerna kunde inte hämtas.');
+        return body;
       })
-      .then((data) => setCampaigns(data.campaigns ?? []))
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : 'Okänt fel')
-      )
-      .finally(() => setLoading(false));
+      .then((data) => {
+        if (!cancelled) setCampaigns(data.campaigns ?? []);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Okänt fel');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reload]);
+
+  const retry = useCallback(() => {
+    setError(null);
+    setCampaigns(null);
+    setReload((n) => n + 1);
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Kampanjer</h1>
-          <p className="text-gray-500 mt-1">
-            Kampanjer skapade från godkända briefs
-          </p>
-        </div>
-        <Link href="/create/brief">
-          <Button className="bg-[#0000A0] hover:bg-[#000080]">
-            <Plus className="w-4 h-4 mr-2" />
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar
+        breadcrumb={['Kampanjer']}
+        right={
+          <Link href="/create/brief" className="nordea-btn nordea-btn-primary">
+            <Plus className="w-4 h-4" />
             Ny brief
-          </Button>
-        </Link>
+          </Link>
+        }
+      />
+
+      <div className="px-8 py-8 max-w-[1400px] mx-auto">
+        <PageHeading
+          eyebrow="Arbetsyta"
+          title="Kampanjer"
+          description="Varje kampanj skapas från en godkänd brief och samlar video, displayformat och QA på ett ställe."
+        />
+
+        {error ? (
+          <div className="nordea-card">
+            <ErrorState title="Kampanjerna kunde inte hämtas" description={error} onRetry={retry} />
+          </div>
+        ) : campaigns === null ? (
+          <CardGridSkeleton count={6} />
+        ) : campaigns.length === 0 ? (
+          <div className="nordea-card">
+            <EmptyState
+              icon={Rocket}
+              title="Inga kampanjer ännu"
+              description="Börja med en brief. När strategin är godkänd skapar CreativeIQ kampanjen med video och displayformat."
+              action={
+                <Link href="/create/brief" className="nordea-btn nordea-btn-primary">
+                  <Plus className="w-4 h-4" />
+                  Skapa en brief
+                </Link>
+              }
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {campaigns.map((c) => (
+              <CampaignCard key={c.id} campaign={c} />
+            ))}
+          </div>
+        )}
       </div>
-
-      {loading && (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && campaigns.length === 0 && (
-        <Card className="border-0 shadow-sm">
-          <CardContent className="py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#0000A0]/10 flex items-center justify-center mx-auto mb-4">
-              <Rocket className="w-8 h-8 text-[#0000A0]" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Inga kampanjer ännu
-            </h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              Kampanjer skapas när du genererar en kampanj från en godkänd brief.
-            </p>
-            <Link href="/create/brief">
-              <Button className="bg-[#0000A0] hover:bg-[#000080]">
-                <Plus className="w-4 h-4 mr-2" />
-                Skapa en brief
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
-
-      {!loading && campaigns.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {campaigns.map((c) => {
-            const statusCfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.draft;
-            const templateCount = c.template_ids?.length ?? 0;
-            const href = c.brief_id
-              ? `/create/brief/${c.brief_id}/campaign`
-              : `/studio`;
-            return (
-              <Link key={c.id} href={href}>
-                <Card className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer h-full">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-gray-900 truncate flex-1 min-w-0">
-                        {c.name || 'Namnlös kampanj'}
-                      </h3>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-4">
-                      <Badge className={statusCfg.className}>{statusCfg.label}</Badge>
-                      {templateCount > 0 && (
-                        <Badge variant="outline" className="text-xs flex items-center gap-1">
-                          <Film className="w-3 h-3" />
-                          {templateCount} video{templateCount > 1 ? 's' : ''}
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-gray-500 mt-4 pt-3 border-t border-gray-100">
-                      <span className="flex items-center gap-1">
-                        {c.status === 'approved' || c.status === 'live' ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                        ) : (
-                          <Clock className="w-3.5 h-3.5" />
-                        )}
-                        {formatRelative(c.updated_at)}
-                      </span>
-                      <span className="flex items-center gap-1 text-[#0000A0] font-medium">
-                        Öppna
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      )}
     </div>
+  );
+}
+
+function CampaignCard({ campaign: c }: { campaign: Campaign }) {
+  const status = campaignStatus(c.status);
+  const templateCount = c.template_ids?.length ?? 0;
+  const done = c.status === 'approved' || c.status === 'live';
+
+  return (
+    <Link href={`/campaigns/${c.id}`} className="nordea-card overflow-hidden group hover:border-nordea-border-emphasis transition-colors flex">
+      <div className="w-[88px] shrink-0 bg-nordea-blue-soft flex items-center justify-center border-r border-nordea-hairline">
+        {c.video_config?.scenes?.length ? (
+          <CreativeThumbnail config={c.video_config} playOnHover={false} rounded="rounded-none" className="w-full" />
+        ) : (
+          <Clapperboard className="w-5 h-5 text-nordea-blue" />
+        )}
+      </div>
+      <div className="p-4 flex-1 min-w-0 flex flex-col">
+        <div className="font-semibold text-sm text-nordea-text truncate">{c.name || 'Namnlös kampanj'}</div>
+        <div className="flex items-center gap-2 mt-2">
+          <NordeaBadge tone={status.tone} dot>
+            {status.label}
+          </NordeaBadge>
+          {c.display_set && <NordeaBadge tone="neutral">Display</NordeaBadge>}
+          {templateCount > 0 && (
+            <NordeaBadge tone="neutral">
+              <Film className="w-3 h-3" />
+              {templateCount} {templateCount === 1 ? 'video' : 'videor'}
+            </NordeaBadge>
+          )}
+        </div>
+        <div className="flex items-center justify-between text-xs text-nordea-text-tertiary mt-auto pt-4">
+          <span className="flex items-center gap-1">
+            {done ? <CheckCircle2 className="w-3.5 h-3.5 text-nordea-green" /> : <Clock className="w-3.5 h-3.5" />}
+            {formatRelative(c.updated_at)}
+          </span>
+          <span className="flex items-center gap-1 text-nordea-blue font-medium">
+            Öppna
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }

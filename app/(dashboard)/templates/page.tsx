@@ -19,6 +19,7 @@ import type { Template } from '@/lib/video-types';
 import { Topbar } from '@/components/layout/topbar';
 import { CreativeThumbnail } from '@/components/preview/creative-thumbnail';
 import { SectionTitle } from '@/components/layout/section-title';
+import { PageHeading } from '@/components/layout/page-heading';
 import { NordeaBadge } from '@/components/ui/nordea-badge';
 import { FormatChip } from '@/components/ui/format-chip';
 
@@ -122,14 +123,17 @@ export default function TemplatesPage() {
       />
 
       <div className="px-8 py-7 max-w-[1400px] mx-auto">
-        {/* Hero */}
-        <div className="mb-6">
-          <h1 className="nordea-display text-3xl text-nordea-deep">Mallbibliotek</h1>
-          <div className="text-sm text-nordea-text-tertiary mt-1">
-            {templates.length} varumärkesgodkända layouter
-            {favorites.length > 0 && ` · ${favorites.length} favoriter`}
-          </div>
-        </div>
+        <PageHeading
+          eyebrow="Bibliotek"
+          title="Mallar"
+          description={
+            templates.length === 0
+              ? 'Varumärkesgodkända layouter — utgångspunkten för massproduktion.'
+              : `${templates.length} varumärkesgodkända ${templates.length === 1 ? 'layout' : 'layouter'}${
+                  favorites.length > 0 ? ` · ${favorites.length} favoriter` : ''
+                } — utgångspunkten för massproduktion.`
+          }
+        />
 
         {/* Filter row */}
         <div className="flex gap-2.5 mb-6 items-center flex-wrap">
@@ -275,8 +279,8 @@ export default function TemplatesPage() {
 function EmptyState() {
   return (
     <div className="text-center py-20">
-      <div className="w-16 h-16 bg-nordea-teal/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <Sparkles className="w-8 h-8 text-nordea-teal" />
+      <div className="w-16 h-16 bg-nordea-blue-soft rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <Sparkles className="w-8 h-8 text-nordea-blue" />
       </div>
       <h3 className="text-lg font-semibold text-nordea-text mb-2">Inga mallar ännu</h3>
       <p className="text-sm text-nordea-text-tertiary mb-6 max-w-sm mx-auto">

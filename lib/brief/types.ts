@@ -5,6 +5,9 @@
 // (insight, tension, big_idea, key_messages, value_props). Campaigns link
 // a brief to the generated assets.
 
+import type { VideoConfig } from "@/lib/remotion/types";
+import type { DisplaySet } from "@/lib/display/types";
+
 export type BriefSource = "wizard" | "upload" | "manual";
 export type BriefStatus = "draft" | "approved" | "used";
 
@@ -77,6 +80,11 @@ export interface Campaign {
 
   status: "draft" | "in_review" | "approved" | "live";
   approval_notes: string | null;
+
+  /** Kampanjens video (Motion Studio). */
+  video_config?: VideoConfig | null;
+  /** Kampanjens displaypaket (Displayformat). */
+  display_set?: DisplaySet | null;
 
   created_by: string;
   created_at: string;
