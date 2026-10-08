@@ -86,6 +86,10 @@ export interface Campaign {
   /** Kampanjens displaypaket (Displayformat). */
   display_set?: DisplaySet | null;
 
+  /** Valda kanaler och videoformat (lib/campaign-options). Tomma = inte valt. */
+  channels?: string[];
+  formats?: string[];
+
   created_by: string;
   created_at: string;
   updated_at: string;

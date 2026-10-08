@@ -8,8 +8,14 @@ Kör filerna i `migrations/` i namnordning på ett nytt projekt:
 
 1. `migrations/20260926000000_creativeiq_schema.sql` — alla tabeller, index,
    radnivåsäkerhet (RLS) och behörigheter
-2. `personas_seed.sql` — standardpersonas ur `lib/persona-library.ts`
+2. `migrations/20260927000000_campaign_creatives.sql` — kampanjens video och
+   displaypaket (`video_config`, `display_set`), en kampanj per brief
+3. `migrations/20261006000000_campaign_channels_formats.sql` — valda kanaler
+   och videoformat (`channels`, `formats`)
+4. `personas_seed.sql` — standardpersonas ur `lib/persona-library.ts`
    (generera om med `npm run personas:seed-sql` när biblioteket ändras)
+
+Alla tre migrationerna är körda i projektet ovan.
 
 `migration.sql` och `rls_sprint12.sql` är den gamla uppsättningen och ska inte
 köras på nya projekt: RLS-filen pekade på kolumner som inte finns.

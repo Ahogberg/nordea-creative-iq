@@ -11,6 +11,7 @@ import {
 import { withVisualGrammar } from "@/lib/brand/visual-grammar";
 import { withMotionCapabilities } from "@/lib/remotion/prompt-capabilities";
 import { compileCanvasScenes } from "@/lib/remotion/compile";
+import { CampaignChoicesSchema, isChannel, isFormat, type CampaignChoices } from "@/lib/campaign-options";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -49,7 +50,7 @@ REGLER:
 - Plocka EN av strategins key_messages för rubriker (välj den som passar valt format bäst)
 - Använd EN av desired_action som avslut: URL eller mjuk uppmaning i ett textkort (cta-scen bara om strategin kräver en knapp)
 - Kreditprodukter: legal.creditWarning och en terms-scen. Sparande: legal.riskNote.
-- Om recommended_formats finns: använd första format-värdet
+- Videon görs i det första av selected_formats (sätts även i efterhand). Anpassa tempo, textmängd och avslut efter selected_channels (t.ex. TikTok: snabbt och vertikalt, LinkedIn: sakligt, YouTube: bredbild med lite mer tid)
 - totalDurationSeconds = exakt summan
 - Behåll Nordea brand-tone
 
@@ -58,14 +59,26 @@ Returnera ENDAST giltig JSON för VideoConfig.`;
 // En kampanj per brief. Finns den redan returneras den som den är — sidan
 // genererar alltså inte om vid varje besök. { regenerate: true } skriver en ny
 // video till samma kampanj (och samma mall/master) i stället för att skapa nya.
+// { channels, formats } är kanal- och formatvalet (lib/campaign-options); utan
+// dem gäller kampanjens sparade val, annars briefens rekommendationer.
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: briefId } = await params;
-    const body = (await request.json().catch(() => null)) as { regenerate?: boolean } | null;
+    const body = (await request.json().catch(() => null)) as
+      | { regenerate?: boolean; channels?: unknown; formats?: unknown }
+      | null;
     const regenerate = body?.regenerate === true;
+    let chosen: CampaignChoices | null = null;
+    if (body?.channels !== undefined || body?.formats !== undefined) {
+      const parsed = CampaignChoicesSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ error: "Välj minst en kanal och ett format." }, { status: 400 });
+      }
+      chosen = parsed.data;
+    }
 
     const db = await requireDb();
     if ("response" in db) return db.response;
@@ -88,6 +101,17 @@ export async function POST(
       .eq("brief_id", briefId)
       .eq("created_by", ownerId)
       .maybeSingle();
+
+    const choices = chosen ?? savedOrRecommended(existing, brief);
+    // Nya val på en befintlig kampanj sparas även när videon redan finns.
+    if (existing && chosen) {
+      await supabase
+        .from("campaigns")
+        .update({ channels: chosen.channels, formats: chosen.formats })
+        .eq("id", existing.id)
+        .eq("created_by", ownerId);
+      Object.assign(existing, chosen);
+    }
 
     // Kampanjer från före video_config har videon i sin mall — flytta in den
     // i stället för att låta AI:n skriva över det användaren redan sett.
@@ -114,7 +138,7 @@ export async function POST(
       return NextResponse.json({ campaign: existing, created: false });
     }
 
-    const config = await generateConfig(brief, briefId);
+    const config = await generateConfig(brief, briefId, choices);
     const name = brief.title || "Kampanj från brief";
 
     // En mall och en master per kampanj — uppdateras vid omgenerering.
@@ -127,6 +151,8 @@ export async function POST(
         .from("campaigns")
         .update({
           video_config: config,
+          channels: choices.channels,
+          formats: choices.formats,
           template_ids: [templateId],
           master_creative_ids: masterId ? [masterId] : [],
         })
@@ -143,6 +169,8 @@ export async function POST(
           name,
           brief_id: briefId,
           video_config: config,
+          channels: choices.channels,
+          formats: choices.formats,
           master_creative_ids: masterId ? [masterId] : [],
           template_ids: [templateId],
           production_job_ids: [],
@@ -182,8 +210,29 @@ export async function POST(
   }
 }
 
-async function generateConfig(brief: Record<string, unknown>, briefId: string): Promise<VideoConfig> {
-  if (!client) return buildMockConfig(brief);
+/** Kampanjens sparade val, annars briefens rekommendationer, annars Meta i 9:16. */
+function savedOrRecommended(
+  existing: { channels?: string[] | null; formats?: string[] | null } | null,
+  brief: Record<string, unknown>
+): CampaignChoices {
+  const strings = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
+  const channels = strings(existing?.channels).filter(isChannel);
+  const formats = strings(existing?.formats).filter(isFormat);
+  const recChannels = strings(brief.recommended_channels).filter(isChannel);
+  const recFormats = strings(brief.recommended_formats).filter(isFormat);
+  return {
+    channels: channels.length ? channels : recChannels.length ? recChannels : ["meta"],
+    formats: formats.length ? formats : recFormats.length ? recFormats : ["story"],
+  };
+}
+
+async function generateConfig(
+  brief: Record<string, unknown>,
+  briefId: string,
+  choices: CampaignChoices
+): Promise<VideoConfig> {
+  const format = choices.formats[0];
+  if (!client) return buildMockConfig(brief, format);
   const startTime = Date.now();
   const response = await client.messages.create({
     model: CLAUDE_MODEL,
@@ -201,7 +250,8 @@ async function generateConfig(brief: Record<string, unknown>, briefId: string): 
             value_props: brief.value_props,
             desired_action: brief.desired_action,
             tone_of_voice: brief.tone_of_voice,
-            recommended_formats: brief.recommended_formats,
+            selected_channels: choices.channels,
+            selected_formats: choices.formats,
           },
           null,
           2
@@ -216,6 +266,7 @@ async function generateConfig(brief: Record<string, unknown>, briefId: string): 
 
   const config = await compileCanvasScenes(JSON.parse(jsonMatch[0]) as VideoConfig);
   if (!config.motion) config.motion = DEFAULT_MOTION_CONFIG;
+  config.format = format;
   config.totalDurationSeconds = config.scenes.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
 
   await logGeneration({
@@ -223,7 +274,7 @@ async function generateConfig(brief: Record<string, unknown>, briefId: string): 
     provider: "claude",
     model: CLAUDE_MODEL,
     prompt: "brief_to_campaign",
-    params: { brief_id: briefId },
+    params: { brief_id: briefId, channels: choices.channels, formats: choices.formats },
     cost_usd: 0.015,
     latency_ms: Date.now() - startTime,
     status: "success",
@@ -265,8 +316,7 @@ async function upsertMaster(
   brief: Record<string, unknown>,
   config: VideoConfig
 ): Promise<string | null> {
-  const formats = brief.recommended_formats;
-  const sourceFormat = Array.isArray(formats) && typeof formats[0] === "string" ? formats[0] : config.format;
+  const sourceFormat = config.format;
   if (id) {
     const { data } = await supabase
       .from("master_creatives")
@@ -289,18 +339,13 @@ async function upsertMaster(
   return data.id;
 }
 
-function buildMockConfig(brief: Record<string, unknown>): VideoConfig {
+function buildMockConfig(brief: Record<string, unknown>, format: VideoConfig["format"]): VideoConfig {
   const bigIdea =
     typeof brief.big_idea === "string" ? brief.big_idea : "Kampanj";
   const desiredAction =
     typeof brief.desired_action === "string"
       ? brief.desired_action
       : "Kontakta oss";
-  const format =
-    Array.isArray(brief.recommended_formats) &&
-    typeof brief.recommended_formats[0] === "string"
-      ? (brief.recommended_formats[0] as VideoConfig["format"])
-      : "story";
 
   return {
     id: `mock-${Date.now()}`,

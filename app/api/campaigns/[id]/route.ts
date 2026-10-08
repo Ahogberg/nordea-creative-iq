@@ -4,6 +4,7 @@ import { requireDb } from "@/lib/supabase/db";
 import type { VideoConfig } from "@/lib/remotion/types";
 import { compileCanvasScenes, stripCompiledCanvas } from "@/lib/remotion/compile";
 import { DisplaySetSchema } from "@/lib/display/schema";
+import { CampaignChoicesSchema } from "@/lib/campaign-options";
 
 export const runtime = "nodejs";
 
@@ -62,6 +63,8 @@ const PatchSchema = z.object({
   approval_notes: z.string().max(2000).nullable().optional(),
   video_config: z.custom<VideoConfig>((v) => !!v && Array.isArray((v as VideoConfig).scenes)).optional(),
   display_set: DisplaySetSchema.nullable().optional(),
+  channels: CampaignChoicesSchema.shape.channels.optional(),
+  formats: CampaignChoicesSchema.shape.formats.optional(),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -81,7 +84,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       .update(updates)
       .eq("id", id)
       .eq("created_by", ownerId)
-      .select("id, name, status, updated_at")
+      .select("id, name, status, channels, formats, updated_at")
       .maybeSingle();
     if (error) throw error;
     if (!data) return NextResponse.json({ error: "Kampanjen finns inte" }, { status: 404 });

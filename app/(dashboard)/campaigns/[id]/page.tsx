@@ -28,6 +28,15 @@ import { DISPLAY_FORMATS } from "@/lib/formats/registry";
 import { DisplayBanner, type DisplayBannerProps } from "@/lib/display/DisplayBanner";
 import { resolveContent } from "@/lib/display/types";
 import { FORMAT_PRESETS } from "@/lib/remotion/styles";
+import {
+  channelName,
+  formatName,
+  isChannel,
+  isFormat,
+  type Channel,
+  type Format,
+} from "@/lib/campaign-options";
+import { CampaignChoicesPicker } from "@/components/brief/campaign-choices-picker";
 
 const MotionPlayer = dynamic(
   () => import("@/lib/remotion/PlayerWrapper").then((m) => ({ default: m.MotionPlayer })),
@@ -43,7 +52,17 @@ const STATUSES: Array<{ id: Campaign["status"]; label: string }> = [
 
 type BriefSummary = Pick<
   CreativeBrief,
-  "id" | "title" | "big_idea" | "insight" | "key_message" | "key_messages" | "desired_action" | "audience_description" | "tone_of_voice"
+  | "id"
+  | "title"
+  | "big_idea"
+  | "insight"
+  | "key_message"
+  | "key_messages"
+  | "desired_action"
+  | "audience_description"
+  | "tone_of_voice"
+  | "recommended_channels"
+  | "recommended_formats"
 >;
 
 interface PageProps {
@@ -73,15 +92,21 @@ export default function CampaignPage({ params }: PageProps) {
     void load();
   }, [load]);
 
-  const patch = async (updates: Partial<Pick<Campaign, "name" | "status">>) => {
-    if (!campaign) return;
+  const patch = async (updates: Partial<Pick<Campaign, "name" | "status" | "channels" | "formats">>) => {
+    if (!campaign) return false;
+    const before = campaign;
     setCampaign({ ...campaign, ...updates });
     const res = await fetch(`/api/campaigns/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     });
-    if (!res.ok) setError("Ändringen kunde inte sparas");
+    if (!res.ok) {
+      setCampaign(before);
+      setError("Ändringen kunde inte sparas");
+      return false;
+    }
+    return true;
   };
 
   const regenerate = async () => {
@@ -163,7 +188,14 @@ export default function CampaignPage({ params }: PageProps) {
         )}
 
         <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-5 items-start">
-          <StrategyCard brief={brief} />
+          <div className="space-y-5">
+            <StrategyCard brief={brief} />
+            <ChoicesCard
+              campaign={campaign}
+              brief={brief}
+              onSave={(next) => patch(next)}
+            />
+          </div>
 
           <div className="space-y-5 min-w-0">
             <section className="nordea-card p-5">
@@ -298,6 +330,103 @@ function DisplayStrip({ set }: { set: NonNullable<Campaign["display_set"]> }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/** Var kampanjen ska synas: valda kanaler och videoformat, med redigering. */
+function ChoicesCard({
+  campaign,
+  brief,
+  onSave,
+}: {
+  campaign: Campaign;
+  brief: BriefSummary | null;
+  onSave: (next: { channels: Channel[]; formats: Format[] }) => Promise<boolean>;
+}) {
+  const saved = {
+    channels: (campaign.channels ?? []).filter(isChannel),
+    formats: (campaign.formats ?? []).filter(isFormat),
+  };
+  const [draft, setDraft] = useState<{ channels: Channel[]; formats: Format[] } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const empty = saved.channels.length === 0 && saved.formats.length === 0;
+
+  const startEditing = () => {
+    const rec = {
+      channels: (brief?.recommended_channels ?? []).filter(isChannel),
+      formats: (brief?.recommended_formats ?? []).filter(isFormat),
+    };
+    setDraft(empty ? rec : saved);
+  };
+
+  const save = async () => {
+    if (!draft) return;
+    setSaving(true);
+    if (await onSave(draft)) setDraft(null);
+    setSaving(false);
+  };
+
+  const ready = !!draft && draft.channels.length > 0 && draft.formats.length > 0;
+
+  return (
+    <section className="nordea-card p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-nordea-text">Kanaler och format</h2>
+        {!draft && (
+          <button type="button" onClick={startEditing} className="text-xs text-nordea-blue hover:underline">
+            {empty ? "Välj" : "Ändra"}
+          </button>
+        )}
+      </div>
+
+      {draft ? (
+        <div className="mt-4 space-y-4">
+          <CampaignChoicesPicker
+            channels={draft.channels}
+            formats={draft.formats}
+            recommendedChannels={brief?.recommended_channels ?? []}
+            recommendedFormats={brief?.recommended_formats ?? []}
+            onChange={setDraft}
+          />
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setDraft(null)} className="nordea-btn nordea-btn-ghost nordea-btn-sm">
+              Avbryt
+            </button>
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={!ready || saving}
+              className="nordea-btn nordea-btn-primary nordea-btn-sm disabled:opacity-50"
+            >
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Spara
+            </button>
+          </div>
+        </div>
+      ) : empty ? (
+        <p className="mt-2 text-sm text-nordea-text-tertiary">Inte valt ännu.</p>
+      ) : (
+        <div className="mt-3 space-y-3">
+          <ChipRow label="Kanaler" items={saved.channels.map(channelName)} />
+          <ChipRow label="Videoformat" items={saved.formats.map(formatName)} />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ChipRow({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div>
+      <div className="text-[11px] font-medium text-nordea-text-tertiary uppercase tracking-wide">{label}</div>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {items.map((item) => (
+          <span key={item} className="rounded-full bg-nordea-blue-soft px-2.5 py-0.5 text-xs text-nordea-blue">
+            {item}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
