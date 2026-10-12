@@ -26,6 +26,7 @@ const TABS: Array<{ id: InspectorTab; label: string; icon: LucideIcon }> = [
 ];
 
 export function Inspector() {
+  const advanced = useStudioStore(s => s.editorMode === "advanced");
   const tab = useStudioStore((s) => s.inspectorTab);
   const setTab = useStudioStore((s) => s.setInspectorTab);
   const variantsCount = useStudioStore((s) => s.variants.length);
@@ -58,7 +59,7 @@ export function Inspector() {
         aria-label="Egenskaper"
         className="w-14 h-full border-l border-nordea-border bg-white flex flex-col items-center gap-1 py-3"
       >
-        {TABS.map(({ id, label, icon: Icon }) => {
+        {TABS.filter(t => advanced || t.id !== "motion").map(({ id, label, icon: Icon }) => {
           const isActive = tab === id;
           return (
             <button
@@ -91,6 +92,7 @@ function InspectorBody({ tab }: { tab: InspectorTab }) {
   const selectedSceneIndex = useStudioStore((s) => s.selectedSceneIndex);
   const selectedElementId = useStudioStore((s) => s.selectedElementId);
   const updateScene = useStudioStore((s) => s.updateScene);
+  const advanced = useStudioStore(s => s.editorMode === "advanced");
   const scene = selectedSceneIndex !== null ? config.scenes[selectedSceneIndex] : null;
 
   const handleAssetSelect = (asset: PickedAsset) => {
@@ -112,7 +114,7 @@ function InspectorBody({ tab }: { tab: InspectorTab }) {
           {selectedElementId && <SelectedElementPanel />}
           {scene && selectedSceneIndex !== null ? (
             <>
-              {scene.type === "canvas" && (scene.layers?.length ?? 0) > 0 && (
+              {advanced && scene.type === "canvas" && (scene.layers?.length ?? 0) > 0 && (
                 <Accordion title="Lager och keyframes" defaultOpen>
                   <KeyframeEditor scene={scene} sceneIndex={selectedSceneIndex} />
                 </Accordion>

@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 
 const QUICK_START = [
   { icon: Sparkles, title: "Börja från en brief", sub: "Idé eller färdig brief → strategi och kampanj", href: "/create/brief" },
-  { icon: LayoutGrid, title: "Använd en mall", sub: "Varumärkesgodkända layouter", href: "/templates" },
+  { icon: LayoutGrid, title: "Använd en mall", sub: "Varumärkesgodkända layouter", href: "/library?tab=templates" },
   { icon: Upload, title: "Granska en befintlig annons", sub: "Persona-feedback och uppmärksamhetskarta", href: "/create/analyze" },
 ];
 
@@ -43,6 +43,7 @@ export default async function DashboardPage() {
 
       <div className="px-8 py-8 max-w-[1400px] mx-auto">
         {/* Välkomst */}
+        {data && data.inReviewCount > 0 && <div className="nordea-card p-4 mb-5 flex items-center justify-between gap-3"><span>{data.inReviewCount} kampanjer väntar på granskning.</span><Link href="/campaigns" className="nordea-btn nordea-btn-secondary nordea-btn-sm">Visa kampanjer</Link></div>}
         <div className="flex flex-wrap items-end justify-between gap-6 mb-8">
           <div>
             <div className="text-xs text-nordea-text-tertiary mb-2 first-letter:uppercase">
@@ -56,13 +57,13 @@ export default async function DashboardPage() {
             </h1>
           </div>
           <div className="flex gap-2">
-            <Link href="/templates" className="nordea-btn nordea-btn-secondary">
+            <Link href="/library?tab=templates" className="nordea-btn nordea-btn-secondary">
               <LayoutGrid className="w-4 h-4" />
               Öppna mall
             </Link>
             <Link href="/create/brief" className="nordea-btn nordea-btn-primary">
               <Sparkles className="w-4 h-4" />
-              Ny brief
+              Ny kampanj
             </Link>
           </div>
         </div>
@@ -73,40 +74,12 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* KPI:er — riktiga värden, "—" när underlag saknas */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            label="Kampanjer"
-            value={data ? String(data.campaignCount) : "—"}
-            sub={data ? `${data.inReviewCount} under granskning` : undefined}
-            icon={Rocket}
-          />
-          <StatCard
-            label="Renderade videor"
-            value={data ? String(data.renderedVideos) : "—"}
-            sub="från export och massproduktion"
-            icon={Film}
-          />
-          <StatCard
-            label="Snitt QA-poäng"
-            value={data?.qa.avgScore != null ? String(Math.round(data.qa.avgScore)) : "—"}
-            sub={data && data.qa.runs > 0 ? `${data.qa.runs} granskningar, 30 dagar` : "inga granskningar ännu"}
-            icon={CheckCircle2}
-          />
-          <StatCard
-            label="Tid per granskning"
-            value={data?.qa.avgDurationMs != null ? formatDuration(data.qa.avgDurationMs) : "—"}
-            sub="persona-jury, ToV och compliance"
-            icon={Timer}
-          />
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-5">
           {/* Senaste kampanjer */}
           <div className="nordea-card overflow-hidden">
             <div className="px-5 py-4 border-b border-nordea-hairline">
               <SectionTitle
-                title="Senaste kampanjer"
+                title="Återuppta arbete"
                 right={
                   <Link href="/campaigns" className="text-xs font-medium text-nordea-blue inline-flex items-center gap-1 hover:underline">
                     Alla kampanjer <ArrowRight className="w-3 h-3" />
@@ -218,6 +191,35 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
+        <div className="mt-8">        {/* KPI:er — riktiga värden, "—" när underlag saknas */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard
+            label="Kampanjer"
+            value={data ? String(data.campaignCount) : "—"}
+            sub={data ? `${data.inReviewCount} under granskning` : undefined}
+            icon={Rocket}
+          />
+          <StatCard
+            label="Renderade videor"
+            value={data ? String(data.renderedVideos) : "—"}
+            sub="från export och massproduktion"
+            icon={Film}
+          />
+          <StatCard
+            label="Snitt QA-poäng"
+            value={data?.qa.avgScore != null ? String(Math.round(data.qa.avgScore)) : "—"}
+            sub={data && data.qa.runs > 0 ? `${data.qa.runs} granskningar, 30 dagar` : "inga granskningar ännu"}
+            icon={CheckCircle2}
+          />
+          <StatCard
+            label="Tid per granskning"
+            value={data?.qa.avgDurationMs != null ? formatDuration(data.qa.avgDurationMs) : "—"}
+            sub="persona-jury, ToV och compliance"
+            icon={Timer}
+          />
+        </div>
+
+</div>
         <div className="mt-8"><RecentAds data={data} /></div>
       </div>
     </div>

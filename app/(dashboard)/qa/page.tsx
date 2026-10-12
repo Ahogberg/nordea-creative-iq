@@ -97,7 +97,8 @@ export default function QAReportsPage() {
     setListError(null);
     setRuns(null);
     try {
-      const res = await fetch("/api/qa");
+      const campaignId = new URLSearchParams(window.location.search).get("campaign");
+      const res = await fetch(`/api/qa${campaignId ? `?campaign=${encodeURIComponent(campaignId)}` : ""}`);
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error ?? "Kunde inte hämta QA-historiken");
       const list = (body.runs ?? []) as RunSummary[];

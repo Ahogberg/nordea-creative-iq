@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Users, Play, RefreshCw, Eye, MessageSquareWarning, TrendingUp, TrendingDown } from "lucide-react";
 import { PersonaImage } from "@/components/ui/persona-image";
@@ -166,7 +167,7 @@ export function FocusGroupPanel({ personas, getContext, disabled, runSignal }: F
             <Users className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-nordea-text">Fokusgrupp</h3>
+            <h3 className="text-base font-semibold text-nordea-text">Fokusgrupp</h3><Link href="/personas" className="text-xs text-nordea-blue hover:underline">Hantera personas</Link>
             <p className="text-xs text-nordea-text-tertiary">
               {personas.length} simulerade kunder tittar på annonsen samtidigt
             </p>

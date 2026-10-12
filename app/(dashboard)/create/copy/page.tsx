@@ -230,6 +230,12 @@ export default function CopyStudioPage() {
   const [channel, setChannel] = useState<ChannelKey>('meta');
   const [objective, setObjective] = useState<ObjectiveKey>('awareness');
   const [topic, setTopic] = useState('');
+  useEffect(() => {
+    const passed = new URLSearchParams(window.location.search).get('prompt');
+    if (!passed) return;
+    const timer = setTimeout(() => setTopic(passed), 0);
+    return () => clearTimeout(timer);
+  }, []);
   const [isGenerating, setIsGenerating] = useState(false);
   const [variants, setVariants] = useState<CopyVariant[]>([]);
   const [selectedVariant, setSelectedVariant] = useState<CopyVariant | null>(null);

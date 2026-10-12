@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Download, Sparkles, ShieldCheck, Loader2, LayoutGrid, MoreHorizontal } from "lucide-react";
 import { useStudioStore } from "@/lib/studio/store";
@@ -56,7 +56,8 @@ export function StudioTopbar() {
   const campaignQuery = useCampaignQuery();
 
   const [saveOpen, setSaveOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const [exportOpen, setExportOpen] = useState(searchParams.get("action") === "export");
   const [qaRunning, setQaRunning] = useState(false);
   const router = useRouter();
 
@@ -143,12 +144,13 @@ export function StudioTopbar() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem disabled={isGeneratingVariants} onSelect={() => { setInspectorTab("variants"); void generateVariants(); }}>
+            <DropdownMenuItem disabled={isGeneratingVariants} onSelect={() => { useStudioStore.setState({ scenesOpen: true }); setInspectorTab("variants"); void generateVariants(); }}>
               <Sparkles className="w-4 h-4" /> Skapa AI-varianter
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href={`/create/display${campaignQuery}`}><LayoutGrid className="w-4 h-4" /> Skapa displayformat</Link>
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => { useStudioStore.setState({ scenesOpen: true }); setInspectorTab("style"); }}>Stil och logotyp</DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setSaveOpen(true)}><Save className="w-4 h-4" /> Spara som mall</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

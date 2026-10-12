@@ -27,6 +27,9 @@ import type { VideoConfig } from "@/lib/remotion/types";
 import { DISPLAY_FORMATS } from "@/lib/formats/registry";
 import { DisplayBanner, type DisplayBannerProps } from "@/lib/display/DisplayBanner";
 import { resolveContent } from "@/lib/display/types";
+import { CampaignPlanning } from "@/components/campaigns/campaign-planning";
+import { CampaignLocalization } from "@/components/campaigns/campaign-localization";
+import { extractVariantSeeds } from "@/lib/video-types";
 import { FORMAT_PRESETS } from "@/lib/remotion/styles";
 
 const MotionPlayer = dynamic(
@@ -52,6 +55,7 @@ interface PageProps {
 
 export default function CampaignPage({ params }: PageProps) {
   const { id } = use(params);
+  const [step, setStep] = useState<"brief" | "material" | "formats" | "review" | "export">("material");
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [brief, setBrief] = useState<BriefSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -162,10 +166,20 @@ export default function CampaignPage({ params }: PageProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-5 items-start">
+        <nav aria-label="Kampanjens arbetsflöde" className="flex flex-wrap gap-2 mb-5">
+          {([{ id: "brief", label: "Brief" }, { id: "material", label: "Material" }, { id: "formats", label: "Format och marknader" }, { id: "review", label: "Granskning" }, { id: "export", label: "Export" }] as const).map((item, i) =>
+            <button key={item.id} type="button" aria-current={step === item.id ? "step" : undefined} onClick={() => setStep(item.id)} className={`nordea-btn ${step === item.id ? "nordea-btn-primary" : "nordea-btn-secondary"}`}>{i + 1}. {item.label}</button>)}
+        </nav>
+        <div className="nordea-card p-4 mb-5 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-nordea-text">{!video ? "Nästa steg: skapa kampanjens huvudfilm." : !campaign.display_set ? "Nästa steg: anpassa materialet för format och marknader." : "Nästa steg: granska materialet före leverans."}</p>
+          <button type="button" className="nordea-btn nordea-btn-secondary nordea-btn-sm" onClick={() => setStep(!video ? "material" : !campaign.display_set ? "formats" : "review")}>Fortsätt</button>
+        </div>
+        <section hidden={step !== "brief"} aria-label="Brief och budget" className="space-y-5">
           <StrategyCard brief={brief} />
-
-          <div className="space-y-5 min-w-0">
+          {campaign.brief_id && <Link className="nordea-btn nordea-btn-secondary" href={`/create/brief/${campaign.brief_id}`}>Öppna brief</Link>}
+          <details className="nordea-card p-5"><summary className="cursor-pointer font-medium">Budget och målgrupp</summary><CampaignPlanning key={campaign.id} embedded campaignId={campaign.id} campaignName={campaign.name} /></details>
+        </section>
+        <section hidden={step !== "material"} aria-label="Material" className="space-y-5">
             <section className="nordea-card p-5">
               <DeliverableHeader
                 icon={Film}
@@ -207,6 +221,8 @@ export default function CampaignPage({ params }: PageProps) {
               </div>
             </section>
 
+        </section>
+        <section hidden={step !== "formats"} aria-label="Format och marknader" className="space-y-5">
             <section className="nordea-card p-5">
               <DeliverableHeader
                 icon={LayoutGrid}
@@ -226,8 +242,22 @@ export default function CampaignPage({ params }: PageProps) {
                 </Link>
               </div>
             </section>
+            {video && <CampaignLocalization key={video.id} embedded initialContent={extractVariantSeeds(video)} />}
+        </section>
+        <section hidden={step !== "review"} aria-label="Granskning" className="nordea-card p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Granska kampanjens material</h2>
+          <p className="text-sm text-nordea-text-secondary">Granska texten och testa hela videon i fokusgruppen. Tidigare rapporter kan avse äldre material; kontrollera alltid vad som faktiskt granskats.</p>
+          <div className="flex flex-wrap gap-2"><Link href={`/create/video?campaign=${campaign.id}`} className="nordea-btn nordea-btn-primary">Öppna video för granskning</Link><Link href={`/qa?campaign=${campaign.id}`} className="nordea-btn nordea-btn-secondary">Kampanjens rapporter</Link></div>
+        </section>
+        <section hidden={step !== "export"} aria-label="Export" className="nordea-card p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Exportera och skapa fler varianter</h2>
+          <p className="text-sm text-nordea-text-secondary">Välj leveransformat i studion. Exporten kan användas som ett utkast; den innebär inget automatiskt godkännande.</p>
+          <div className="flex flex-wrap gap-2">
+            {video && <Link href={`/create/video?campaign=${campaign.id}&action=export`} className="nordea-btn nordea-btn-primary">Exportera video</Link>}
+            <Link href={`/create/display?campaign=${campaign.id}`} className="nordea-btn nordea-btn-secondary">Exportera displayformat</Link>
+            {campaign.template_ids[0] ? <Link href={`/produce?template=${campaign.template_ids[0]}`} className="nordea-btn nordea-btn-secondary">Skapa fler varianter</Link> : <Link href={`/create/video?campaign=${campaign.id}`} className="nordea-btn nordea-btn-secondary">Spara video som mall för fler varianter</Link>}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

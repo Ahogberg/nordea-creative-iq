@@ -4,6 +4,7 @@
 // Går mot /api/motion-generate, som har Nordeas visuella grammatik och
 // renderarens förmågor (illustrationer, fetstil, rubrikfärg, juridik).
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, RotateCcw, Sparkles, AlertCircle, SquarePen, RefreshCw, ScanEye, Check, Info, Users, GitCompare } from "lucide-react";
 import { useStudioStore, type ChatMessage, type ChatReview } from "@/lib/studio/store";
@@ -55,6 +56,7 @@ export function ChatPanel() {
   const scenes = useStudioStore((s) => s.config.scenes);
   const legal = useStudioStore((s) => s.config.legal);
   const format = useStudioStore((s) => s.config.format);
+  const scope = useStudioStore(s => s.promptScope);
   const selected = useStudioStore((s) => s.selectedSceneIndex);
 
   const [text, setText] = useState("");
@@ -126,6 +128,7 @@ export function ChatPanel() {
       </div>
 
       <div className="border-t border-nordea-hairline p-3 flex-shrink-0">
+        <Link href="/personas" className="block text-xs text-nordea-blue hover:underline mb-2">Hantera personas</Link>
         {!isBusy && scenes.length > 0 && (
           <button
             type="button"
@@ -152,12 +155,16 @@ export function ChatPanel() {
           </div>
         )}
         <div className="relative rounded-xl border border-nordea-border bg-nordea-bg focus-within:border-nordea-blue/40 focus-within:ring-2 focus-within:ring-nordea-blue/10 transition-shadow">
-          {selected !== null && scenes.length > 1 && (
-            <div className="px-3 pt-2 text-[11px] text-nordea-text-tertiary">
-              Scen {selected + 1} är markerad
-            </div>
-          )}
+          <div className="px-3 pt-2 pb-1">
+            <label className="text-[11px] text-nordea-text-secondary">Ändringen gäller
+              <select aria-label="Ändringen gäller" value={scope} disabled={isBusy} onChange={e => useStudioStore.setState({ promptScope: e.target.value as "video" | "scene" })} className="block w-full bg-transparent text-xs font-medium text-nordea-blue mt-1 focus:outline-none focus:ring-2 focus:ring-nordea-blue rounded">
+                <option value="video">Hela videon</option>
+                <option value="scene" disabled={selected === null}>Endast scen {selected !== null ? selected + 1 : "—"}</option>
+              </select>
+            </label>
+          </div>
           <textarea
+            aria-label="Beskriv en ändring"
             ref={inputRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -168,7 +175,7 @@ export function ChatPanel() {
               }
             }}
             rows={2}
-            placeholder={scenes.length > 0 ? "Beskriv en ändring eller en ny idé…" : "Beskriv videon du vill skapa…"}
+            placeholder={scope === "scene" ? "Vad vill du ändra i den här scenen?" : "T.ex. korta ned filmen eller gör budskapet tydligare…"}
             className="w-full bg-transparent resize-none px-3 pt-2.5 pb-10 text-sm text-nordea-text placeholder:text-nordea-text-faint focus:outline-none"
           />
           <div className="absolute left-3 bottom-2.5 text-[10px] text-nordea-text-faint">Enter skickar · Shift+Enter ny rad</div>

@@ -47,6 +47,7 @@ export function Stage() {
   const config = useStudioStore((s) => s.config);
   const previewKey = useStudioStore((s) => s.previewKey);
   const setAspectRatio = useStudioStore((s) => s.setAspectRatio);
+  const scenesOpen = useStudioStore(s => s.scenesOpen);
   const isDrafting = useStudioStore((s) => s.isDrafting);
   const { attach } = useStudioPlayer();
 
@@ -172,7 +173,7 @@ export function Stage() {
                 Inga scener än — beskriv din video i chatten
               </div>
             )}
-            {frameSize.width > 0 && !isDrafting && <CanvasOverlay />}
+            {scenesOpen && frameSize.width > 0 && !isDrafting && <CanvasOverlay />}
             {showSafe && frameSize.width > 0 && (
               <SafeZoneOverlay config={config} frameWidth={frameSize.width} frameHeight={frameSize.height} />
             )}
