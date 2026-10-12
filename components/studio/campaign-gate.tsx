@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { Loader2, Megaphone, AlertCircle } from "lucide-react";
 import { useStudioStore } from "@/lib/studio/store";
-import { openCampaign } from "@/lib/studio/campaign-sync";
+import { closeCampaign, flushCampaignSave, openCampaign } from "@/lib/studio/campaign-sync";
 
 /**
  * Öppnar kampanjen i ?campaign= och visar studion först när den är inläst.
@@ -15,13 +15,32 @@ export function CampaignGate({ campaignId, children }: { campaignId: string | nu
   const openId = useStudioStore((s) => s.campaign?.id);
   const load = useStudioStore((s) => s.campaignLoad);
 
+  const openLocal = async () => {
+    if (await flushCampaignSave()) {
+      closeCampaign();
+      useStudioStore.setState({ campaignLoad: null });
+    } else {
+      useStudioStore.setState({ campaignLoad: { id: "local", status: "error", message: "Ändringarna kunde inte sparas. Försök igen innan du lämnar kampanjen." } });
+    }
+  };
+
   useEffect(() => {
     if (campaignId) void openCampaign(campaignId);
+    else if (useStudioStore.getState().campaign) {
+      void flushCampaignSave().then((saved) => {
+        if (saved) {
+          closeCampaign();
+          useStudioStore.setState({ campaignLoad: null });
+        } else {
+          useStudioStore.setState({ campaignLoad: { id: "local", status: "error", message: "Ändringarna kunde inte sparas. Försök igen innan du lämnar kampanjen." } });
+        }
+      });
+    }
   }, [campaignId]);
 
-  if (!campaignId || openId === campaignId) return <>{children}</>;
+  if ((!campaignId && !openId) || openId === campaignId) return <>{children}</>;
 
-  const failed = load?.id === campaignId && load.status === "error";
+  const failed = load?.id === (campaignId ?? "local") && load.status === "error";
   return (
     <div className="h-full flex items-center justify-center bg-nordea-bg">
       <div className="text-center max-w-md mx-4">
@@ -36,7 +55,7 @@ export function CampaignGate({ campaignId, children }: { campaignId: string | nu
               </Link>
               <button
                 type="button"
-                onClick={() => void openCampaign(campaignId)}
+                onClick={() => { if (campaignId) void openCampaign(campaignId); else void openLocal(); }}
                 className="nordea-btn nordea-btn-primary"
               >
                 Försök igen

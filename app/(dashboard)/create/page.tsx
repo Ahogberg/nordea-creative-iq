@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
   Type,
   Video,
   Image as ImageIcon,
-  FileText,
   ArrowUpRight,
-  Layers,
 } from "lucide-react";
 import { Topbar } from "@/components/layout/topbar";
 
@@ -18,67 +17,47 @@ interface Shortcut {
   icon: typeof Type;
   title: string;
   description: string;
-  mode: "copy" | "video" | "analyze" | "brief" | "master";
+  mode: "copy" | "video" | "analyze";
 }
 
 const SHORTCUTS: Shortcut[] = [
   {
     id: "copy",
     icon: Type,
-    title: "Copy Studio",
+    title: "Skriv annonstext",
     description: "Rubriker, brödtext och CTA:er i Nordeas ton",
     mode: "copy",
   },
   {
     id: "video",
     icon: Video,
-    title: "Motion Studio",
-    description: "Video i scener, med AI-chatt bredvid",
+    title: "Skapa video",
+    description: "Beskriv hela filmen — få ett sammanhängande utkast",
     mode: "video",
   },
   {
     id: "analyze",
     icon: ImageIcon,
-    title: "Ad Studio",
+    title: "Granska annons",
     description: "Granska en annons med personas och uppmärksamhetskarta",
     mode: "analyze",
   },
-  {
-    id: "brief",
-    icon: FileText,
-    title: "Från brief",
-    description: "Idé eller brief → strategi och kampanj",
-    mode: "brief",
-  },
-  {
-    id: "master",
-    icon: Layers,
-    title: "Master",
-    description: "En master design → 4 lokaliserade format-varianter",
-    mode: "master",
-  },
 ];
 
-/**
- * AI-driven entry surface for creation. The free-text prompt at the top
- * routes to the appropriate sub-route based on a regex mode detector
- * (TODO: replace with Claude-driven detection in a later sprint).
- * The 4 shortcuts jump straight into a specific tool.
- */
 export default function CreatePage() {
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
+  const [mode, setMode] = useState<Shortcut["mode"]>("video");
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) return;
+    if (!prompt.trim() && mode !== "analyze") return;
     setIsGenerating(true);
-    const mode = detectMode(prompt);
-    router.push(`/create/${mode}?prompt=${encodeURIComponent(prompt)}`);
+    router.push(mode === "analyze" ? "/create/analyze" : `/create/${mode}?prompt=${encodeURIComponent(prompt)}`);
   };
 
   const handleShortcut = (mode: Shortcut["mode"]) => {
-    router.push(`/create/${mode}`);
+    router.push(`/create/${mode}${mode === "video" ? "?new=1" : ""}`);
   };
 
   return (
@@ -90,13 +69,18 @@ export default function CreatePage() {
             Vad vill du skapa idag?
           </h1>
           <p className="text-base text-nordea-text-secondary">
-            Beskriv din idé så genererar AI:n direkt — eller välj ett verktyg nedan
+            Välj vad du vill göra och beskriv din idé. Du kan också öppna ett verktyg direkt.
           </p>
         </div>
 
         <div className="mb-10">
+          <label htmlFor="create-mode" className="block text-sm font-medium text-nordea-text mb-2">Vad vill du göra?</label>
+          <select id="create-mode" value={mode} onChange={(e) => setMode(e.target.value as Shortcut["mode"])} className="nordea-input w-full mb-4">
+            {SHORTCUTS.map((s) => <option key={s.mode} value={s.mode}>{s.title}</option>)}
+          </select>
           <div className="relative">
             <textarea
+              aria-label="Beskriv din idé"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => {
@@ -107,20 +91,22 @@ export default function CreatePage() {
               }}
               placeholder='T.ex. "En 15-sek video om bolån för förstagångsköpare med fokus på trygghet och låga räntor..."'
               rows={3}
+              maxLength={1800}
               className="w-full px-5 py-4 pr-14 bg-white border border-nordea-border rounded-2xl text-base text-nordea-deep placeholder:text-nordea-text-tertiary focus:outline-none focus:border-nordea-blue/40 focus:ring-4 focus:ring-nordea-blue/5 resize-none shadow-sm"
             />
             <button
               type="button"
               onClick={handleGenerate}
-              disabled={!prompt.trim() || isGenerating}
+              disabled={(!prompt.trim() && mode !== "analyze") || isGenerating}
               className="absolute bottom-4 right-4 w-10 h-10 bg-nordea-blue hover:bg-[#000080] text-white rounded-xl flex items-center justify-center disabled:opacity-30 transition-colors"
-              title="Generera (⌘+Enter)"
+              title="Fortsätt (Ctrl/⌘+Enter)"
+              aria-label="Fortsätt med din idé"
             >
               <Sparkles className="w-5 h-5" />
             </button>
           </div>
           <p className="text-xs text-nordea-text-tertiary mt-2 text-center">
-            ⌘+Enter för att skicka
+            Ctrl/⌘+Enter för att fortsätta
           </p>
         </div>
 
@@ -132,7 +118,11 @@ export default function CreatePage() {
           <div className="flex-1 h-px bg-nordea-border" />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="nordea-card p-5 mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="font-medium text-nordea-text">Ska materialet ingå i en kampanj?</h2><p className="text-sm text-nordea-text-secondary">Samla brief, material och leverans i en arbetsyta.</p></div>
+          <Link href="/create/brief" className="nordea-btn nordea-btn-secondary">Ny kampanj</Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {SHORTCUTS.map((s) => {
             const Icon = s.icon;
             return (
@@ -157,16 +147,4 @@ export default function CreatePage() {
       </div>
     </div>
   );
-}
-
-/**
- * Regex-based mode router. Sprint 7 stub — replace with Claude routing
- * when we have a free moment. Order matters: more-specific patterns first.
- */
-function detectMode(prompt: string): Shortcut["mode"] {
-  const lower = prompt.toLowerCase();
-  if (/video|animer|reel|story|tiktok|motion/.test(lower)) return "video";
-  if (/kampanj|brief|strategi|launch/.test(lower)) return "brief";
-  if (/analys|testa|granska|feedback|review/.test(lower)) return "analyze";
-  return "copy";
 }

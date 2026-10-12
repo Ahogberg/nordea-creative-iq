@@ -10,6 +10,7 @@ import {
 import { withVisualGrammar } from "@/lib/brand/visual-grammar";
 import { withMotionCapabilities } from "@/lib/remotion/prompt-capabilities";
 import { compileCanvasScenes } from "@/lib/remotion/compile";
+import { draftChoices } from "@/lib/studio/draft-choices";
 import { aiErrorMessage } from "@/lib/ai/error-message";
 
 export const runtime = "nodejs";
@@ -133,24 +134,26 @@ export async function POST(request: Request) {
 // those raise normal 500s so the user knows something is wrong.
 function buildMockConfig(prompt: string): VideoConfig {
   const trimmed = prompt.trim();
-  const firstSentence = trimmed.split(/[.!?\n]/)[0].trim();
+  const idea = trimmed.match(/idé:\s*([^\n]+)/i)?.[1] ?? trimmed.replace(/^Skapa en hel sammanhängande video:\s*/i, "");
+  const firstSentence = idea.split(/[.!?\n]/)[0].trim();
   const headline =
     firstSentence.length > 0 && firstSentence.length <= 50
       ? firstSentence
-      : trimmed.slice(0, 50);
+      : idea.slice(0, 50);
 
   const lower = trimmed.toLowerCase();
   const isEnergetic = /story|tiktok|reel|ung|snabb|energi/.test(lower);
-  const baseDuration = isEnergetic ? 2 : 2.8;
+  const choices = draftChoices(prompt);
+  const baseDuration = choices.duration ? (choices.duration - 0.5) / 3 : isEnergetic ? 2 : 2.8;
 
   return {
     id: `mock-${Date.now()}`,
     title: headline.slice(0, 50) || "Ny video",
-    format: /landscape|16:9|youtube/.test(lower)
+    format: choices.format ?? (/landscape|16:9|youtube/.test(lower)
       ? "landscape"
       : /feed|instagram|1:1/.test(lower)
         ? "feed"
-        : "story",
+        : "story"),
     backgroundColor: "#0000A0",
     accentColor: "#40BFA3",
     scenes: [
@@ -158,7 +161,7 @@ function buildMockConfig(prompt: string): VideoConfig {
         type: "title",
         durationSeconds: baseDuration,
         headline,
-        subtitle: trimmed.slice(0, 80),
+        subtitle: idea.slice(0, 80),
         alignment: "center",
       },
       {
@@ -174,7 +177,7 @@ function buildMockConfig(prompt: string): VideoConfig {
         durationSeconds: baseDuration,
         headline: "Vill du veta mer?",
         buttonText: "BOKA RÅDGIVNING",
-        subtitle: "Få ett svar inom 24 timmar",
+        subtitle: "Läs om dina alternativ",
       },
     ],
     showLogo: true,

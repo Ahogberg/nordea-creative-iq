@@ -66,7 +66,12 @@ export function ExportModal({ open, onClose }: ExportModalProps) {
   const pollJob = async (jobId: string) => {
     try {
       const res = await fetch(`/api/studio/export/${jobId}`);
+      if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.message || error?.error || "Exportstatus kunde inte hämtas. Försök igen.");
+      }
       const data = (await res.json()) as ExportJob;
+      if (!["pending", "rendering", "done", "failed"].includes(data.status)) throw new Error("Exportstatus kunde inte tolkas.");
 
       setJob({
         job_id: jobId,

@@ -25,6 +25,7 @@ import {
   DEFAULT_MOTION_CONFIG,
   DEFAULT_ELEMENT_TRANSFORM,
 } from "@/lib/remotion/types";
+import { editPrompt, type PromptScope } from "./prompt-scope";
 import { describeChanges } from "./describe-changes";
 import type { AudienceCompareResponse, AudienceTestResponse } from "@/lib/audience/types";
 import type { DisplaySet } from "@/lib/display/types";
@@ -121,6 +122,10 @@ export interface SelectedKeyframe {
 
 interface StudioState {
   config: VideoConfig;
+  promptScope: PromptScope;
+  scenesOpen: boolean;
+  editorMode: "basic" | "advanced";
+  resetDraft: () => void;
 
   // Chatt (Motion Studio-layouten)
   messages: ChatMessage[];
@@ -129,7 +134,7 @@ interface StudioState {
   isDrafting: boolean;
   inspectorTab: InspectorTab | null;
   setInspectorTab: (tab: InspectorTab | null) => void;
-  startFromPrompt: (prompt: string) => Promise<void>;
+  startFromPrompt: (prompt: string, display?: string) => Promise<void>;
   /** `display` visas i bubblan i stället för en lång genererad text. */
   sendChatMessage: (text: string, display?: string) => Promise<void>;
   undoMessage: (id: string) => void;
@@ -148,7 +153,7 @@ interface StudioState {
 
   /** Kampanjen som öppnats i studion (?campaign=) — video och display sparas dit. */
   campaign: { id: string; name: string } | null;
-  campaignSave: "idle" | "saving" | "saved" | "error";
+  campaignSave: "idle" | "pending" | "saving" | "saved" | "error";
   /** Inläsningen av kampanjen — studion visas först när den är klar. */
   campaignLoad: { id: string; status: "loading" | "error"; message?: string } | null;
 
@@ -225,7 +230,14 @@ interface StudioState {
 
 export const useStudioStore = create<StudioState>()(
   subscribeWithSelector((set, get) => ({
-    config: DEFAULT_VIDEO_CONFIG,
+    config: { ...DEFAULT_VIDEO_CONFIG, scenes: [], totalDurationSeconds: 0 },
+    promptScope: "video",
+    scenesOpen: false,
+    editorMode: "basic",
+    resetDraft: () => {
+      set({ config: { ...DEFAULT_VIDEO_CONFIG, id: `draft-${Date.now()}`, scenes: [], totalDurationSeconds: 0 }, display: null, messages: [], selectedSceneIndex: null, selectedElementId: null, selectedKeyframe: null, variants: [], promptScope: "video", scenesOpen: false, editorMode: "basic", inspectorTab: null });
+      clearHistory();
+    },
 
     messages: [],
     isChatBusy: false,
@@ -234,16 +246,17 @@ export const useStudioStore = create<StudioState>()(
 
     setInspectorTab: (tab) => set({ inspectorTab: tab }),
 
-    startFromPrompt: async (prompt) => {
+    startFromPrompt: async (prompt, display) => {
       if (get().isChatBusy) return;
       set({ isDrafting: true });
-      await runChatTurn(prompt, "/api/studio/initial-prompt");
+      await runChatTurn(prompt, "/api/studio/initial-prompt", display);
       set({ isDrafting: false });
     },
 
     sendChatMessage: async (text, display) => {
       if (get().isChatBusy || !text.trim()) return;
-      await runChatTurn(text.trim(), "/api/motion-generate", display);
+      if (get().config.scenes.length === 0) await get().startFromPrompt(text.trim());
+      else await runChatTurn(text.trim(), "/api/motion-generate", display);
     },
 
     retryMessage: async (id) => {
@@ -345,7 +358,7 @@ export const useStudioStore = create<StudioState>()(
         };
         return { config: { ...state.config, scenes } };
       }),
-    selectedSceneIndex: 0,
+    selectedSceneIndex: null,
     previewKey: 0,
     isRendering: false,
 
@@ -414,8 +427,14 @@ export const useStudioStore = create<StudioState>()(
     loadConfig: (config) => {
       set({
         config: { ...config, motion: config.motion ?? DEFAULT_MOTION_CONFIG },
+        messages: [],
         selectedSceneIndex: config.scenes.length > 0 ? 0 : null,
         selectedElementId: null,
+        selectedKeyframe: null,
+        promptScope: "video",
+        scenesOpen: false,
+        editorMode: "basic",
+        inspectorTab: null,
         previewKey: 0,
       });
       // En annan video — det finns inget att ångra tillbaka till.
@@ -575,7 +594,9 @@ const newId = () => `msg-${Date.now()}-${++messageSeq}`;
 async function runChatTurn(text: string, endpoint: string, display?: string) {
   const { getState, setState } = useStudioStore;
   const before = getState().config;
+  const campaignId = getState().campaign?.id;
   const selected = getState().selectedSceneIndex;
+  const scope = getState().promptScope;
 
   const userMsg: ChatMessage = {
     id: newId(),
@@ -602,11 +623,7 @@ async function runChatTurn(text: string, endpoint: string, display?: string) {
   try {
     const isInitial = endpoint.endsWith("initial-prompt");
     const history = completedTurns(getState().messages);
-    // Vald scen följer med så att "gör den här scenen …" fungerar.
-    const prompt =
-      !isInitial && selected !== null && before.scenes.length > 1
-        ? `${text}\n\n(Användaren har scen ${selected + 1} markerad i editorn.)`
-        : text;
+    const prompt = isInitial ? text : editPrompt(text, scope, selected, before.scenes.length);
 
     const res = await fetch(endpoint, {
       method: "POST",
@@ -617,11 +634,15 @@ async function runChatTurn(text: string, endpoint: string, display?: string) {
     });
     const data = (await res.json().catch(() => null)) as {
       config?: VideoConfig | null;
+      mock?: boolean;
       message?: string;
       error?: string;
     } | null;
     if (!res.ok || !data) throw new Error(data?.error || data?.message || "AI:n svarade med ett fel");
 
+    if (data.config && (getState().config !== before || getState().campaign?.id !== campaignId)) {
+      throw new Error("Videon ändrades medan AI:n arbetade. Ändringarna har behållits. Skicka din fråga igen.");
+    }
     if (data.config) {
       const next = { ...data.config, motion: data.config.motion ?? DEFAULT_MOTION_CONFIG };
       const changes = describeChanges(before, next);
@@ -634,7 +655,7 @@ async function runChatTurn(text: string, endpoint: string, display?: string) {
         status: "done",
         content:
           (isInitial ? undefined : data.message) ??
-          `Här är ett första utkast med ${next.scenes.length} scener. Beskriv vad du vill ändra.`,
+          (data.mock ? "Här är ett demonstrationsutkast med exempeldata. Riktig AI-generering är inte tillgänglig just nu." : "Här är ditt första videoutkast. Se hela filmen och beskriv vad du vill förbättra."),
         changes: isInitial ? undefined : changes,
         before,
         review: { status: "pending" },

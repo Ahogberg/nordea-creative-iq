@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-nordea-bg">
       <Topbar breadcrumb={['System', 'Inställningar']} />
       <div className="px-8 py-8 max-w-[1400px] mx-auto space-y-6 *:max-w-3xl">
+      <div className="mb-4"><Link href="/personas" className="nordea-btn nordea-btn-secondary">Hantera personas</Link></div>
       <PageHeading
         eyebrow="System"
         title="Inställningar"

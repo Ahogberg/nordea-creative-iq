@@ -15,32 +15,10 @@ import { Menu, LogOut, User, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import {
-  LayoutDashboard,
-  Sparkles,
-  Calendar,
-  Users,
-  Rocket,
-  LayoutGrid,
-  Settings2,
-  FolderOpen,
-  ShieldCheck,
-} from 'lucide-react';
+import { PRIMARY_NAV, SETTINGS_NAV, isNavActive } from '@/lib/navigation';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
-
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/campaigns', label: 'Kampanjer', icon: Rocket },
-  { href: '/create', label: 'Skapa', icon: Sparkles },
-  { href: '/templates', label: 'Mallar', icon: LayoutGrid },
-  { href: '/produce', label: 'Massproduktion', icon: Settings2 },
-  { href: '/dam', label: 'Mediabibliotek', icon: FolderOpen },
-  { href: '/qa', label: 'QA-rapporter', icon: ShieldCheck },
-  { href: '/personas', label: 'Personas', icon: Users },
-  { href: '/campaign-planner', label: 'Mediaplanering', icon: Calendar },
-  { href: '/settings', label: 'Inställningar', icon: Settings },
-];
+const navItems = [...PRIMARY_NAV, SETTINGS_NAV];
 
 interface HeaderProps {
   user: SupabaseUser;
@@ -78,13 +56,14 @@ export function Header({ user }: HeaderProps) {
               <NordeaLogo variant="dark" size={28} withProductName />
             </Link>
           </div>
-          <nav className="px-3 py-4 space-y-1">
+          <nav aria-label="Huvudmeny" className="px-3 py-4 space-y-1">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = isNavActive(item.href, pathname);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                     isActive
@@ -93,7 +72,7 @@ export function Header({ user }: HeaderProps) {
                   )}
                 >
                   <item.icon className="w-5 h-5" />
-                  {item.label}
+                  {item.name}
                 </Link>
               );
             })}
