@@ -1,5 +1,6 @@
 # Kontroller på varje push och pull request: typer, lint och enhetstester.
-# Bygget körs av Vercel på samma PR; här fångas det bygget hoppar över
+# Bygget körs även här så att verifiering inte kräver en fungerande Vercel-preview.
+# Typkontrollen körs separat eftersom bygget hoppar över den
 # (next.config.ts har ignoreBuildErrors eftersom Next 16:s typkontroll
 # tar slut på minne i bygget).
 name: CI
@@ -30,3 +31,8 @@ jobs:
         run: npm run lint
       - name: Enhetstester
         run: npm run test
+      - name: Produktionsbygge
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-key
