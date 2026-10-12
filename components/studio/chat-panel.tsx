@@ -402,7 +402,7 @@ function ReviewBlock({ review }: { review: ChatReview }) {
         <p className="mt-1.5 text-[10px] text-nordea-text-faint">
           {review.visualError
             ? `Bara regelkontroll — ${review.visualError}.`
-            : "Ingen renderare i den här miljön — bara regelkontroll."}
+            : "Visuell kontroll ingår inte i den här bedömningen."}
         </p>
       )}
     </div>

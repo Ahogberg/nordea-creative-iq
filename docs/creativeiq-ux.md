@@ -16,6 +16,6 @@ Lokalisering börjar med texten från kampanjens video. Kampanjens rapportlänk 
 
 ## Verifiering
 
-47 tester täcker sparning, explicit promptomfattning, navigation samt budgetvalidering, ägaråtkomst och sparrundtur i en simulerad datakälla. CI ska verifiera typkontroll, lint och produktionsbygge med låsfilen. Browser-test ska kontrollera tom videostart, generering av en hel video, hela-videon-scope efter scenmarkering, uttrycklig scenändring, avancerat läge, bibliotek, kampanjsteg samt budgetens återöppning.
+49 tester täcker sparning, explicit promptomfattning, navigation samt budgetvalidering, ägaråtkomst och sparrundtur i en simulerad datakälla. CI verifierar typkontroll, lint och produktionsbygge med låsfilen. Browser-test med kontrollerade AI- och kampanjsvar verifierar tom videostart, generering av en hel video, hela-videon-scope efter scenmarkering, uttrycklig scenändring, avancerat läge, bibliotek, kampanjsteg samt budgetens återöppning.
 
 Ett riktigt Nordea-konto och databasens befintliga campaign_plans-tabell behövs för sparning av budget i den driftsatta miljön. I demo kan budget beräknas och exporteras till PDF, men inga budgetskrivningar görs.

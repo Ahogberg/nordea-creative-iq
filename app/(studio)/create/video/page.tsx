@@ -42,7 +42,7 @@ function StudioPageInner() {
     if (campaignFromUrl ? openCampaignId !== campaignFromUrl : !!openCampaignId) return;
     processedRef.current = entry;
     useStudioStore.getState().resetDraft();
-    if (promptFromUrl) void useStudioStore.getState().startFromPrompt(`Skapa en hel sammanhängande video: ${promptFromUrl}`);
+    if (promptFromUrl) void useStudioStore.getState().startFromPrompt(`Skapa en hel sammanhängande video: ${promptFromUrl}`, promptFromUrl);
   }, [promptFromUrl, newFromUrl, campaignFromUrl, openCampaignId, busy]);
 
   // Markerar man ett element på videon eller en keyframe öppnas scenens egenskaper.

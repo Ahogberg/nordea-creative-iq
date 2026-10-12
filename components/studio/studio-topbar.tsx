@@ -174,6 +174,7 @@ export function StudioTopbar() {
         {campaign ? <CampaignChip /> : <span>Lokalt utkast · spara som mall för att behålla videon</span>}
       </div>
 
+      {config.id.startsWith("mock-") && <p role="status" className="w-full text-xs text-nordea-text-secondary">Demonstrationsutkast med exempeldata · riktig AI-generering är inte tillgänglig.</p>}
       <SaveTemplateModal open={saveOpen} onClose={() => setSaveOpen(false)} />
       <ExportModal open={exportOpen} onClose={() => setExportOpen(false)} />
     </header>

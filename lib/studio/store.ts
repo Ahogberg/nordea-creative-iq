@@ -134,7 +134,7 @@ interface StudioState {
   isDrafting: boolean;
   inspectorTab: InspectorTab | null;
   setInspectorTab: (tab: InspectorTab | null) => void;
-  startFromPrompt: (prompt: string) => Promise<void>;
+  startFromPrompt: (prompt: string, display?: string) => Promise<void>;
   /** `display` visas i bubblan i stället för en lång genererad text. */
   sendChatMessage: (text: string, display?: string) => Promise<void>;
   undoMessage: (id: string) => void;
@@ -246,10 +246,10 @@ export const useStudioStore = create<StudioState>()(
 
     setInspectorTab: (tab) => set({ inspectorTab: tab }),
 
-    startFromPrompt: async (prompt) => {
+    startFromPrompt: async (prompt, display) => {
       if (get().isChatBusy) return;
       set({ isDrafting: true });
-      await runChatTurn(prompt, "/api/studio/initial-prompt");
+      await runChatTurn(prompt, "/api/studio/initial-prompt", display);
       set({ isDrafting: false });
     },
 
@@ -634,6 +634,7 @@ async function runChatTurn(text: string, endpoint: string, display?: string) {
     });
     const data = (await res.json().catch(() => null)) as {
       config?: VideoConfig | null;
+      mock?: boolean;
       message?: string;
       error?: string;
     } | null;
@@ -654,7 +655,7 @@ async function runChatTurn(text: string, endpoint: string, display?: string) {
         status: "done",
         content:
           (isInitial ? undefined : data.message) ??
-          `Här är ett första utkast med ${next.scenes.length} scener. Beskriv vad du vill ändra.`,
+          (data.mock ? "Här är ett demonstrationsutkast med exempeldata. Riktig AI-generering är inte tillgänglig just nu." : "Här är ditt första videoutkast. Se hela filmen och beskriv vad du vill förbättra."),
         changes: isInitial ? undefined : changes,
         before,
         review: { status: "pending" },

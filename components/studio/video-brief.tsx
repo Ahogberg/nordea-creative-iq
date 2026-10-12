@@ -14,7 +14,7 @@ export function VideoBrief({ initialIdea = "" }: { initialIdea?: string }) {
   const error = [...messages].reverse().find(m => m.status === "error")?.content;
   const generate = () => {
     if (!idea.trim() || busy) return;
-    void start(`Skapa en hel, sammanhängande video.\nIdé: ${idea.trim()}\nFormat: ${ASPECT_RATIOS[format].ratio}. Längd: ${duration} sekunder.\nPlanera berättelse, tempo och avslut för hela filmen. Dela upp i scener internt, utan att be användaren beskriva varje scen.`);
+    void start(`Skapa en hel, sammanhängande video.\nIdé: ${idea.trim()}\nFormat: ${ASPECT_RATIOS[format].ratio}. Längd: ${duration} sekunder.\nPlanera berättelse, tempo och avslut för hela filmen. Dela upp i scener internt, utan att be användaren beskriva varje scen.`, `${idea.trim()} · ${ASPECT_RATIOS[format].ratio} · ${duration} sekunder`);
   };
   return <main className="flex-1 overflow-y-auto bg-nordea-bg p-4 sm:p-8">
     <div className="max-w-2xl mx-auto py-8 sm:py-12">
