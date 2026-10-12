@@ -36,7 +36,7 @@ export function MediaLibrary({ embedded = false }: { embedded?: boolean }) {
   const [source, setSource] = useState<Source>("brand");
 
   return (
-    <div className="min-h-screen bg-nordea-bg">
+    <div className={`${embedded ? "" : "min-h-screen"} bg-nordea-bg`}>
       {!embedded && <Topbar breadcrumb={["Mediabibliotek"]} />}
       <div className="px-8 py-8 max-w-[1400px] mx-auto">
         <PageHeading

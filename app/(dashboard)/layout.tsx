@@ -15,7 +15,7 @@ export default async function DashboardLayout({
       <Sidebar user={userDisplay(user)} />
       <div className="lg:pl-[240px]">
         <Header user={user} />
-        <main className="p-4 lg:p-8">
+        <main className="min-w-0">
           {children}
         </main>
       </div>

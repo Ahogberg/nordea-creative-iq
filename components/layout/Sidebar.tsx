@@ -30,7 +30,6 @@ interface NavSection {
 
 const NAV_SECTIONS: NavSection[] = [
   { label: null, items: PRIMARY_NAV },
-  { label: null, items: [SETTINGS_NAV] },
 ];
 
 export function Sidebar({ user }: { user: UserDisplay }) {
@@ -88,6 +87,7 @@ export function Sidebar({ user }: { user: UserDisplay }) {
       </nav>
 
       <div className="p-2 border-t border-gray-200">
+        <Link href={SETTINGS_NAV.href} aria-current={isActive(SETTINGS_NAV.href) ? "page" : undefined} className={`sidebar-item mb-2 ${isActive(SETTINGS_NAV.href) ? "active" : ""}`}><Settings /><span>Inställningar</span></Link>
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0000A0]">
             <div className="w-9 h-9 rounded-lg bg-[#0000A0] flex items-center justify-center text-white text-sm font-medium shrink-0">

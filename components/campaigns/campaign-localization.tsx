@@ -151,7 +151,7 @@ export function CampaignLocalization({ embedded = false, initialContent }: { emb
     score >= 85 ? 'text-green-600' : score >= 70 ? 'text-yellow-600' : 'text-red-600';
 
   return (
-    <div className="min-h-screen bg-nordea-bg">
+    <div className={`${embedded ? "" : "min-h-screen"} bg-nordea-bg`}>
       {!embedded && <Topbar breadcrumb={['Lokalisering']} />}
       <div className="px-8 py-8 max-w-[1400px] mx-auto space-y-6">
       <PageHeading

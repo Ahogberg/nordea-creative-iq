@@ -111,7 +111,7 @@ export function TemplateLibrary({ embedded = false }: { embedded?: boolean }) {
   const others = filtered.filter((t) => !t.is_favorite);
 
   return (
-    <div className="min-h-screen bg-nordea-bg">
+    <div className={`${embedded ? "" : "min-h-screen"} bg-nordea-bg`}>
       {!embedded && (
 <Topbar
         breadcrumb={['Mallar']}

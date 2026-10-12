@@ -248,7 +248,7 @@ export function CampaignPlanning({ embedded = false, campaignId, campaignName }:
   const allocatedBudget = channelResults.reduce((s, r) => s + r.budget, 0);
 
   return (
-    <fieldset disabled={planLoading} aria-label="Mediaplanering" className="min-h-screen bg-nordea-bg border-0 min-w-0 p-0">
+    <fieldset disabled={planLoading} aria-label="Mediaplanering" className={`${embedded ? "" : "min-h-screen"} bg-nordea-bg border-0 min-w-0 p-0`}>
       {!embedded && (
 <Topbar
         breadcrumb={['Verktyg', 'Mediaplanering']}
