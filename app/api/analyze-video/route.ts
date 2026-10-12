@@ -205,13 +205,13 @@ Svara ENDAST i följande JSON-format:
       }
     }
 
+    if (anthropic) throw new Error("AI-svaret kunde inte tolkas");
+
     // Fallback to mock
     console.log('[CreativeIQ] Video analysis fallback till mockdata');
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    return NextResponse.json(mockVideoAnalysis);
+    return NextResponse.json({ ...mockVideoAnalysis, simulation: "mock" });
   } catch (error) {
     console.error('[CreativeIQ] Analyze-video error:', error);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return NextResponse.json(mockVideoAnalysis);
+    return NextResponse.json({ message: "Analysen misslyckades. Försök igen." }, { status: 502 });
   }
 }

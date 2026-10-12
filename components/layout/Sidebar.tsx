@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Sparkles,
   Calendar,
+  Globe,
   Users,
   Rocket,
   Settings,
@@ -47,7 +48,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: null,
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Översikt', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Kampanjer', href: '/campaigns', icon: Rocket },
       {
         name: 'Skapa',
@@ -63,7 +64,7 @@ const NAV_SECTIONS: NavSection[] = [
         subtitle: 'Skala mallar till många varianter',
       },
       { name: 'Mediabibliotek', href: '/dam', icon: FolderOpen },
-      { name: 'QA-rapporter', href: '/qa', icon: ShieldCheck },
+      { name: 'Granskningar', href: '/qa', icon: ShieldCheck },
       { name: 'Personas', href: '/personas', icon: Users },
     ],
   },
@@ -71,6 +72,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Verktyg',
     items: [
       { name: 'Mediaplanering', href: '/campaign-planner', icon: Calendar },
+      { name: 'Lokalisering', href: '/localization', icon: Globe },
     ],
   },
   {

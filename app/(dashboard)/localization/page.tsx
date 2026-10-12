@@ -14,6 +14,7 @@ import { Topbar } from '@/components/layout/topbar';
 import { PageHeading } from '@/components/layout/page-heading';
 
 interface LocalizedResult {
+  simulation?: "mock";
   market: string;
   headline: string;
   body: string;
@@ -87,6 +88,7 @@ export default function LocalizationPage() {
   const [cta, setCta] = useState('Testa kalkylatorn');
   const [results, setResults] = useState<LocalizedResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [expandedMarket, setExpandedMarket] = useState<string | null>(null);
 
@@ -101,8 +103,10 @@ export default function LocalizationPage() {
     if (targetMarkets.length === 0) return;
     setLoading(true);
     setResults([]);
+    setErrors([]);
 
     const localizedResults: LocalizedResult[] = [];
+    const failures: string[] = [];
 
     for (const market of targetMarkets) {
       try {
@@ -118,6 +122,10 @@ export default function LocalizationPage() {
 
         if (res.ok) {
           const data = await res.json();
+          if (data.simulation === 'mock' && mockLocalizations[market]) {
+            localizedResults.push({ ...mockLocalizations[market], simulation: 'mock' });
+            continue;
+          }
           if (data.headline) {
             localizedResults.push({ market, ...data });
             continue;
@@ -126,12 +134,11 @@ export default function LocalizationPage() {
       } catch (e) {
         console.error(`Localization failed for ${market}:`, e);
       }
-      // Fallback to mock data
-      const mock = mockLocalizations[market];
-      if (mock) localizedResults.push(mock);
+      failures.push(`${nordicMarkets.find((m) => m.id === market)?.name ?? market}: lokaliseringen kunde inte slutföras. Försök igen.`);
     }
 
     setResults(localizedResults);
+    setErrors(failures);
     setLoading(false);
     if (localizedResults.length > 0) setExpandedMarket(localizedResults[0].market);
   };
@@ -155,6 +162,12 @@ export default function LocalizationPage() {
         description="Anpassa rubrik, brödtext och CTA för Sverige, Danmark, Norge och Finland — med språk, ton och regelverk per marknad."
       />
 
+      {errors.length > 0 && <div role="alert" className="nordea-card p-4 text-sm text-nordea-rose">{errors.join(' ')}</div>}
+      {results.some((result) => result.simulation === 'mock') && (
+        <div role="status" className="nordea-card p-4 text-sm text-nordea-text">
+          <strong>Demonstration · AI-nyckel saknas.</strong> Exempeltexterna är inte en översättning av ditt innehåll. Poängen är exempelvärden.
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input */}
         <div className="space-y-6">

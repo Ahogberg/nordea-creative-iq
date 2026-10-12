@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Download, Sparkles, ShieldCheck, Loader2, LayoutGrid } from "lucide-react";
+import { ArrowLeft, Save, Download, Sparkles, ShieldCheck, Loader2, LayoutGrid, MoreHorizontal } from "lucide-react";
 import { useStudioStore } from "@/lib/studio/store";
+import { flushCampaignSave } from "@/lib/studio/campaign-sync";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { SaveTemplateModal } from "./save-template-modal";
 import { ExportModal } from "./export-modal";
 import { CampaignChip, useCampaignQuery } from "./campaign-chip";
@@ -102,10 +104,15 @@ export function StudioTopbar() {
     useStudioStore.setState((s) => ({ config: { ...s.config, title } }));
 
   return (
-    <header className="h-14 px-3 border-b border-nordea-border bg-white flex items-center justify-between gap-4 flex-shrink-0">
+    <header className="min-h-14 py-2 px-3 flex-wrap border-b border-nordea-border bg-white flex items-center justify-between gap-4 flex-shrink-0">
       <div className="flex items-center gap-3 min-w-0">
         <Link
           href={campaign ? `/campaigns/${campaign.id}` : "/create"}
+          onClick={async (event) => {
+            event.preventDefault();
+            if (await flushCampaignSave()) router.push(campaign ? `/campaigns/${campaign.id}` : "/create");
+            else toast.error("Ändringarna kunde inte sparas", { description: "Försök spara igen innan du lämnar studion." });
+          }}
           aria-label="Tillbaka"
           title={campaign ? "Tillbaka till kampanjen" : "Tillbaka"}
           className="w-9 h-9 rounded-lg flex items-center justify-center text-nordea-text-tertiary hover:text-nordea-text hover:bg-nordea-bg-hover transition-colors"
@@ -129,31 +136,22 @@ export function StudioTopbar() {
 
       <div className="flex items-center gap-2">
         <UndoRedo />
-        <button
-          type="button"
-          onClick={() => {
-            setInspectorTab("variants");
-            void generateVariants();
-          }}
-          disabled={isGeneratingVariants}
-          className="nordea-btn nordea-btn-ghost nordea-btn-sm disabled:opacity-50"
-        >
-          {isGeneratingVariants ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          Varianter
-        </button>
-        <CampaignChip />
-        <Link
-          href={`/create/display${campaignQuery}`}
-          title="Samma budskap i svenska publicisters displayformat"
-          className="nordea-btn nordea-btn-secondary nordea-btn-sm"
-        >
-          <LayoutGrid className="w-4 h-4" />
-          Displayformat
-        </Link>
-        <button type="button" onClick={() => setSaveOpen(true)} className="nordea-btn nordea-btn-secondary nordea-btn-sm">
-          <Save className="w-4 h-4" />
-          Spara som mall
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" aria-label="Fler åtgärder" className="nordea-btn nordea-btn-secondary nordea-btn-sm">
+              <MoreHorizontal className="w-4 h-4" /> Fler åtgärder
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem disabled={isGeneratingVariants} onSelect={() => { setInspectorTab("variants"); void generateVariants(); }}>
+              <Sparkles className="w-4 h-4" /> Skapa AI-varianter
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/create/display${campaignQuery}`}><LayoutGrid className="w-4 h-4" /> Skapa displayformat</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setSaveOpen(true)}><Save className="w-4 h-4" /> Spara som mall</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           type="button"
           onClick={runQA}
@@ -162,12 +160,16 @@ export function StudioTopbar() {
           className="nordea-btn nordea-btn-secondary nordea-btn-sm"
         >
           {qaRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-          {qaRunning ? "Granskar…" : "Kör QA"}
+          {qaRunning ? "Granskar…" : "Granska text"}
         </button>
         <button type="button" onClick={() => setExportOpen(true)} className="nordea-btn nordea-btn-primary nordea-btn-sm">
           <Download className="w-4 h-4" />
           Exportera
         </button>
+      </div>
+
+      <div className="w-full flex items-center gap-2 text-xs text-nordea-text-tertiary">
+        {campaign ? <CampaignChip /> : <span>Lokalt utkast · spara som mall för att behålla videon</span>}
       </div>
 
       <SaveTemplateModal open={saveOpen} onClose={() => setSaveOpen(false)} />

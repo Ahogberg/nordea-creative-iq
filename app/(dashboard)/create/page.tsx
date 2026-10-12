@@ -25,35 +25,35 @@ const SHORTCUTS: Shortcut[] = [
   {
     id: "copy",
     icon: Type,
-    title: "Copy Studio",
+    title: "Skriv annonstext",
     description: "Rubriker, brödtext och CTA:er i Nordeas ton",
     mode: "copy",
   },
   {
     id: "video",
     icon: Video,
-    title: "Motion Studio",
+    title: "Skapa video",
     description: "Video i scener, med AI-chatt bredvid",
     mode: "video",
   },
   {
     id: "analyze",
     icon: ImageIcon,
-    title: "Ad Studio",
+    title: "Granska annons",
     description: "Granska en annons med personas och uppmärksamhetskarta",
     mode: "analyze",
   },
   {
     id: "brief",
     icon: FileText,
-    title: "Från brief",
+    title: "Planera kampanj",
     description: "Idé eller brief → strategi och kampanj",
     mode: "brief",
   },
   {
     id: "master",
     icon: Layers,
-    title: "Master",
+    title: "Skapa formatvarianter",
     description: "En master design → 4 lokaliserade format-varianter",
     mode: "master",
   },
@@ -68,12 +68,12 @@ const SHORTCUTS: Shortcut[] = [
 export default function CreatePage() {
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
+  const [mode, setMode] = useState<Shortcut["mode"]>("video");
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     setIsGenerating(true);
-    const mode = detectMode(prompt);
     router.push(`/create/${mode}?prompt=${encodeURIComponent(prompt)}`);
   };
 
@@ -90,13 +90,18 @@ export default function CreatePage() {
             Vad vill du skapa idag?
           </h1>
           <p className="text-base text-nordea-text-secondary">
-            Beskriv din idé så genererar AI:n direkt — eller välj ett verktyg nedan
+            Välj vad du vill göra och beskriv din idé. Du kan också öppna ett verktyg direkt.
           </p>
         </div>
 
         <div className="mb-10">
+          <label htmlFor="create-mode" className="block text-sm font-medium text-nordea-text mb-2">Vad vill du göra?</label>
+          <select id="create-mode" value={mode} onChange={(e) => setMode(e.target.value as Shortcut["mode"])} className="nordea-input w-full mb-4">
+            {SHORTCUTS.map((s) => <option key={s.mode} value={s.mode}>{s.title}</option>)}
+          </select>
           <div className="relative">
             <textarea
+              aria-label="Beskriv din idé"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => {
@@ -114,13 +119,14 @@ export default function CreatePage() {
               onClick={handleGenerate}
               disabled={!prompt.trim() || isGenerating}
               className="absolute bottom-4 right-4 w-10 h-10 bg-nordea-blue hover:bg-[#000080] text-white rounded-xl flex items-center justify-center disabled:opacity-30 transition-colors"
-              title="Generera (⌘+Enter)"
+              title="Fortsätt (Ctrl/⌘+Enter)"
+              aria-label="Fortsätt med din idé"
             >
               <Sparkles className="w-5 h-5" />
             </button>
           </div>
           <p className="text-xs text-nordea-text-tertiary mt-2 text-center">
-            ⌘+Enter för att skicka
+            Ctrl/⌘+Enter för att fortsätta
           </p>
         </div>
 
@@ -157,16 +163,4 @@ export default function CreatePage() {
       </div>
     </div>
   );
-}
-
-/**
- * Regex-based mode router. Sprint 7 stub — replace with Claude routing
- * when we have a free moment. Order matters: more-specific patterns first.
- */
-function detectMode(prompt: string): Shortcut["mode"] {
-  const lower = prompt.toLowerCase();
-  if (/video|animer|reel|story|tiktok|motion/.test(lower)) return "video";
-  if (/kampanj|brief|strategi|launch/.test(lower)) return "brief";
-  if (/analys|testa|granska|feedback|review/.test(lower)) return "analyze";
-  return "copy";
 }

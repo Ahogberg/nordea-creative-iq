@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   Sparkles,
   Calendar,
+  Globe,
   Users,
   Rocket,
   LayoutGrid,
@@ -30,15 +31,16 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Översikt', icon: LayoutDashboard },
   { href: '/campaigns', label: 'Kampanjer', icon: Rocket },
   { href: '/create', label: 'Skapa', icon: Sparkles },
   { href: '/templates', label: 'Mallar', icon: LayoutGrid },
   { href: '/produce', label: 'Massproduktion', icon: Settings2 },
   { href: '/dam', label: 'Mediabibliotek', icon: FolderOpen },
-  { href: '/qa', label: 'QA-rapporter', icon: ShieldCheck },
+  { href: '/qa', label: 'Granskningar', icon: ShieldCheck },
   { href: '/personas', label: 'Personas', icon: Users },
   { href: '/campaign-planner', label: 'Mediaplanering', icon: Calendar },
+  { href: '/localization', label: 'Lokalisering', icon: Globe },
   { href: '/settings', label: 'Inställningar', icon: Settings },
 ];
 
@@ -80,7 +82,7 @@ export function Header({ user }: HeaderProps) {
           </div>
           <nav className="px-3 py-4 space-y-1">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
                 <Link
                   key={item.href}

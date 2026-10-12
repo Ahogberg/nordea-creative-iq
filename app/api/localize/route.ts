@@ -25,11 +25,13 @@ export async function POST(request: Request) {
       }
     }
 
+    if (result) throw new Error("AI-svaret kunde inte tolkas");
+
     // Fallback
     console.log('[CreativeIQ] Lokalisering fallback – ingen AI-nyckel eller parse-fel');
-    return NextResponse.json({ message: 'Lokalisering hanteras i frontend med mockdata' });
+    return NextResponse.json({ simulation: 'mock', message: 'AI-nyckel saknas. Endast demonstration är tillgänglig.' });
   } catch (error) {
     console.error('[CreativeIQ] Localize error:', error);
-    return NextResponse.json({ message: 'Lokalisering hanteras i frontend med mockdata' });
+    return NextResponse.json({ message: 'Lokaliseringen misslyckades. Försök igen.' }, { status: 502 });
   }
 }

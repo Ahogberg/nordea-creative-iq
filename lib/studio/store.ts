@@ -148,7 +148,7 @@ interface StudioState {
 
   /** Kampanjen som öppnats i studion (?campaign=) — video och display sparas dit. */
   campaign: { id: string; name: string } | null;
-  campaignSave: "idle" | "saving" | "saved" | "error";
+  campaignSave: "idle" | "pending" | "saving" | "saved" | "error";
   /** Inläsningen av kampanjen — studion visas först när den är klar. */
   campaignLoad: { id: string; status: "loading" | "error"; message?: string } | null;
 
@@ -575,6 +575,7 @@ const newId = () => `msg-${Date.now()}-${++messageSeq}`;
 async function runChatTurn(text: string, endpoint: string, display?: string) {
   const { getState, setState } = useStudioStore;
   const before = getState().config;
+  const campaignId = getState().campaign?.id;
   const selected = getState().selectedSceneIndex;
 
   const userMsg: ChatMessage = {
@@ -622,6 +623,9 @@ async function runChatTurn(text: string, endpoint: string, display?: string) {
     } | null;
     if (!res.ok || !data) throw new Error(data?.error || data?.message || "AI:n svarade med ett fel");
 
+    if (data.config && (getState().config !== before || getState().campaign?.id !== campaignId)) {
+      throw new Error("Videon ändrades medan AI:n arbetade. Ändringarna har behållits. Skicka din fråga igen.");
+    }
     if (data.config) {
       const next = { ...data.config, motion: data.config.motion ?? DEFAULT_MOTION_CONFIG };
       const changes = describeChanges(before, next);

@@ -27,13 +27,15 @@ function StudioPageInner() {
   const searchParams = useSearchParams();
   const promptFromUrl = searchParams.get("prompt");
   const campaignFromUrl = searchParams.get("campaign");
-  const processedRef = useRef(false);
+  const processedRef = useRef<string | null>(null);
+  const openCampaignId = useStudioStore((s) => s.campaign?.id);
 
   useEffect(() => {
-    if (!promptFromUrl || processedRef.current) return;
-    processedRef.current = true;
+    if (!promptFromUrl || processedRef.current === promptFromUrl) return;
+    if (campaignFromUrl ? openCampaignId !== campaignFromUrl : !!openCampaignId) return;
+    processedRef.current = promptFromUrl;
     void useStudioStore.getState().startFromPrompt(promptFromUrl);
-  }, [promptFromUrl]);
+  }, [promptFromUrl, campaignFromUrl, openCampaignId]);
 
   // Markerar man ett element på videon eller en keyframe öppnas scenens egenskaper.
   useEffect(() => {

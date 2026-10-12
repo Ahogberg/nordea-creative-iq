@@ -73,8 +73,6 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        <RecentAds data={data} />
-
         {/* KPI:er — riktiga värden, "—" när underlag saknas */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
@@ -220,6 +218,7 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
+        <div className="mt-8"><RecentAds data={data} /></div>
       </div>
     </div>
   );

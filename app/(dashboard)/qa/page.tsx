@@ -1,6 +1,6 @@
 "use client";
 
-// ── QA-rapporter: riktiga granskningar ur qa_runs ──
+// ── Granskningar: riktiga granskningar ur qa_runs ──
 //
 // Vänster: historiken (nyast först). Höger: vald rapport med totalpoäng,
 // delpoäng, persona-jury, tone of voice, compliance och uppmärksamhet.
@@ -168,7 +168,7 @@ export default function QAReportsPage() {
   return (
     <div className="min-h-screen bg-nordea-bg">
       <Topbar
-        breadcrumb={detail ? ["QA-rapporter", runTitle(detail)] : ["QA-rapporter"]}
+        breadcrumb={detail ? ["Granskningar", runTitle(detail)] : ["Granskningar"]}
         right={
           canApprove ? (
             <button type="button" onClick={approve} disabled={approving} className="nordea-btn nordea-btn-primary">
@@ -186,7 +186,7 @@ export default function QAReportsPage() {
       <div className="px-8 py-8 max-w-[1400px] mx-auto">
         <PageHeading
           eyebrow="Kvalitetssäkring"
-          title="QA-rapporter"
+          title="Granskningar"
           description="Varje granskning väger persona-jury, tone of voice, compliance och uppmärksamhet mot tröskeln innan materialet går ut."
         />
 
