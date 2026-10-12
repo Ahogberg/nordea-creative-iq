@@ -64,11 +64,14 @@ Motionstudions huvudytor är AI-chatt, video och scenrad. Grundläggande rediger
 
 ## Verifiering och leveransstatus
 
-31 enhetstester passerar, varav sex nya regressionstester för kampanjsparning. Typkontrollen passerar i den tillfälliga miljön. Lint rapporterar befintliga problem; en jämförelse av ändrade filer mot huvudgrenens original kontrollerar att nya lintfel inte introducerats.
+CI med projektets låsta beroenden har passerat typkontroll, lint, samtliga 31 tester och npm run build. Sex tester är nya regressionstester för kampanjsparning. Resultaten gäller kodcommit 51d9561 i draft-PR 17. En tillfällig lokal miljö användes under arbetet på grund av nästan full C-disk; beroendeversionerna och låsfilen i projektet är oförändrade.
 
-Full installation från låsfilen och ett tillförlitligt produktionsbygge har inte slutförts: C-disken var nästan full. Den tillfälliga miljön återanvänder tidigare installerade paket och är inte identisk med låsfilen. Ett byggförsök med en oförenlig gammal kommandogenväg avbröts; det räknas inte som ett godkänt bygge. Inga beroendeversioner eller låsfiler har ändrats i projektet.
+Vercels preview är READY. Browser-test av den ändrade versionen verifierade att det explicita valet Granska annons leder till analysverktyget även när användaren skriver om en video. Menyn Fler åtgärder fungerar med Escape. Granska text och Exportera är synliga i motionstudion vid 1024 pixlar, utkaststatus visas och inga sidfel registrerades i detta test. Auditrapportens HTML-version har kontrollerats i webbläsare.
 
-Förbättringarna är därför ett granskningsbart första paket, inte en färdig produktionsrelease. CI med låsta beroenden, browser-test av den ändrade versionen, riktigt Nordea-login, databasrundtur, fokusgrupp med fyra obligatoriska personas och faktisk export måste vara klara innan release.
+Förbättringarna är ett första granskningsbart paket, inte en färdig produktionsrelease. Riktigt Nordea-login, databasrundtur, fokusgrupp med fyra obligatoriska personas och faktisk rendering/export återstår. Ingen produktionsmerge har gjorts.
+
+PR: https://github.com/Ahogberg/nordea-creative-iq/pull/17
+Preview: https://nordea-creative-o6z44xkxn-andreas-projects-f2b98374.vercel.app
 
 ## Ordning för nästa förbättringsomgång
 
