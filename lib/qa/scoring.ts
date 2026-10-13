@@ -15,9 +15,6 @@ import type {
 } from "./types";
 import { DEFAULT_THRESHOLDS } from "./thresholds";
 
-/** Uppmärksamhetspoäng som används när bara copy granskas (ingen bild). */
-export const COPY_ONLY_HEATMAP_BASELINE = 75;
-
 export interface QAParts {
   persona_jury: PersonaJuryResult;
   tov: ToVScores;
@@ -38,13 +35,14 @@ export function scoreQA(
   thresholds = DEFAULT_THRESHOLDS
 ): QAScore {
   const weights = thresholds.weights;
-  const heatmap_score = heatmap?.attention_score ?? COPY_ONLY_HEATMAP_BASELINE;
+  const heatmap_score = heatmap?.attention_score ?? 0;
 
+  const activeWeight = weights.persona + weights.tov + weights.compliance + (heatmap ? weights.heatmap : 0);
   const total_score = Math.round(
-    persona_jury.aggregate_score * weights.persona +
+    (persona_jury.aggregate_score * weights.persona +
       tov.weighted_score * weights.tov +
       compliance.score * weights.compliance +
-      heatmap_score * weights.heatmap
+      heatmap_score * weights.heatmap) / activeWeight
   );
 
   // Blockerande compliance vinner alltid.

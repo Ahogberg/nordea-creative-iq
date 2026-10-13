@@ -1,3 +1,4 @@
+import { parseCampaignChoices, type Format } from "@/lib/campaign-options";
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { CLAUDE_MODEL } from "@/lib/ai/anthropic";
@@ -64,8 +65,11 @@ export async function POST(
 ) {
   try {
     const { id: briefId } = await params;
-    const body = (await request.json().catch(() => null)) as { regenerate?: boolean } | null;
+    const body = (await request.json().catch(() => null)) as { regenerate?: boolean; channels?: unknown; formats?: unknown } | null;
     const regenerate = body?.regenerate === true;
+    const hasChoices = body?.channels !== undefined || body?.formats !== undefined;
+    const choices = hasChoices ? parseCampaignChoices(body) : null;
+    if (hasChoices && !choices) return NextResponse.json({ error: "Välj minst en giltig kanal och ett giltigt format." }, { status: 400 });
 
     const db = await requireDb();
     if ("response" in db) return db.response;
@@ -82,16 +86,18 @@ export async function POST(
       return NextResponse.json({ error: "Brief not found" }, { status: 404 });
     }
 
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("campaigns")
       .select("*")
       .eq("brief_id", briefId)
       .eq("created_by", ownerId)
       .maybeSingle();
 
+    if (existingError) throw existingError;
+
     // Kampanjer från före video_config har videon i sin mall — flytta in den
     // i stället för att låta AI:n skriva över det användaren redan sett.
-    if (existing && !existing.video_config && existing.template_ids?.[0] && !regenerate) {
+    if (existing && !choices && !existing.video_config && existing.template_ids?.[0] && !regenerate) {
       const { data: template } = await supabase
         .from("templates")
         .select("config")
@@ -110,16 +116,31 @@ export async function POST(
       }
     }
 
-    if (existing?.video_config && !regenerate) {
+    if (existing?.video_config && !regenerate && !choices) {
       return NextResponse.json({ campaign: existing, created: false });
     }
 
-    const config = await generateConfig(brief, briefId);
+    const selectedFormats = choices?.formats ?? (existing?.formats?.length ? existing.formats : [brief.recommended_formats?.[0] ?? "story"]);
+    const selectedChannels = choices?.channels ?? existing?.channels ?? [];
+    const generationBrief = { ...brief, recommended_formats: selectedFormats, selected_channels: selectedChannels };
+    const config = existing?.video_config && !regenerate
+      ? existing.video_config as VideoConfig
+      : await generateConfig(generationBrief, briefId);
+    if (!existing?.video_config || regenerate) config.format = selectedFormats[0];
     const name = brief.title || "Kampanj från brief";
 
     // En mall och en master per kampanj — uppdateras vid omgenerering.
-    const templateId = await upsertTemplate(db, existing?.template_ids?.[0] ?? null, name, brief, config);
-    const masterId = await upsertMaster(db, existing?.master_creative_ids?.[0] ?? null, name, brief, config);
+    const templateIds: string[] = [];
+    const { data: savedTemplates, error: templatesError } = existing?.template_ids?.length
+      ? await supabase.from("templates").select("id, config").in("id", existing.template_ids).eq("user_id", ownerId)
+      : { data: [], error: null };
+    if (templatesError) throw templatesError;
+    for (const format of selectedFormats as Format[]) {
+      const saved = savedTemplates?.find(t => t.config?.format === format);
+      const templateId = saved && !regenerate ? saved.id : await upsertTemplate(db, saved?.id ?? null, `${name} · ${format}`, generationBrief, { ...config, format });
+      templateIds.push(templateId);
+    }
+    const masterId = existing?.master_creative_ids?.[0] && !regenerate ? existing.master_creative_ids[0] : await upsertMaster(db, existing?.master_creative_ids?.[0] ?? null, name, generationBrief, config);
 
     let campaign: Record<string, unknown> | null = null;
     if (existing) {
@@ -127,7 +148,9 @@ export async function POST(
         .from("campaigns")
         .update({
           video_config: config,
-          template_ids: [templateId],
+          template_ids: [...new Set([...templateIds, ...(existing?.template_ids ?? [])])],
+          channels: selectedChannels,
+          formats: selectedFormats,
           master_creative_ids: masterId ? [masterId] : [],
         })
         .eq("id", existing.id)
@@ -144,7 +167,9 @@ export async function POST(
           brief_id: briefId,
           video_config: config,
           master_creative_ids: masterId ? [masterId] : [],
-          template_ids: [templateId],
+          template_ids: [...new Set([...templateIds, ...(existing?.template_ids ?? [])])],
+          channels: selectedChannels,
+          formats: selectedFormats,
           production_job_ids: [],
           status: "draft",
           created_by: ownerId,
@@ -202,6 +227,7 @@ async function generateConfig(brief: Record<string, unknown>, briefId: string): 
             desired_action: brief.desired_action,
             tone_of_voice: brief.tone_of_voice,
             recommended_formats: brief.recommended_formats,
+            selected_channels: brief.selected_channels,
           },
           null,
           2

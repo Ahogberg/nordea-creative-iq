@@ -18,7 +18,6 @@ import { PersonaImage } from "@/components/ui/persona-image";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { getPersonaById } from "@/lib/persona-library";
 import { DEFAULT_THRESHOLDS } from "@/lib/qa/thresholds";
-import { COPY_ONLY_HEATMAP_BASELINE } from "@/lib/qa/scoring";
 import { formatRelative } from "@/lib/campaign-status";
 import type {
   QAStatus,
@@ -164,7 +163,7 @@ export default function QAReportsPage() {
     }
   };
 
-  const canApprove = detail && !detail.approved_at && (detail.status === "pass" || detail.status === "warn");
+  const canApprove = detail && !detail.approved_at && (detail.status === "pass" || detail.status === "warn") && !(detail.blocking_issues ?? []).length;
 
   return (
     <div className="min-h-screen bg-nordea-bg">
@@ -296,11 +295,7 @@ function Report({ run }: { run: RunDetail }) {
     { label: "Persona-jury", value: run.persona_score },
     { label: "Tone of voice", value: run.tov_score },
     { label: "Compliance", value: run.compliance_score },
-    // Utan bild räknar gaten med en fast baslinje — visa den, så att delarna
-    // förklarar totalen.
-    run.heatmap_score != null
-      ? { label: "Uppmärksamhet", value: run.heatmap_score }
-      : { label: "Uppmärksamhet (baslinje, ingen bild)", value: COPY_ONLY_HEATMAP_BASELINE },
+    { label: "Uppmärksamhet", value: run.heatmap_score },
   ].filter((b): b is { label: string; value: number } => b.value != null);
 
   const notes = [

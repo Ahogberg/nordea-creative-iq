@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { scoreQA, COPY_ONLY_HEATMAP_BASELINE, type QAParts } from "./scoring";
+import { scoreQA, type QAParts } from "./scoring";
 import { DEFAULT_THRESHOLDS } from "./thresholds";
 import type { ComplianceIssue, PersonaScore } from "./types";
 
@@ -74,11 +74,9 @@ describe("scoreQA", () => {
     expect(result.blocking_issues).toEqual(["Effektiv ränta: detalj. Visa räntan."]);
   });
 
-  it("använder baslinjen för uppmärksamhet när ingen bild granskats", () => {
-    const w = DEFAULT_THRESHOLDS.weights;
-    const result = scoreQA(parts(80, { heatmap: null }));
-    const expected = Math.round(80 * (w.persona + w.tov + w.compliance) + COPY_ONLY_HEATMAP_BASELINE * w.heatmap);
-    expect(result.total_score).toBe(expected);
+  it("viktar endast granskade delar när ingen bild finns", () => {
+    expect(scoreQA(parts(80, { heatmap: null })).total_score).toBe(80);
+    expect(scoreQA(parts(100, { heatmap: null })).total_score).toBe(100);
   });
 
   it("sorterar fel till rätt lista och tar invändningar från lägsta personan", () => {

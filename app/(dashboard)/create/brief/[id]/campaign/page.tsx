@@ -1,88 +1,143 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, Rocket, AlertCircle } from "lucide-react";
+import { use, useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Check, Loader2, Rocket } from "lucide-react";
+import type { CreativeBrief } from "@/lib/brief/types";
+import { CHANNELS, FORMATS, type Channel, type Format } from "@/lib/campaign-options";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
+interface PageProps { params: Promise<{ id: string }> }
+interface Result { id: string; template_ids: string[]; master_creative_ids: string[] }
 
-// Sista steget i brief-flödet: hämtar kampanjen för briefen — eller skapar den
-// en gång om den inte finns — och går vidare till kampanjvyn. API:et är
-// idempotent, så att öppna sidan igen skapar ingen ny kampanj.
 export default function BriefCampaignPage({ params }: PageProps) {
-  const router = useRouter();
-  const { id: briefId } = use(params);
-  const [attempt, setAttempt] = useState(0);
+  const { id } = use(params);
+  const [brief, setBrief] = useState<CreativeBrief | null>(null);
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [formats, setFormats] = useState<Format[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [campaignId, setCampaignId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/brief/${briefId}/generate-campaign`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: "{}",
-        });
-        const data = (await res.json().catch(() => null)) as { campaign?: { id: string }; error?: string } | null;
-        if (!res.ok || !data?.campaign) throw new Error(data?.error || "Kampanjen kunde inte skapas");
-        if (!cancelled) router.replace(`/campaigns/${data.campaign.id}`);
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Något gick fel");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [briefId, attempt, router]);
+    let active = true;
+    Promise.all([
+      fetch(`/api/brief/${id}`).then(async (response) => {
+        if (!response.ok) throw new Error("Briefen kunde inte laddas");
+        return response.json();
+      }),
+      fetch(`/api/campaigns?brief_id=${encodeURIComponent(id)}`).then(async (response) => {
+        if (!response.ok) throw new Error("Kampanjvalen kunde inte laddas");
+        return response.json();
+      }),
+    ])
+      .then(([{ brief: value }, { campaigns }]: [{ brief: CreativeBrief }, { campaigns: { id: string; channels: string[]; formats: string[] }[] }]) => {
+        if (!active) return;
+        setBrief(value);
+        const existing = campaigns[0];
+        setCampaignId(existing?.id ?? null);
+        setChannels((existing?.channels?.length ? existing.channels : value.recommended_channels ?? []).filter((item): item is Channel => CHANNELS.some((c) => c.id === item)));
+        setFormats((existing?.formats?.length ? existing.formats : value.recommended_formats ?? []).filter((item): item is Format => FORMATS.some((f) => f.id === item)));
+      })
+      .catch((cause: unknown) => active && setError(cause instanceof Error ? cause.message : "Något gick fel"))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
+  }, [id]);
 
-  if (error) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center max-w-md mx-4">
-          <AlertCircle className="w-10 h-10 text-nordea-rose mx-auto mb-3" />
-          <p className="text-base font-medium text-nordea-text mb-2">Kunde inte skapa kampanjen</p>
-          <p className="text-sm text-nordea-text-tertiary mb-4">{error}</p>
-          <div className="flex gap-2 justify-center">
-            <button
-              type="button"
-              onClick={() => router.push(`/create/brief/${briefId}/review`)}
-              className="nordea-btn nordea-btn-secondary"
-            >
-              Tillbaka till strategi
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setAttempt((a) => a + 1);
-              }}
-              className="nordea-btn nordea-btn-primary"
-            >
-              Försök igen
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const toggle = <T extends string,>(value: T, selected: T[], setSelected: (values: T[]) => void) => {
+    setSelected(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
+  };
+
+  const saveChoices = async (): Promise<boolean> => {
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ briefId: id, channels, formats }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Kampanjen kunde inte sparas");
+      setCampaignId(data.campaign.id);
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Något gick fel");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const generate = async () => {
+    setGenerating(true);
+    setError(null);
+    try {
+      const saved = await saveChoices();
+      if (!saved) return;
+      const response = await fetch(`/api/brief/${id}/generate-campaign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channels, formats }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Kampanjen kunde inte skapas");
+      setResult(data.campaign as Result);
+      setCampaignId(data.campaign.id);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Något gick fel");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-nordea-blue" /></div>;
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="text-center max-w-md mx-4">
-        <div className="w-16 h-16 bg-nordea-blue-soft rounded-2xl flex items-center justify-center mx-auto mb-5">
-          <Rocket className="w-7 h-7 text-nordea-blue" />
-        </div>
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Loader2 className="w-4 h-4 text-nordea-blue animate-spin" />
-          <p className="text-base font-medium text-nordea-text">Förbereder kampanjen…</p>
-        </div>
-        <p className="text-sm text-nordea-text-tertiary">
-          Första gången skriver AI:n en video utifrån strategin — det tar runt 20 sekunder.
-        </p>
+    <div className="mx-auto max-w-4xl space-y-6 pb-12">
+      <Link href={`/create/brief/${id}`} className="text-sm text-nordea-blue hover:underline">← Tillbaka till strategin</Link>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-widest text-nordea-blue">Kampanj · Kanal- och formatval</p>
+        <h1 className="nordea-display mt-2 text-3xl text-nordea-deep">Välj kanaler och format</h1>
+        <p className="mt-2 text-sm text-nordea-text-secondary">{brief?.title ?? "Brief"} · Välj var materialet ska användas innan du skapar det.</p>
+        {campaignId && <Link href={`/campaigns/${campaignId}`} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-nordea-blue hover:underline">Öppna kampanjöversikt <ArrowRight className="h-4 w-4" /></Link>}
       </div>
+      <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
+        <div className="space-y-5">
+          <section className="nordea-card p-5">
+            <h2 className="font-semibold text-nordea-deep">1. Kanaler</h2>
+            <p className="mt-1 mb-4 text-sm text-nordea-text-secondary">Strategins rekommendationer är förvalda. Anpassa efter din medieplan.</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {CHANNELS.map((channel) => <button key={channel.id} type="button" disabled={saving || generating || !!result} aria-pressed={channels.includes(channel.id)} onClick={() => toggle(channel.id, channels, setChannels)} className={`rounded-xl border p-3 text-left transition-colors ${channels.includes(channel.id) ? "border-nordea-blue bg-nordea-blue-soft" : "border-nordea-border bg-white hover:border-nordea-blue/40"}`}>
+                <span className="flex items-center justify-between gap-2 font-medium text-nordea-deep">{channel.name}{channels.includes(channel.id) && <Check className="h-4 w-4 text-nordea-blue" />}</span>
+                <span className="mt-1 block text-xs text-nordea-text-secondary">{channel.description}</span>
+              </button>)}
+            </div>
+          </section>
+          <section className="nordea-card p-5">
+            <h2 className="font-semibold text-nordea-deep">2. Kreativa format</h2>
+            <p className="mt-1 mb-4 text-sm text-nordea-text-secondary">En redigerbar videomall skapas för varje valt bildförhållande.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {FORMATS.map((format) => <button key={format.id} type="button" disabled={saving || generating || !!result} aria-pressed={formats.includes(format.id)} onClick={() => toggle(format.id, formats, setFormats)} className={`flex items-center justify-between rounded-xl border p-3 text-left transition-colors ${formats.includes(format.id) ? "border-nordea-blue bg-nordea-blue-soft" : "border-nordea-border bg-white hover:border-nordea-blue/40"}`}>
+                <span><span className="block text-sm font-medium text-nordea-deep">{format.name}</span><span className="text-xs text-nordea-text-secondary">{format.ratio}</span></span>
+                {formats.includes(format.id) && <Check className="h-4 w-4 text-nordea-blue" />}
+              </button>)}
+            </div>
+          </section>
+        </div>
+        <aside className="nordea-card h-fit p-5 lg:sticky lg:top-6">
+          <h2 className="font-semibold text-nordea-deep">Produktionsöversikt</h2>
+          <dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between"><dt className="text-nordea-text-secondary">Kanaler</dt><dd className="font-semibold">{channels.length}</dd></div><div className="flex justify-between"><dt className="text-nordea-text-secondary">Format</dt><dd className="font-semibold">{formats.length}</dd></div><div className="flex justify-between border-t border-nordea-border pt-3"><dt className="text-nordea-text-secondary">Redigerbara mallar</dt><dd className="font-semibold">{formats.length}</dd></div></dl>
+          <p className="mt-4 text-xs text-nordea-text-secondary">Granska budskap och anpassa materialet i Master eller Produktion innan publicering.</p>
+          <button type="button" onClick={saveChoices} disabled={!brief || saving || generating || channels.length === 0 || formats.length === 0} className="nordea-btn nordea-btn-secondary mt-5 w-full justify-center disabled:opacity-50">{saving ? "Sparar…" : "Spara kampanjval"}</button>
+          <button type="button" onClick={generate} disabled={!brief || generating || saving || channels.length === 0 || formats.length === 0 || !!result} className="nordea-btn nordea-btn-primary mt-2 w-full justify-center disabled:opacity-50">{generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}{generating ? "Skapar material…" : "Skapa kampanjmaterial"}</button>
+          {(channels.length === 0 || formats.length === 0) && <p className="mt-2 text-xs text-nordea-text-secondary">Välj minst en kanal och ett format.</p>}
+        </aside>
+      </div>
+      {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {result && <section className="nordea-card border-nordea-blue p-5" aria-live="polite"><h2 className="text-lg font-semibold text-nordea-deep">Kampanjmaterialet är klart</h2><p className="mt-1 text-sm text-nordea-text-secondary">{result.template_ids.length} mallar tillgängliga. Fortsätt med kreativ bearbetning och granskning.</p><div className="mt-4 flex flex-wrap gap-2">{result.master_creative_ids[0] && <Link className="nordea-btn nordea-btn-primary" href={`/create/master?id=${result.master_creative_ids[0]}`}>Öppna Master <ArrowRight className="h-4 w-4" /></Link>}<Link className="nordea-btn nordea-btn-secondary" href={`/produce?template=${result.template_ids[0]}`}>Öppna Produktion <ArrowRight className="h-4 w-4" /></Link><Link className="nordea-btn nordea-btn-secondary" href={`/campaigns/${result.id}`}>Öppna kampanjöversikt</Link></div></section>}
     </div>
   );
 }

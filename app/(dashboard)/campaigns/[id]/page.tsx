@@ -30,6 +30,7 @@ import { resolveContent } from "@/lib/display/types";
 import { CampaignPlanning } from "@/components/campaigns/campaign-planning";
 import { CampaignLocalization } from "@/components/campaigns/campaign-localization";
 import { extractVariantSeeds } from "@/lib/video-types";
+import { channelName, formatName } from "@/lib/campaign-options";
 import { FORMAT_PRESETS } from "@/lib/remotion/styles";
 
 const MotionPlayer = dynamic(
@@ -60,6 +61,21 @@ export default function CampaignPage({ params }: PageProps) {
   const [brief, setBrief] = useState<BriefSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewId, setReviewId] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const reviewTemplate = async () => {
+    if (!campaign?.template_ids[0] || reviewing) return;
+    setReviewing(true); setReviewError(null); setReviewId(null);
+    try {
+      const response = await fetch("/api/qa/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creative_kind: "template", creative_ref: campaign.id, metadata: { template_id: campaign.template_ids[0] } }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Textgranskningen kunde inte slutföras");
+      setReviewId(data.id);
+      if (data.status === "error") setReviewError("Granskningen är ofullständig. Öppna rapporten för detaljer.");
+    } catch (cause) { setReviewError(cause instanceof Error ? cause.message : "Granskningen misslyckades"); }
+    finally { setReviewing(false); }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -223,6 +239,7 @@ export default function CampaignPage({ params }: PageProps) {
 
         </section>
         <section hidden={step !== "formats"} aria-label="Format och marknader" className="space-y-5">
+          <div className="nordea-card p-5 space-y-3"><h2 className="font-semibold">Kampanjval</h2><p className="text-sm">Kanaler: {campaign.channels?.map(channelName).join(", ") || "Inte valda"}</p><p className="text-sm">Videoformat: {campaign.formats?.map(formatName).join(", ") || "Inte valda"}</p>{campaign.brief_id && <Link className="nordea-btn nordea-btn-secondary" href={`/create/brief/${campaign.brief_id}/campaign`}>Ändra kanaler och format</Link>}</div>
             <section className="nordea-card p-5">
               <DeliverableHeader
                 icon={LayoutGrid}
@@ -247,6 +264,9 @@ export default function CampaignPage({ params }: PageProps) {
         <section hidden={step !== "review"} aria-label="Granskning" className="nordea-card p-6 space-y-4">
           <h2 className="text-xl font-semibold">Granska kampanjens material</h2>
           <p className="text-sm text-nordea-text-secondary">Granska texten och testa hela videon i fokusgruppen. Tidigare rapporter kan avse äldre material; kontrollera alltid vad som faktiskt granskats.</p>
+          {campaign.template_ids[0] && <div className="space-y-2"><button type="button" onClick={() => void reviewTemplate()} disabled={reviewing} className="nordea-btn nordea-btn-secondary disabled:opacity-50">{reviewing ? "Granskar malltext…" : "Granska den sparade mallens text"}</button><p className="text-xs text-nordea-text-secondary">Gäller den sparade mallen. Senare videoändringar, bilder och animation ingår inte; granska aktuell video i studion.</p></div>}
+          {reviewError && <p role="alert" className="text-sm text-nordea-rose">{reviewError}</p>}
+          {reviewId && <Link className="text-sm text-nordea-blue hover:underline" href={`/qa?campaign=${campaign.id}&run=${reviewId}`}>Öppna textgranskningen</Link>}
           <div className="flex flex-wrap gap-2"><Link href={`/create/video?campaign=${campaign.id}`} className="nordea-btn nordea-btn-primary">Öppna video för granskning</Link><Link href={`/qa?campaign=${campaign.id}`} className="nordea-btn nordea-btn-secondary">Kampanjens rapporter</Link></div>
         </section>
         <section hidden={step !== "export"} aria-label="Export" className="nordea-card p-6 space-y-4">

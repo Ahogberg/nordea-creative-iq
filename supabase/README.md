@@ -6,9 +6,11 @@ Projekt: `beiulqgftqiqtntumqmj` (eu-west-3).
 
 Kör filerna i `migrations/` i namnordning på ett nytt projekt:
 
-1. `migrations/20260926000000_creativeiq_schema.sql` — alla tabeller, index,
+1. `migrations/20260925100530_campaign_channels_formats.sql` — kanal- och formatval på befintliga kampanjtabeller; hoppas över om tabellen ännu inte finns
+2. `migrations/20260926000000_creativeiq_schema.sql` — alla tabeller, index,
    radnivåsäkerhet (RLS) och behörigheter
-2. `personas_seed.sql` — standardpersonas ur `lib/persona-library.ts`
+3. `migrations/20260927000000_campaign_creatives.sql` — video och displaypaket
+4. `personas_seed.sql` — standardpersonas ur `lib/persona-library.ts`
    (generera om med `npm run personas:seed-sql` när biblioteket ändras)
 
 `migration.sql` och `rls_sprint12.sql` är den gamla uppsättningen och ska inte

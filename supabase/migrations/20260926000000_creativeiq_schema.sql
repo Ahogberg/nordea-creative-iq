@@ -335,6 +335,8 @@ CREATE TABLE IF NOT EXISTS public.campaigns (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   brief_id UUID REFERENCES public.creative_briefs(id) ON DELETE SET NULL,
+  channels TEXT[] NOT NULL DEFAULT '{}',
+  formats TEXT[] NOT NULL DEFAULT '{}',
   master_creative_ids UUID[],
   template_ids UUID[],
   production_job_ids UUID[],

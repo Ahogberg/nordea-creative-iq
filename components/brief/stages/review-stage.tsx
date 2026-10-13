@@ -405,7 +405,7 @@ export function ReviewStage({
             className="nordea-btn nordea-btn-primary nordea-btn-lg"
           >
             <Rocket className="w-4 h-4" />
-            Generera kampanj
+            Välj kanaler och format
           </button>
         </div>
       </div>
