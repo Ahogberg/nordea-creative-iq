@@ -18,7 +18,7 @@ interface HeatmapInput {
 export async function runHeatmapPrediction(
   creative: HeatmapInput
 ): Promise<HeatmapResult | null> {
-  // No visual surface → skip; gate falls back to default 75 score
+  // No visual surface → skip; excluded from the weighted score
   if (!creative.image_url && !creative.video_url) {
     return null;
   }

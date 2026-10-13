@@ -134,7 +134,6 @@ export class PexelsProvider implements StockProvider {
       });
 
       await logGeneration({
-        user_id: "default-user",
         kind: "stock-search",
         provider: "pexels",
         prompt: opts.query,
@@ -147,7 +146,6 @@ export class PexelsProvider implements StockProvider {
       return results;
     } catch (error) {
       await logGeneration({
-        user_id: "default-user",
         kind: "stock-search",
         provider: "pexels",
         prompt: opts.query,

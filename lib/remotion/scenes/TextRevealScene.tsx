@@ -1,10 +1,11 @@
 import React from "react";
 import { AbsoluteFill } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { colors, fonts } from "../styles";
 import type { TextRevealScene as TextRevealSceneProps, MotionConfig, StaggerMode } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
-import { resolveBackground } from "../scene-utils";
+import { resolveBackground, inlineElement, positionedElement } from "../scene-utils";
 import { useSceneTheme } from "../theme";
 
 const FPS = 30;
@@ -17,6 +18,8 @@ export const TextRevealSceneComponent: React.FC<{
 }> = ({ scene, width, motion, durationFrames }) => {
   const theme = useSceneTheme();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
   const m = motion ?? DEFAULT_MOTION_CONFIG;
   const endFrame = durationFrames ?? Math.round(scene.durationSeconds * FPS);
 
@@ -28,6 +31,31 @@ export const TextRevealSceneComponent: React.FC<{
   const baseStartFrame = 9; // ~0.3s baseline before first line appears
   const linePerSecondGap = 0.4; // matches the legacy s2f(0.3 + i * 0.4) cadence
 
+  // Varje rad är ett eget flyttbart element: "row-0", "row-1", …
+  const rows = scene.lines.map((line, i) => {
+    const isHighlighted = scene.highlight && line.includes(scene.highlight);
+    const startFrame = baseStartFrame + Math.round(i * linePerSecondGap * FPS);
+    const node = (
+      <div style={{ marginBottom: 16 * scale }}>
+        <StaggeredText
+          text={line}
+          startFrame={startFrame}
+          endFrame={endFrame}
+          fontSize={Math.round(56 * scale)}
+          fontWeight={900}
+          color={isHighlighted ? colors.teal : theme.headline}
+          mode={innerMode}
+          delayBetween={m.text.delayBetween}
+          useSpring={m.text.useSpring}
+          fontFamily={fonts.headline}
+          textAlign="left"
+          lineHeight={1.3}
+        />
+      </div>
+    );
+    return { id: `row-${i}`, node };
+  });
+
   return (
     <AbsoluteFill
       style={{
@@ -36,32 +64,11 @@ export const TextRevealSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "flex-start",
-        padding: `0 ${110 * scale}px`,
+        padding: `${safe.top}px ${110 * scale}px ${safe.bottom}px`,
       }}
     >
-      {scene.lines.map((line, i) => {
-        const isHighlighted = scene.highlight && line.includes(scene.highlight);
-        const startFrame = baseStartFrame + Math.round(i * linePerSecondGap * FPS);
-
-        return (
-          <div key={i} style={{ marginBottom: 16 * scale }}>
-            <StaggeredText
-              text={line}
-              startFrame={startFrame}
-              endFrame={endFrame}
-              fontSize={Math.round(56 * scale)}
-              fontWeight={900}
-              color={isHighlighted ? colors.teal : theme.text}
-              mode={innerMode}
-              delayBetween={m.text.delayBetween}
-              useSpring={m.text.useSpring}
-              fontFamily={fonts.headline}
-              textAlign="left"
-              lineHeight={1.3}
-            />
-          </div>
-        );
-      })}
+      {rows.map((r) => inlineElement(scene, r.id, r.node))}
+      {rows.map((r) => positionedElement(scene, r.id, r.node))}
     </AbsoluteFill>
   );
 };

@@ -7,7 +7,7 @@ import type { CreativeBrief } from "@/lib/brief/types";
 import { CHANNELS, FORMATS, type Channel, type Format } from "@/lib/campaign-options";
 
 interface PageProps { params: Promise<{ id: string }> }
-interface Result { template_ids: string[]; master_id: string | null }
+interface Result { id: string; template_ids: string[]; master_creative_ids: string[] }
 
 export default function BriefCampaignPage({ params }: PageProps) {
   const { id } = use(params);
@@ -28,7 +28,7 @@ export default function BriefCampaignPage({ params }: PageProps) {
         if (!response.ok) throw new Error("Briefen kunde inte laddas");
         return response.json();
       }),
-      fetch(`/api/campaigns?briefId=${encodeURIComponent(id)}`).then(async (response) => {
+      fetch(`/api/campaigns?brief_id=${encodeURIComponent(id)}`).then(async (response) => {
         if (!response.ok) throw new Error("Kampanjvalen kunde inte laddas");
         return response.json();
       }),
@@ -84,7 +84,8 @@ export default function BriefCampaignPage({ params }: PageProps) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Kampanjen kunde inte skapas");
-      setResult(data as Result);
+      setResult(data.campaign as Result);
+      setCampaignId(data.campaign.id);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Något gick fel");
     } finally {
@@ -98,7 +99,7 @@ export default function BriefCampaignPage({ params }: PageProps) {
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
       <Link href={`/create/brief/${id}`} className="text-sm text-nordea-blue hover:underline">← Tillbaka till strategin</Link>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-nordea-blue">Kampanj · steg 2 av 3</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-nordea-blue">Kampanj · Kanal- och formatval</p>
         <h1 className="nordea-display mt-2 text-3xl text-nordea-deep">Välj kanaler och format</h1>
         <p className="mt-2 text-sm text-nordea-text-secondary">{brief?.title ?? "Brief"} · Välj var materialet ska användas innan du skapar det.</p>
         {campaignId && <Link href={`/campaigns/${campaignId}`} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-nordea-blue hover:underline">Öppna kampanjöversikt <ArrowRight className="h-4 w-4" /></Link>}
@@ -109,7 +110,7 @@ export default function BriefCampaignPage({ params }: PageProps) {
             <h2 className="font-semibold text-nordea-deep">1. Kanaler</h2>
             <p className="mt-1 mb-4 text-sm text-nordea-text-secondary">Strategins rekommendationer är förvalda. Anpassa efter din medieplan.</p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {CHANNELS.map((channel) => <button key={channel.id} type="button" aria-pressed={channels.includes(channel.id)} onClick={() => toggle(channel.id, channels, setChannels)} className={`rounded-xl border p-3 text-left transition-colors ${channels.includes(channel.id) ? "border-nordea-blue bg-nordea-blue-soft" : "border-nordea-border bg-white hover:border-nordea-blue/40"}`}>
+              {CHANNELS.map((channel) => <button key={channel.id} type="button" disabled={saving || generating || !!result} aria-pressed={channels.includes(channel.id)} onClick={() => toggle(channel.id, channels, setChannels)} className={`rounded-xl border p-3 text-left transition-colors ${channels.includes(channel.id) ? "border-nordea-blue bg-nordea-blue-soft" : "border-nordea-border bg-white hover:border-nordea-blue/40"}`}>
                 <span className="flex items-center justify-between gap-2 font-medium text-nordea-deep">{channel.name}{channels.includes(channel.id) && <Check className="h-4 w-4 text-nordea-blue" />}</span>
                 <span className="mt-1 block text-xs text-nordea-text-secondary">{channel.description}</span>
               </button>)}
@@ -119,7 +120,7 @@ export default function BriefCampaignPage({ params }: PageProps) {
             <h2 className="font-semibold text-nordea-deep">2. Kreativa format</h2>
             <p className="mt-1 mb-4 text-sm text-nordea-text-secondary">En redigerbar videomall skapas för varje valt bildförhållande.</p>
             <div className="grid grid-cols-2 gap-2">
-              {FORMATS.map((format) => <button key={format.id} type="button" aria-pressed={formats.includes(format.id)} onClick={() => toggle(format.id, formats, setFormats)} className={`flex items-center justify-between rounded-xl border p-3 text-left transition-colors ${formats.includes(format.id) ? "border-nordea-blue bg-nordea-blue-soft" : "border-nordea-border bg-white hover:border-nordea-blue/40"}`}>
+              {FORMATS.map((format) => <button key={format.id} type="button" disabled={saving || generating || !!result} aria-pressed={formats.includes(format.id)} onClick={() => toggle(format.id, formats, setFormats)} className={`flex items-center justify-between rounded-xl border p-3 text-left transition-colors ${formats.includes(format.id) ? "border-nordea-blue bg-nordea-blue-soft" : "border-nordea-border bg-white hover:border-nordea-blue/40"}`}>
                 <span><span className="block text-sm font-medium text-nordea-deep">{format.name}</span><span className="text-xs text-nordea-text-secondary">{format.ratio}</span></span>
                 {formats.includes(format.id) && <Check className="h-4 w-4 text-nordea-blue" />}
               </button>)}
@@ -131,12 +132,12 @@ export default function BriefCampaignPage({ params }: PageProps) {
           <dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between"><dt className="text-nordea-text-secondary">Kanaler</dt><dd className="font-semibold">{channels.length}</dd></div><div className="flex justify-between"><dt className="text-nordea-text-secondary">Format</dt><dd className="font-semibold">{formats.length}</dd></div><div className="flex justify-between border-t border-nordea-border pt-3"><dt className="text-nordea-text-secondary">Redigerbara mallar</dt><dd className="font-semibold">{formats.length}</dd></div></dl>
           <p className="mt-4 text-xs text-nordea-text-secondary">Granska budskap och anpassa materialet i Master eller Produktion innan publicering.</p>
           <button type="button" onClick={saveChoices} disabled={!brief || saving || generating || channels.length === 0 || formats.length === 0} className="nordea-btn nordea-btn-secondary mt-5 w-full justify-center disabled:opacity-50">{saving ? "Sparar…" : "Spara kampanjval"}</button>
-          <button type="button" onClick={generate} disabled={!brief || generating || saving || channels.length === 0 || formats.length === 0 || !!result} className="nordea-btn nordea-btn-cobalt mt-2 w-full justify-center disabled:opacity-50">{generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}{generating ? "Skapar material…" : "Skapa kampanjmaterial"}</button>
+          <button type="button" onClick={generate} disabled={!brief || generating || saving || channels.length === 0 || formats.length === 0 || !!result} className="nordea-btn nordea-btn-primary mt-2 w-full justify-center disabled:opacity-50">{generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}{generating ? "Skapar material…" : "Skapa kampanjmaterial"}</button>
           {(channels.length === 0 || formats.length === 0) && <p className="mt-2 text-xs text-nordea-text-secondary">Välj minst en kanal och ett format.</p>}
         </aside>
       </div>
       {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {result && <section className="nordea-card border-nordea-blue p-5" aria-live="polite"><h2 className="text-lg font-semibold text-nordea-deep">Kampanjmaterialet är klart</h2><p className="mt-1 text-sm text-nordea-text-secondary">{result.template_ids.length} mallar skapade. Fortsätt med kreativ bearbetning och granskning.</p><div className="mt-4 flex flex-wrap gap-2">{result.master_id && <Link className="nordea-btn nordea-btn-cobalt" href={`/create/master?id=${result.master_id}`}>Öppna Master <ArrowRight className="h-4 w-4" /></Link>}<Link className="nordea-btn nordea-btn-secondary" href={`/produce?template=${result.template_ids[0]}`}>Öppna Produktion <ArrowRight className="h-4 w-4" /></Link><Link className="nordea-btn nordea-btn-secondary" href="/campaigns">Alla kampanjer</Link></div></section>}
+      {result && <section className="nordea-card border-nordea-blue p-5" aria-live="polite"><h2 className="text-lg font-semibold text-nordea-deep">Kampanjmaterialet är klart</h2><p className="mt-1 text-sm text-nordea-text-secondary">{result.template_ids.length} mallar tillgängliga. Fortsätt med kreativ bearbetning och granskning.</p><div className="mt-4 flex flex-wrap gap-2">{result.master_creative_ids[0] && <Link className="nordea-btn nordea-btn-primary" href={`/create/master?id=${result.master_creative_ids[0]}`}>Öppna Master <ArrowRight className="h-4 w-4" /></Link>}<Link className="nordea-btn nordea-btn-secondary" href={`/produce?template=${result.template_ids[0]}`}>Öppna Produktion <ArrowRight className="h-4 w-4" /></Link><Link className="nordea-btn nordea-btn-secondary" href={`/campaigns/${result.id}`}>Öppna kampanjöversikt</Link></div></section>}
     </div>
   );
 }

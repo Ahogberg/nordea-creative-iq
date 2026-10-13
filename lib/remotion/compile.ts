@@ -6,6 +6,7 @@
 // with a whitelisted set of globals (see CanvasScene.tsx).
 
 import { transform } from "esbuild";
+import type { Scene, VideoConfig } from "./types";
 
 export interface CompileResult {
   ok: boolean;
@@ -74,4 +75,38 @@ export async function compileCanvasTsx(tsxCode: string): Promise<CompileResult> 
     const message = err instanceof Error ? err.message : String(err);
     return { ok: false, error: `Kompileringsfel: ${message}` };
   }
+}
+
+/**
+ * Kompilerar alla canvas-scener i en config från deras tsxCode. Används av
+ * alla AI-flöden som returnerar en VideoConfig, så att canvas-scener (även
+ * illustrationsscener) fungerar oavsett var de skapades. Inkommande
+ * compiledJs litas aldrig på — den kompileras om.
+ */
+export async function compileCanvasScenes<T extends Pick<VideoConfig, "scenes">>(config: T): Promise<T> {
+  if (!Array.isArray(config.scenes)) return config;
+  const scenes = await Promise.all(
+    config.scenes.map(async (scene: Scene): Promise<Scene> => {
+      if (scene.type !== "canvas") return scene;
+      if (!scene.tsxCode) {
+        return { ...scene, compiledJs: undefined, compileError: "Ingen tsxCode angiven" };
+      }
+      const result = await compileCanvasTsx(scene.tsxCode);
+      return result.ok
+        ? { ...scene, compiledJs: result.compiledJs, compileError: undefined }
+        : { ...scene, compiledJs: undefined, compileError: result.error };
+    })
+  );
+  return { ...config, scenes };
+}
+
+/** Tar bort kompilerad kod innan en config skickas till AI:n (sparar tokens). */
+export function stripCompiledCanvas<T extends Pick<VideoConfig, "scenes">>(config: T): T {
+  if (!Array.isArray(config.scenes)) return config;
+  return {
+    ...config,
+    scenes: config.scenes.map((scene) =>
+      scene.type === "canvas" ? { ...scene, compiledJs: undefined, compileError: undefined } : scene
+    ),
+  };
 }

@@ -29,6 +29,7 @@ import type { AttentionResult } from '@/app/api/attention/route';
 // ---------------------------------------------------------------------------
 
 interface AnalysisResult {
+  simulation?: "mock";
   score: number;
   summary: string;
   issues: Array<{ status: 'pass' | 'warning' | 'fail'; message: string }>;
@@ -67,6 +68,10 @@ interface PersonaReaction {
   suggestion?: string;
   firstNoticed?: string;
   sawVisual?: boolean;
+  /** Exempelsvar (ingen AI-nyckel) — inte en riktig simulering. */
+  mock?: boolean;
+  /** Personan kunde inte svara — visas som fel, inte som en siffra. */
+  error?: string;
 }
 
 interface ChatMessage {
@@ -74,60 +79,6 @@ interface ChatMessage {
   role: 'user' | 'persona';
   content: string;
 }
-
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-
-const mockImageAnalysis: AnalysisResult = {
-  score: 82,
-  summary: 'Bra visuellt intryck med korrekt branding. Disclaimer saknas för finansiell produkt.',
-  issues: [
-    { status: 'fail', message: 'Disclaimer saknas för finansiell produkt' },
-    { status: 'warning', message: 'CTA-kontrasten kan förbättras' },
-    { status: 'warning', message: 'Textöverlägg kan vara svårlästa på mobil' },
-  ],
-  details: {
-    visual: [
-      { status: 'pass', message: 'Bildkvalitet är god (hög upplösning)' },
-      { status: 'pass', message: 'Nordea-branding synlig och korrekt' },
-      { status: 'warning', message: 'Kontrasten kan förbättras på CTA' },
-    ],
-    copy: [
-      { status: 'pass', message: 'Rubriken är tydlig och kortfattad' },
-      { status: 'pass', message: 'Tone of Voice stämmer med riktlinjer' },
-      { status: 'fail', message: 'Disclaimer saknas för finansiell produkt' },
-    ],
-  },
-};
-
-const mockVideoAnalysis: AnalysisResult = {
-  score: 79,
-  summary: 'Bra visuellt intryck. CTA kommer för sent och disclaimer saknas.',
-  issues: [
-    { status: 'fail', message: 'Disclaimer saknas för finansiell produkt' },
-    { status: 'warning', message: 'CTA visas efter 12 sek - bör komma inom 8 sek' },
-    { status: 'warning', message: 'Textöverlägg kan vara svårlästa på mobil' },
-  ],
-  details: {
-    visual: [
-      { status: 'pass', message: 'Videokvalitet är god (1080p)' },
-      { status: 'pass', message: 'Nordea-branding synlig genom hela videon' },
-      { status: 'warning', message: 'Textöverlägg svårlästa i vissa frames' },
-    ],
-    copy: [
-      { status: 'pass', message: 'Budskapet är tydligt' },
-      { status: 'warning', message: 'CTA kommer sent (efter 12 sek)' },
-      { status: 'fail', message: 'Disclaimer saknas' },
-    ],
-  },
-  videoAnalysis: {
-    duration: 15,
-    hookScore: 85,
-    pacingScore: 68,
-    ctaTiming: 'Sen (12s) - rekommenderat inom 8s',
-  },
-};
 
 // ---------------------------------------------------------------------------
 // Main component
@@ -149,6 +100,7 @@ export default function AdStudioPage() {
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [detectedProduct, setDetectedProduct] = useState<ProductMatch | null>(null);
 
@@ -308,6 +260,7 @@ export default function AdStudioPage() {
     if (mediaType === 'image' && !attention) void loadAttention();
     setIsAnalyzing(true);
     setAnalysis(null);
+    setAnalysisError(null);
     setPersonaReaction(null);
     setShowDetails(false);
 
@@ -335,9 +288,11 @@ export default function AdStudioPage() {
         if (!response.ok) throw new Error('Failed to analyze video');
         const data = await response.json();
 
+        if (!Number.isFinite(data.scores?.overall)) throw new Error("Analysen saknar en giltig bedömning. Försök igen.");
         setAnalysis({
-          score: data.scores?.overall || 79,
-          summary: data.summary || mockVideoAnalysis.summary,
+          simulation: data.simulation,
+          score: data.scores?.overall ?? 0,
+          summary: data.summary || 'Ingen sammanfattning returnerades.',
           issues: [
             ...(data.complianceIssues || []).map((ci: { severity: string; issue: string }) => ({
               status: (ci.severity === 'high' ? 'fail' : 'warning') as 'pass' | 'warning' | 'fail',
@@ -351,7 +306,7 @@ export default function AdStudioPage() {
                   { status: 'pass' as const, message: `Branding: ${data.brandingAnalysis.brandFit}` },
                   { status: (data.scores?.hook >= 70 ? 'pass' : 'warning') as 'pass' | 'warning', message: `Hook (3s): ${data.hookAnalysis?.feedback || 'Analyserad'}` },
                 ]
-              : mockVideoAnalysis.details.visual,
+              : [{ status: 'warning', message: 'Visuell bedömning saknas.' }],
             copy: data.ctaAnalysis
               ? [
                   { status: (data.scores?.ctaTiming >= 70 ? 'pass' : 'warning') as 'pass' | 'warning', message: `CTA-timing: ${data.ctaAnalysis.timing}` },
@@ -360,12 +315,12 @@ export default function AdStudioPage() {
                     message: ci.issue,
                   })),
                 ]
-              : mockVideoAnalysis.details.copy,
+              : [{ status: 'warning', message: 'Textbedömning saknas.' }],
           },
           videoAnalysis: {
             duration: metadata.duration,
-            hookScore: data.scores?.hook || 75,
-            pacingScore: data.scores?.pacing || 70,
+            hookScore: data.scores?.hook ?? 0,
+            pacingScore: data.scores?.pacing ?? 0,
             ctaTiming: data.ctaAnalysis?.timing || 'Analyserad',
           },
         });
@@ -382,9 +337,11 @@ export default function AdStudioPage() {
         if (!response.ok) throw new Error('Failed to analyze image');
         const data = await response.json();
 
+        if (!Number.isFinite(data.scores?.overall)) throw new Error("Analysen saknar en giltig bedömning. Försök igen.");
         setAnalysis({
-          score: data.scores?.overall || 82,
-          summary: data.summary || mockImageAnalysis.summary,
+          simulation: data.simulation,
+          score: data.scores?.overall ?? 0,
+          summary: data.summary || 'Ingen sammanfattning returnerades.',
           issues: [
             ...(data.complianceIssues || []).map((ci: { severity: string; issue: string }) => ({
               status: (ci.severity === 'high' ? 'fail' : 'warning') as 'pass' | 'warning' | 'fail',
@@ -393,18 +350,16 @@ export default function AdStudioPage() {
             ...(data.suggestions || []).slice(0, 2).map((s: string) => ({ status: 'warning' as const, message: s })),
           ],
           details: {
-            visual: data.visualAnalysis?.feedback || mockImageAnalysis.details.visual,
-            copy: data.copyAnalysis?.feedback || mockImageAnalysis.details.copy,
+            visual: data.visualAnalysis?.feedback || [{ status: 'warning', message: 'Visuell bedömning saknas.' }],
+            copy: data.copyAnalysis?.feedback || [{ status: 'warning', message: 'Textbedömning saknas.' }],
           },
         });
       } else {
-        // Text-only analysis
-        await new Promise((r) => setTimeout(r, 1500));
-        setAnalysis(mockImageAnalysis);
+        throw new Error('Ladda upp en bild eller video för annonsanalys. Använd Skriv annonstext för textarbete.');
       }
     } catch (error) {
       console.error('Error analyzing:', error);
-      setAnalysis(mediaType === 'video' ? mockVideoAnalysis : mockImageAnalysis);
+      setAnalysisError(error instanceof Error ? error.message : 'Analysen misslyckades. Försök igen.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -442,21 +397,25 @@ export default function AdStudioPage() {
           productCategory: product.category,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Personan kunde inte svara');
       setPersonaReaction({
-        impression: data.firstImpression || 'Intressant annons.',
-        wouldClick: data.wouldClick || 50,
+        impression: data.firstImpression || '',
+        wouldClick: data.wouldClick,
         objections: data.objections || [],
         whatWorked: data.whatWorked || undefined,
         suggestion: data.suggestion || undefined,
         firstNoticed: data.firstNoticed || undefined,
         sawVisual: data.sawVisual === true,
+        mock: data.simulation === 'mock',
       });
-    } catch {
+    } catch (err) {
+      // Inget påhittat svar vid fel — visa felet.
       setPersonaReaction({
-        impression: `Som ${selectedPersona.name.toLowerCase()} tycker jag att annonsen har ett tydligt budskap, men jag saknar konkret information om villkor och nästa steg.`,
-        wouldClick: 68,
-        objections: ['Vad kostar det?', 'Vad händer när jag klickar?'],
+        impression: '',
+        wouldClick: 0,
+        objections: [],
+        error: err instanceof Error ? err.message : 'Personan kunde inte svara',
       });
     } finally {
       setIsLoadingReaction(false);
@@ -702,8 +661,19 @@ export default function AdStudioPage() {
                 </div>
               )}
 
-              {personaReaction && selectedPersona && !isLoadingReaction && (
+              {personaReaction?.error && !isLoadingReaction && (
+                <div className="rounded-xl border border-nordea-rose/20 bg-nordea-rose-soft px-4 py-3 text-[13px] text-nordea-rose">
+                  Ingen reaktion: {personaReaction.error}
+                </div>
+              )}
+
+              {personaReaction && !personaReaction.error && selectedPersona && !isLoadingReaction && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  {personaReaction.mock && (
+                    <div className="text-[11px] font-medium text-nordea-amber bg-nordea-amber-soft rounded-md px-2.5 py-1.5">
+                      Exempelsvar — AI-nyckel saknas, detta är ingen simulering
+                    </div>
+                  )}
                   <div className="relative rounded-xl bg-nordea-bg px-4 py-3.5">
                     <Quote className="absolute -top-2 left-3 w-4 h-4 text-nordea-blue" />
                     <p className="text-[13px] text-nordea-text leading-relaxed">{personaReaction.impression}</p>
@@ -793,6 +763,12 @@ export default function AdStudioPage() {
           />
         </div>
 
+        {analysisError && <div role="alert" className="nordea-card p-4 mt-5 text-sm text-nordea-rose">{analysisError}</div>}
+        {analysis?.simulation === 'mock' && (
+          <div role="status" className="nordea-card p-4 mt-5 text-sm text-nordea-text">
+            <strong>Demonstration · AI-nyckel saknas.</strong> Poäng och kommentarer är exempel och gäller inte ditt material.
+          </div>
+        )}
         {/* ── Resultat ── */}
         {(analysis || isAnalyzing) && (
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-5 items-start">

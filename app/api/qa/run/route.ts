@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 import { RunQARequestSchema, type RunQARequest } from "@/lib/qa/types";
 import { runQAGate } from "@/lib/qa/gate";
 import { z } from "zod";
@@ -9,9 +9,9 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  const auth = await requireUser();
+  const auth = await requireDb();
   if ("response" in auth) return auth.response;
-  const { supabase, user } = auth;
+  const { supabase, ownerId } = auth;
   let runId: string | null = null;
   try {
     const body = await request.json();
@@ -25,8 +25,13 @@ export async function POST(request: Request) {
     }
 
     if (parsed.data.creative_kind === "template") {
+      const templateId = parsed.data.metadata?.template_id ?? parsed.data.creative_ref;
+      if (templateId !== parsed.data.creative_ref) {
+        const { data: campaign, error: campaignError } = await supabase.from("campaigns").select("id").eq("id", parsed.data.creative_ref).eq("created_by", ownerId).contains("template_ids", [templateId]).maybeSingle();
+        if (campaignError || !campaign) return NextResponse.json({ error: "Kampanjens mall hittades inte" }, { status: 404 });
+      }
       const { data: template, error } = await supabase.from("templates")
-        .select("config").eq("id", parsed.data.creative_ref).single();
+        .select("config").eq("id", templateId).eq("user_id", ownerId).single();
       if (error || !template) return NextResponse.json({ error: "Mallen hittades inte" }, { status: 404 });
       const config = z.object({ scenes: z.array(z.record(z.string(), z.unknown())) }).safeParse(template.config);
       if (!config.success) return NextResponse.json({ error: "Mallen saknar läsbart textinnehåll" }, { status: 400 });
@@ -36,7 +41,7 @@ export async function POST(request: Request) {
       const copy = config.data.scenes.flatMap(extractSceneText);
       if (!copy.length) return NextResponse.json({ error: "Mallen innehåller ingen text att granska" }, { status: 400 });
       const ctaScene = config.data.scenes.find((scene) => scene.type === "cta");
-      parsed.data.metadata = { headline: copy[0], body: copy.slice(1).join("\n"), cta: typeof ctaScene?.buttonText === "string" ? ctaScene.buttonText : undefined, template_id: parsed.data.creative_ref };
+      parsed.data.metadata = { headline: copy[0], body: copy.slice(1).join("\n"), cta: typeof ctaScene?.buttonText === "string" ? ctaScene.buttonText : undefined, template_id: templateId };
     }
 
 
@@ -44,7 +49,7 @@ export async function POST(request: Request) {
     const { data: row, error: insertError } = await supabase
       .from("qa_runs")
       .insert({
-        user_id: user.id,
+        user_id: ownerId,
         creative_kind: parsed.data.creative_kind,
         creative_ref: parsed.data.creative_ref,
         creative_metadata: stripInlineImages(parsed.data.metadata ?? {}),
@@ -86,7 +91,7 @@ export async function POST(request: Request) {
           completed_at: new Date().toISOString(),
         })
         .eq("id", id)
-        .eq("user_id", user.id)
+        .eq("user_id", ownerId)
         .select("id")
         .single();
 
@@ -103,7 +108,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[qa] gate error:", error);
     if (runId) {
-      const { error: markError } = await supabase.from("qa_runs").update({ status: "error", error_message: "Granskningen avbröts. Kör igen.", completed_at: new Date().toISOString() }).eq("id", runId).eq("user_id", user.id);
+      const { error: markError } = await supabase.from("qa_runs").update({ status: "error", error_message: "Granskningen avbröts. Kör igen.", completed_at: new Date().toISOString() }).eq("id", runId).eq("user_id", ownerId);
       if (markError) console.error("[qa] could not mark failed run:", markError);
     }
     return NextResponse.json(

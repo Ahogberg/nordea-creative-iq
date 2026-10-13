@@ -102,19 +102,18 @@ function TabButton({
 function BrandTab() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"all" | BrandAssetType>("all");
-  const [assets, setAssets] = useState<BrandAsset[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Svaret sparas med nyckeln för sökningen det gäller; laddning = svaret
+  // hör till en äldre sökning. (Ingen setState direkt i effekten.)
+  const key = `${category}|${query}`;
+  const [result, setResult] = useState<{ key: string; assets: BrandAsset[] } | null>(null);
+  const loading = result?.key !== key;
+  const assets = result?.assets ?? [];
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    fetchBrandAssets({ query, category })
-      .then((data) => {
-        if (!cancelled) setAssets(data);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    fetchBrandAssets({ query, category }).then((data) => {
+      if (!cancelled) setResult({ key: `${category}|${query}`, assets: data });
+    });
     return () => {
       cancelled = true;
     };

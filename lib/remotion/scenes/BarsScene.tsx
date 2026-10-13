@@ -1,8 +1,9 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { barGrow, fadeSlideUp, fadeIn, s2f } from "../utils";
 import { colors, fonts } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import type { BarsScene as BarsSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
 
@@ -17,6 +18,8 @@ export const BarsSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
   const barMaxHeight = 400 * scale;
 
   const titleAnim = fadeSlideUp(frame, 5, 15, 30);
@@ -45,11 +48,11 @@ export const BarsSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        padding: `0 ${110 * scale}px`,
+        padding: `${safe.top}px ${110 * scale}px ${safe.bottom}px`,
         position: "relative",
       }}
     >
-      {titleNode && isInline(scene, "title") && titleNode}
+      {inlineElement(scene, "title", titleNode)}
       {titleNode && positionedElement(scene, "title", titleNode)}
 
       {/* Bars container */}

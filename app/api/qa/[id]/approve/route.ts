@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 
 export async function POST(
   request: Request,
@@ -8,25 +8,25 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
-    const auth = await requireUser();
+    const auth = await requireDb();
     if ("response" in auth) return auth.response;
-    const { supabase, user } = auth;
+    const { supabase, ownerId } = auth;
 
-    // Only 'warn' runs can be manually approved. 'fail' (blocking compliance)
+    // Only completed non-blocking runs can be manually approved. 'fail' (blocking compliance)
     // must be re-run after the underlying issue is fixed.
     const { data: run, error: fetchError } = await supabase
       .from("qa_runs")
       .select("status, blocking_issues, approved_at")
       .eq("id", id)
-      .eq("user_id", user.id)
+      .eq("user_id", ownerId)
       .maybeSingle();
 
     if (fetchError) throw fetchError;
 
     if (!run) return NextResponse.json({ error: "Granskningen hittades inte" }, { status: 404 });
-    if (run.status !== "warn" || run.approved_at || (run.blocking_issues ?? []).length > 0) {
+    if (!["pass", "warn"].includes(run.status) || run.approved_at || (run.blocking_issues ?? []).length > 0) {
       return NextResponse.json(
-        { error: "Endast avslutade granskningar med varningar utan blockerande problem kan godkännas" },
+        { error: "Endast avslutade granskningar utan blockerande problem kan godkännas" },
         { status: 400 }
       );
     }
@@ -34,13 +34,13 @@ export async function POST(
     const { data: approved, error: updateError } = await supabase
       .from("qa_runs")
       .update({
-        approved_by: user.id,
+        approved_by: ownerId,
         approved_at: new Date().toISOString(),
         approval_note: typeof body?.note === "string" ? body.note.slice(0, 2000) : null,
       })
       .eq("id", id)
-      .eq("user_id", user.id)
-      .eq("status", "warn")
+      .eq("user_id", ownerId)
+      .eq("status", run.status)
       .is("approved_at", null)
       .select("id")
       .maybeSingle();

@@ -3,6 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useStudioStore } from "@/lib/studio/store";
 import type { Scene, TitleScene } from "@/lib/remotion/types";
+import { stripRichText } from "@/lib/remotion/rich-text";
 
 const SCENE_TYPE_COLORS: Record<string, string> = {
   title: "#0000A0",
@@ -15,6 +16,7 @@ const SCENE_TYPE_COLORS: Record<string, string> = {
   split: "#C8575C",
   lottie: "#E2BD2C",
   canvas: "#6B7280",
+  terms: "#00005E",
 };
 
 const SCENE_TYPE_LABELS: Record<string, string> = {
@@ -28,6 +30,7 @@ const SCENE_TYPE_LABELS: Record<string, string> = {
   split: "Jämför",
   lottie: "Lottie",
   canvas: "Canvas",
+  terms: "Villkor",
 };
 
 export function Timeline() {
@@ -164,6 +167,10 @@ export function Timeline() {
 }
 
 function getSceneLabel(scene: Scene): string {
+  return stripRichText(sceneLabelRaw(scene));
+}
+
+function sceneLabelRaw(scene: Scene): string {
   switch (scene.type) {
     case "title":
       return scene.headline || "—";
@@ -184,7 +191,9 @@ function getSceneLabel(scene: Scene): string {
     case "lottie":
       return scene.headline || "Lottie-animation";
     case "canvas":
-      return scene.description || "Canvas-scen";
+      return scene.headline || scene.description || "Canvas-scen";
+    case "terms":
+      return scene.heading || scene.body.slice(0, 40) || "Villkor";
     default:
       return "—";
   }

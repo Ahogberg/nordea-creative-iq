@@ -18,6 +18,7 @@ const PROTECTED_PAGE_PREFIXES = [
   "/dashboard",
   "/create",
   "/templates",
+  "/library",
   "/produce",
   "/dam",
   "/qa",

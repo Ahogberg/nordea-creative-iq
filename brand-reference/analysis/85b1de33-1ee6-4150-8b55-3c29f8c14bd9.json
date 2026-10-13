@@ -1,0 +1,113 @@
+{
+  "ad_id": "85b1de33-1ee6-4150-8b55-3c29f8c14bd9",
+  "source_files": ["85b1de33-1ee6-4150-8b55-3c29f8c14bd9.mp4"],
+  "kind": "video",
+  "aspect_ratio": "4:5",
+  "product": "mortgage",
+  "year": 2026,
+  "layout": {
+    "archetype_hint": "typografisk-ordlek-ljus-till-bla-textkort",
+    "description": "Tre scener. Scen 1 (0–ca 3,5 s): ljusblå enfärgad bakgrund, blå Nordea-logga centrerad överst (ca 9 % från toppen), en ensam kort rubrik i stor fet stil centrerad på ca 37 % av höjden, och ett ljudvågsmotiv av fem rundade vertikala staplar nere till vänster som skärs av vänsterkanten och nederkanten. Scen 2 (ca 4–6 s): Nordea-blå bakgrund, vit logga, centrerad budskapstext i 4 rader mitt i bild och en URL lägre ner (ca 77 %). Scen 3 (ca 7–9,6 s): blå bakgrund, vit logga, versal fetstilsrubrik för räkneexempel och ett centrerat block med juridisk text. Sista ~1 s är helt tom blå yta.",
+    "zones": [
+      { "element": "logo", "position": "top-center", "approx_area_pct": 3, "notes": "Blå (#0000A0) i scen 1, vit i scen 2–3. Samma position genom hela filmen." },
+      { "element": "headline", "position": "center", "approx_area_pct": 8, "notes": "Scen 1: 'Ränteoro?' → 'Räntero.' på en rad, ca 37 % av höjden." },
+      { "element": "pattern", "position": "bottom-left", "approx_area_pct": 15, "notes": "Ljudvåg: 5 pillerformade staplar i #0000A0, utfallande i vänster- och nederkant, upptar ca 45 % av bredden och nedre 45 % av höjden." },
+      { "element": "body", "position": "center", "approx_area_pct": 20, "notes": "Scen 2: 'Nu finns ett bolån …' centrerad, 4 rader, ca 36–60 % av höjden." },
+      { "element": "cta", "position": "bottom-center", "approx_area_pct": 4, "notes": "Scen 2: URL som text, ingen knapp, ca 77 % av höjden." },
+      { "element": "disclaimer", "position": "center", "approx_area_pct": 45, "notes": "Scen 3: versal rubrik + 13 rader centrerad brödtext, ca 21–77 % av höjden." }
+    ]
+  },
+  "color": {
+    "background": ["#E5EFFB", "#0000A0"],
+    "text": ["#0000A0", "#FFFFFF"],
+    "accents": ["#0000A0"],
+    "notes": "Scen 1 har en ljus, kall ljusblå bakgrund mätt till #E5EFFB — ingen av Nordeas palettfärger (inte persika, inte vit). Rubrik, logga och ljudvågsstaplar är Nordea-blå (mätt #010094 = #0000A0 efter videokodning). Under intoningen ser rubriken och staplarna lila/ljusviolett ut (#7373C8-aktigt) — det är blått vid låg opacitet mot den ljusa bakgrunden, ingen egen färg. Scen 2–3: Nordea-blå bakgrund med ren vit text och vit logga (ingen persika-ton här, mätt ≈ #F7F6FE inkl. kantutjämning). Ingen turkos CTA."
+  },
+  "typography": {
+    "headline": {
+      "font": "NordeaSansLarge",
+      "weight": "bold",
+      "case": "sentence",
+      "approx_size_pct_of_height": 8,
+      "max_lines": 1,
+      "color": "#0000A0"
+    },
+    "body": {
+      "font": "NordeaSansLarge",
+      "weight": "regular",
+      "case": "sentence",
+      "approx_size_pct_of_height": 5,
+      "max_lines": 4,
+      "color": "#FFFFFF"
+    },
+    "cta": {
+      "font": "NordeaSansSmall",
+      "weight": "regular",
+      "case": "sentence",
+      "approx_size_pct_of_height": 3.5,
+      "max_lines": 1,
+      "color": "#FFFFFF"
+    },
+    "notes": "Scen 1-rubriken är mycket tung (bold/black) och tätt spärrad. Scen 2 blandar vikter: regular med nyckelorden 'bundet uppåt' i bold. URL:en blandar vikter: 'nordea.se/' regular + 'FlyttaBolån' bold. Scen 3: rubriken 'RÄKNEEXEMPEL FÖR BOLÅN MED RÄNTETAK I 5 ÅR' i versaler, bold, ca 3 % av höjden, 2 rader; brödtexten regular ca 2,5 % av höjden, 13 rader, centrerad. Scen 2-brödtexten är så stor att den fungerar som rubrik; NordeaSansLarge där är en bedömning. Scen 3-texten ser ut som NordeaSansSmall men kan inte säkert skiljas."
+  },
+  "imagery": {
+    "type": "typographic",
+    "illustration": {
+      "projection": "flat",
+      "shading": "flat",
+      "outline": "none",
+      "palette": ["#0000A0"],
+      "detail_level": "low",
+      "people": "none",
+      "motifs": ["ljudvåg", "vertikala pillerformade staplar"],
+      "composition": "Grafiskt element nere till vänster, delvis utanför bild, som motvikt till centrerad rubrik. Staplarna har olika höjd (hög–låg–hög–mellan–kort punkt) och är baslinjelösa, dvs. vertikalt centrerade kring olika mitter som en ljudvåg.",
+      "description": "Inte en illustration i egentlig mening utan ett grafiskt varumärkesmotiv: fem helt runda (pillerformade) vertikala staplar i enfärgad Nordea-blå, utan kontur eller skuggning. Samma vågmönster finns präglat på Nordeas kreditkort i andra annonser. Staplarna ändrar höjd något mellan rutorna (t.ex. fjärde stapeln), dvs. de rör sig som en equalizer."
+    }
+  },
+  "motion": {
+    "duration_s": 11.07,
+    "hook_first_2s": "Startrutan är bara ljusblå yta + blå logga. Vid 0,25 s tonar 'Ränteoro?' och ljudvågen in samtidigt (lila = halv opacitet), fullt blå vid 0,5–0,75 s. Mellan 1,0 och 1,5 s morfar ordet: 'oro?' korstonar till 'ro.' — o:et försvinner och frågetecknet blir punkt, med tydliga spökbilder av båda tillstånden i rutorna 1,0 och 1,25 s. Sedan glider mellanrummet ihop: 'Ränte  ro.' (1,5 s) → 'Ränte ro.' (1,75–2,0 s) → 'Räntero.' (3,0 s). Hooken är en ren typografisk ordlek: oro blir ro.",
+    "sequence": [
+      { "t_start": 0, "t_end": 3.5, "element": "logo", "animation": "Blå logga statisk överst från första rutan." },
+      { "t_start": 0.1, "t_end": 0.6, "element": "headline", "animation": "'Ränteoro?' tonar in som helhet (opacitet), ingen förflyttning. 'oro' ligger lite efter 'Ränte' i opacitet vid 0,75 s." },
+      { "t_start": 0.1, "t_end": 0.6, "element": "pattern", "animation": "Ljudvågens staplar tonar in samtidigt med rubriken." },
+      { "t_start": 0.6, "t_end": 3.5, "element": "pattern", "animation": "Staplarna ändrar höjd lätt och kontinuerligt, som en ljudvåg/equalizer (små skillnader mellan varje ruta)." },
+      { "t_start": 1.0, "t_end": 1.5, "element": "headline", "animation": "Ordmorf: 'oro?' korstonar till 'ro.' — gamla och nya glyfer ligger halvgenomskinliga ovanpå varandra och förskjuts sidledes." },
+      { "t_start": 1.5, "t_end": 3.0, "element": "headline", "animation": "Mellanrummet mellan 'Ränte' och 'ro.' krymper stegvis (kerning-animation) tills ordet blir 'Räntero.' vid 3,0 s. Hela ordet centreras om under tiden." },
+      { "t_start": 3.0, "t_end": 4.0, "element": "body", "animation": "Scenbyte från ljusblå till Nordea-blå bakgrund; loggan byter från blå till vit. Typ av övergång syns inte (ingen mellanruta)." },
+      { "t_start": 4.0, "t_end": 6.0, "element": "body", "animation": "'Nu finns ett bolån som är bundet uppåt men rörligt nedåt' står still, centrerat." },
+      { "t_start": 4.0, "t_end": 6.0, "element": "cta", "animation": "URL 'nordea.se/FlyttaBolån' står still under texten, visas samtidigt med den." },
+      { "t_start": 6.0, "t_end": 7.0, "element": "disclaimer", "animation": "Byte till räkneexempel-scen. Övergångstyp syns inte." },
+      { "t_start": 7.0, "t_end": 9.57, "element": "disclaimer", "animation": "Juridisk text står still i ca 2,6 s+." },
+      { "t_start": 9.07, "t_end": 9.57, "element": "logo", "animation": "Loggan försvinner före texten (borta vid 9,57 s medan disclaimertexten ännu syns)." },
+      { "t_start": 9.57, "t_end": 10.07, "element": "disclaimer", "animation": "Disclaimertexten försvinner; från 10,07 s till slut (11,07 s) är bilden helt tom blå." }
+    ],
+    "logo_reveal": "Ingen intro — loggan finns från första rutan. Den byter färg (blå → vit) vid bakgrundsbytet och försvinner i slutet innan sista texten, vilket lämnar ca 1 s tom blå yta.",
+    "text_animation": "Scen 1: intoning + ordmorf (korstoning mellan två ordformer) + animerat mellanrum som stänger ordet. Scen 2 och 3: texten verkar komma som hela block utan staggering (inga delvis synliga ord i rutorna).",
+    "cta_reveal": "CTA är en URL i vit text ('nordea.se/FlyttaBolån') som kommer samtidigt med scen 2-texten; ingen knapp, ingen separat animation synlig.",
+    "transitions": "Två scenbyten (ca 3–4 s och ca 6–7 s) — rutorna är för glesa för att avgöra om det är klipp eller toning. Färgbytet ljusblå → blå är den stora visuella förändringen.",
+    "illustration_animation": "Ljudvågens staplar tonar in och pulserar sedan i höjd som en equalizer. Försvinner med scen 1.",
+    "pacing": "medium",
+    "end_card": "Inget klassiskt end card: filmen slutar med räkneexemplet (utan logga de sista rutorna) och därefter ca 1 s helt tom Nordea-blå bild."
+  },
+  "copy": {
+    "headline": "Ränteoro? → Ränte ro. → Räntero.",
+    "body": "Nu finns ett bolån som är bundet uppåt men rörligt nedåt",
+    "cta": "nordea.se/FlyttaBolån",
+    "disclaimer": "RÄKNEEXEMPEL FÖR BOLÅN MED RÄNTETAK I 5 ÅR Det här räkneexemplet visar den effektiva räntan för ett bolån. Den effektiva räntan är den totala årskostnaden för ditt bolån inklusive amortering, ränta, premie och andra eventuella avgifter. För ett lån på 1 000 000 kronor är den effektiva räntan per 2026-09-16 4,48 %. Beräkningen är gjord utifrån konsumentverkets riktlinjer och baseras på en 3 månaders bunden ränta (inklusive premie) på 4,39 % med lånets löptid på 50 år med rak amortering samt e-låneavi. Det totala beloppet som ska återbetalas är 2 099 329 kronor och den första avbetalningen är 5 325 kronor.",
+    "pattern": "Fråga + ordlek-svar ('Ränteoro?' → 'Räntero.': problem → lugn genom att ett ord tas bort) → produktlöfte med kontrast i bold ('bundet uppåt men rörligt nedåt') → URL som CTA → räkneexempel."
+  },
+  "observations": [
+    "Produkt härledd från innehållet: 'bolån', 'räntetak', 'FlyttaBolån' → product = mortgage.",
+    "År härlett från datumet i räkneexemplet ('per 2026-09-16') → year = 2026.",
+    "Enda annonsen i min omgång med ljus bakgrund i öppningen: ljus kall blå #E5EFFB, alltså varken persika eller vit. Blå text och blå logga på ljust, sedan klassisk vit-på-blått.",
+    "Ljudvågen/staplarna är samma form som vågmönstret på Nordeas kreditkort (syns i 8a639c36 och 9035e2f3) — ett återkommande varumärkesmotiv, här använt som dekor.",
+    "Helt grafisk/typografisk annons: ingen foto, film, person eller produktbild. Går att återskapa med enfärgad bakgrund.",
+    "Vad en renderare med bara enfärgad bakgrund och standardtextanimationer inte klarar: ordmorfen (korstoning mellan två ordformer i samma position med glyfförskjutning) och det animerade ordmellanrummet som stänger 'Ränte ro.' till 'Räntero.'; pulserande staplar (equalizer). Bakgrundsfärgbyte mellan scener krävs också.",
+    "Juridisk text i räkneexemplet visas i ca 2,5–3 s — kort lästid för 13 rader.",
+    "Ingen konsumentkreditvarning ('Att låna kostar pengar!') syns — till skillnad från privatlån/kreditkort i andra annonser i omgången.",
+    "Sista ~1 s är tom blå yta utan logga — ovanligt; kan vara utfyllnad i exporten."
+  ],
+  "confidence": "high",
+  "analyzed_at": "2026-09-23"
+}

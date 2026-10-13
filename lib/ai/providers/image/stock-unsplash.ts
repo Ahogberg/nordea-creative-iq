@@ -94,7 +94,6 @@ export class UnsplashProvider implements StockProvider {
       }));
 
       await logGeneration({
-        user_id: "default-user",
         kind: "stock-search",
         provider: "unsplash",
         prompt: opts.query,
@@ -107,7 +106,6 @@ export class UnsplashProvider implements StockProvider {
       return results;
     } catch (error) {
       await logGeneration({
-        user_id: "default-user",
         kind: "stock-search",
         provider: "unsplash",
         prompt: opts.query,

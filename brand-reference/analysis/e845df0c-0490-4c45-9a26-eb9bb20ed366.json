@@ -1,0 +1,115 @@
+{
+  "ad_id": "e845df0c-0490-4c45-9a26-eb9bb20ed366",
+  "source_files": ["e845df0c-0490-4c45-9a26-eb9bb20ed366.mp4"],
+  "kind": "video",
+  "aspect_ratio": "1:1",
+  "product": "cards",
+  "layout": {
+    "archetype_hint": "helbildsfoto-rubrik-nere-grafiska-staplar-vanster-sedan-bla-endcard",
+    "description": "Två scener. Scen 1 (0–ca 3,5 s): helbildsfoto utfallande i hela 1:1-rutan – närbild bakifrån på en ung person med händerna bakom ryggen, en rosa tennisboll i handen och ett rosa betalarmband på handleden. Vit Nordea-logotyp centrerad upptill (ca 8 % från toppen). Vid vänsterkanten fyra vertikala Nordea-blå 'piller' (rundade staplar) i avtagande höjd som ett ljud-/signalvågsmönster, den första beskuren av bildkanten. Rubrik i vitt centrerad i nedre tredjedelen (ca 75 %), underrubrik under (ca 82 %). Vita streck-'strålar' runt armbandet markerar blip/betalning. Scen 2 (ca 3,5–6 s): enfärgad Nordea-blå yta, logotypen kvar på samma plats, centrerat textblock (två rader) och URL under.",
+    "zones": [
+      { "element": "photo", "position": "full-bleed", "approx_area_pct": 100, "notes": "Scen 1: utfallande foto/film, beskuret från midja till händer, inget ansikte." },
+      { "element": "logo", "position": "top-center", "approx_area_pct": 2, "notes": "Vit ordmärkeslogotyp ca 8 % från toppen, samma plats i båda scenerna." },
+      { "element": "pattern", "position": "middle-left", "approx_area_pct": 8, "notes": "Fyra vertikala rundade staplar i Nordea-blå, höjd avtagande från vänster till höger (sista nästan en prick), ca 9–53 % av höjden. Första stapeln beskärs av vänsterkanten." },
+      { "element": "icon", "position": "middle-right", "approx_area_pct": 4, "notes": "Handritade vita streck i en cirkel (strålkrans/'blip') runt armbandet – blinkar." },
+      { "element": "headline", "position": "bottom-center", "approx_area_pct": 5, "notes": "Scen 1: en rad, ca 75 % av höjden, direkt på fotot utan platta eller skugga." },
+      { "element": "subline", "position": "bottom-center", "approx_area_pct": 2, "notes": "Scen 1: underrubrik ca 82 % av höjden." },
+      { "element": "headline", "position": "center", "approx_area_pct": 8, "notes": "Scen 2 (end card): två centrerade rader, ca 47–54 % av höjden." },
+      { "element": "cta", "position": "center", "approx_area_pct": 3, "notes": "Scen 2: URL som textrad under rubriken (ca 62 %), ingen knapp." }
+    ]
+  },
+  "color": {
+    "background": ["#0000A0"],
+    "text": ["#FFFFFF"],
+    "accents": ["#0000A0", "#F2BCCB", "#E9AFC8", "#1C2A4A"],
+    "notes": "End card-bakgrund och de vertikala staplarna ligger nära Nordea-blå (#0000A0). All text och logotyp är rent vit (#FFFFFF) – ingen persika-ton här. Fotot domineras av pudrig rosa (tröja ca #F2BCCB, armband och tennisboll ca #E9AFC8), vit veckad kjol och en mörk marinblå tennisbana (#1C2A4A) med en grön kant uppe till höger. Fotots rosa är inte en Nordea-palettfärg utan kommer från styling/produkt. Ingen turkos CTA-färg förekommer."
+  },
+  "typography": {
+    "headline": {
+      "font": "NordeaSansLarge",
+      "weight": "bold",
+      "case": "sentence",
+      "approx_size_pct_of_height": 4.5,
+      "max_lines": 2,
+      "color": "#FFFFFF"
+    },
+    "body": {
+      "font": "NordeaSansSmall",
+      "weight": "regular",
+      "case": "sentence",
+      "approx_size_pct_of_height": 3,
+      "max_lines": 1,
+      "color": "#FFFFFF"
+    },
+    "cta": {
+      "font": "NordeaSansSmall",
+      "weight": "regular",
+      "case": "sentence",
+      "approx_size_pct_of_height": 3.3,
+      "max_lines": 1,
+      "color": "#FFFFFF"
+    },
+    "notes": "Blandade vikter i samma rubrik: 'Betalarmband' bold + 'för barn' regular. På end card omvänt: 'Dessutom' regular på egen rad + 'mobilförbudssäker.' bold. Underrubrik 'Enkelt och barnsäkert' och URL:en i regular, mindre grad. All text centrerad, gemena/meningsversal, ingen versalisering. Text ligger direkt på fotot utan platta/skugga – läsbarheten klaras av att fotot är ljust rosa och texten ligger över kjol/hand. Typsnittet ser ut som Nordea Sans; Large/Small-fördelningen bedömd utifrån storlek."
+  },
+  "imagery": {
+    "type": "mixed",
+    "photo": {
+      "subject": "Närbild bakifrån/sida på en ung person (barn/tonåring, bedömt utifrån händernas storlek) i ljusrosa collegetröja och vit veckad tenniskjol, med händerna knäppta bakom ryggen. Ena handen håller en rosa tennisboll, på handleden sitter ett rosa elastiskt betalarmband med en kontaktlös-symbol och präglad text. Ansiktet syns inte. Bakgrund: mörkblå tennisbana.",
+      "mood": "Lekfull, trygg, modern och stilig – livsstil snarare än produktpresentation. Ton-i-ton-rosa styling gör armbandet till en naturlig del av outfiten.",
+      "lighting": "Naturligt, starkt dagsljus/solljus snett uppifrån med tydliga mjuka skuggor i tröjans veck; något ljusa, lätt urblekta pastelltoner."
+    },
+    "illustration": {
+      "projection": "flat",
+      "shading": "none",
+      "outline": "thick",
+      "palette": ["#FFFFFF", "#0000A0"],
+      "detail_level": "low",
+      "people": "none",
+      "motifs": ["strålkrans/blip runt armband", "vertikala rundade staplar (signal-/ljudvåg)"],
+      "composition": "Grafiska överlägg på fotot: fyra blå rundade staplar vid vänsterkanten och en krans av korta vita streck runt armbandet.",
+      "description": "Enkla grafiska element ovanpå fotot, inte en egentlig illustration. Strålkransen består av ca 10 korta, rundade vita linjer i cirkel runt armbandet – 'handritad' doodle-känsla som markerar att armbandet blippar. De blå staplarna är solida fyllda former med helt rundade ändar (pill-form) utan kontur."
+    }
+  },
+  "motion": {
+    "duration_s": 6,
+    "hook_first_2s": "Fotot är på plats från ruta 0 tillsammans med logotyp och blå staplar. Rubriken 'Betalarmband för barn' tonar in 0,1–0,5 s (halvgenomskinlig vid 0,25 s). Vid 0,75 s poppar vita strålar upp runt armbandet (blip), de blinkar av/på (borta/krympta vid 1,5 s, tillbaka 1,75 s). Underrubriken dyker upp mellan 1,5 och 1,75 s. Samtidigt långsam inzoomning i fotot och lätt 'andning' i de blå staplarna.",
+    "sequence": [
+      { "t_start": 0, "element": "photo", "animation": "Fotot/filmen syns direkt och zoomar långsamt in (tennisboll och armband blir ca 8–10 % större fram till 3 s) – antingen Ken Burns på stillbild eller lätt kamerarörelse i filmat material; går inte att avgöra." },
+      { "t_start": 0, "element": "logo", "animation": "Statisk från första rutan." },
+      { "t_start": 0, "t_end": 0.75, "element": "pattern", "animation": "Blå rundade staplar på plats från start; höjderna ändras lite mellan rutorna (stapel 1 sträcks uppåt, stapel 3–4 varierar) – subtil equalizer/pulserande rörelse." },
+      { "t_start": 0.1, "t_end": 0.5, "element": "headline", "animation": "Rubriken tonar in (opacitet) som ett helt block; ingen synlig förflyttning." },
+      { "t_start": 0.75, "t_end": 2.0, "element": "icon", "animation": "Vit strålkrans runt armbandet poppar upp (0,75 s), syns 1,0–1,25 s, är borta/krympt till armbandets mitt vid 1,5 s och tillbaka 1,75–2,0 s – blinkande/pulserande 'blip'. Borta vid 3,0 s." },
+      { "t_start": 1.5, "t_end": 1.75, "element": "subline", "animation": "Underrubriken 'Enkelt och barnsäkert' dyker upp under rubriken (troligen toning; ligger mellan rutor)." },
+      { "t_start": 3.0, "t_end": 4.0, "element": "headline", "animation": "Scenbyte från foto till enfärgad blå yta med nytt textblock; typen av övergång (klipp/toning) syns inte i rutorna. Logotypen ligger kvar på exakt samma plats." },
+      { "t_start": 4.0, "t_end": 5.5, "element": "cta", "animation": "End card står stilla: 'Dessutom mobilförbudssäker.' + URL." },
+      { "t_start": 5.5, "t_end": 6.0, "element": "headline", "animation": "Text och URL tonar ut mot slutet (vid 5,95 s nästan borta, texten ser då mörkare ut än bakgrunden); logotypen ligger kvar." }
+    ],
+    "logo_reveal": "Ingen – logotypen är statisk och ligger kvar på samma plats genom hela filmen, även över scenbytet.",
+    "text_animation": "Blockvis toning (opacitet) per textrad/-block: rubrik först, underrubrik ca 1,3 s senare. End card-texten tonar ut i slutet. Ingen ord- eller bokstavsstagger syns.",
+    "cta_reveal": "Ingen knapp. URL:en 'nordea.se/betalarmband' visas som vanlig textrad på end card tillsammans med rubriken (ingen separat animation synlig).",
+    "transitions": "En scenövergång mellan 3 och 4 s: foto → enfärgad Nordea-blå. Typ går inte att avgöra från rutorna. Logotypen fungerar som fast ankare över övergången.",
+    "illustration_animation": "Strålkransen blinkar/pulserar två gånger (på–av–på) som ett 'blip'-ljud i bild; de blå staplarna rör sig subtilt i höjd som en equalizer/signalvåg.",
+    "pacing": "medium",
+    "end_card": "Enfärgad Nordea-blå (#0000A0), vit logotyp upptill, centrerat 'Dessutom' (regular) / 'mobilförbudssäker.' (bold), URL 'nordea.se/betalarmband' under i mindre regular. Ingen knapp, ingen disclaimer. Texten tonar ut sista halvsekunden."
+  },
+  "copy": {
+    "headline": "Betalarmband för barn",
+    "body": "Enkelt och barnsäkert / Dessutom mobilförbudssäker.",
+    "cta": "nordea.se/betalarmband",
+    "pattern": "Produktnamn + målgrupp som rubrik ('Betalarmband för barn'), kort fördelsrad ('Enkelt och barnsäkert'), sedan en extra fördel som punchline på end card ('Dessutom mobilförbudssäker.') med ordlek på aktuell debatt (mobilförbud i skolan). URL som CTA."
+  },
+  "observations": [
+    "Produkten är härledd från innehållet: betalarmband för barn – ett kontaktlöst betalmedel kopplat till kort/konto. Satt till 'cards' som närmaste värde i enum:en; det är inte ett traditionellt kreditkort.",
+    "Inget årtal eller datum syns i annonsen; year är utelämnat.",
+    "Samma fotomaterial som f2fc7560-9ea0-4f6e-9172-354bc8618a6b (9:16) men beskuret till 1:1 och med annan textplacering (rubrik på en rad lägre ned).",
+    "Fotostil: livsstilsfoto i helbild, utfallande, tätt beskuret (midja–händer), inget ansikte – produkten bärs i en naturlig situation. Ton-i-ton-styling i pudrig pastellrosa som matchar produktens färg, ljus sommarkänsla, dagsljus med mjuka skuggor. Ingen produktfotografering på färgplatta och ingen utskuren produkt.",
+    "Fotot rör sig (långsam inzoomning eller lätt kamerarörelse). En renderare som bara klarar enfärgad bakgrund kan inte återskapa scen 1 alls; en renderare med stillbild som bakgrund kan komma nära om den stödjer långsam zoom (Ken Burns), men inte om materialet är filmat.",
+    "Grafiskt element som kan återskapas: de fyra Nordea-blå rundade staplarna vid vänsterkanten (signal-/ljudvåg) och den vita strålkransen som blinkar. Strålkransen är dock placerad exakt runt produkten i fotot – kräver att renderaren kan positionera ett överlägg relativt bildinnehållet.",
+    "Text direkt på foto utan platta eller skugga fungerar här bara för att fotot är ljust och lugnt där texten ligger.",
+    "End card är ett rent textkort på Nordea-blå – återskapbart med enfärgad bakgrund.",
+    "Person i bild: ung (barn/tonåring), beskriven generellt; ingen identitet går att avgöra och ansiktet syns inte.",
+    "Armbandet har en präglad text/logotyp som inte går att läsa säkert i rutorna."
+  ],
+  "confidence": "medium",
+  "analyzed_at": "2026-09-23"
+}

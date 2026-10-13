@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude';
-import { PRODUCT_LABELS, type ProductCategory } from '@/lib/product-detection';
+import { getClaudeClient } from '@/lib/claude';
+import type { ProductCategory } from '@/lib/product-detection';
 import { toImageBlocks } from '@/lib/ai/image-input';
-import {
-  buildPersonaProfileBlock,
-  buildVisualInstruction,
-  resolvePersonaIdentity,
-  type PersonaRequestFields,
-} from '@/lib/ai/prompts/persona-simulation';
+import { resolvePersonaIdentity, type PersonaRequestFields } from '@/lib/ai/prompts/persona-simulation';
+import { reactSampled } from '@/lib/audience/react';
+import { summarize } from '@/lib/audience/aggregate';
+import { aiErrorMessage } from '@/lib/ai/error-message';
+
+export const maxDuration = 60;
 
 interface PersonaReactRequest extends PersonaRequestFields {
   copy: {
@@ -21,8 +21,12 @@ interface PersonaReactRequest extends PersonaRequestFields {
   imageDescription?: string;
   isVideo?: boolean;
   productCategory?: ProductCategory;
+  /** Antal oberoende svar från personan (1–5). Fler svar visar spridningen. */
+  samples?: number;
 }
 
+// Exempelsvar när ANTHROPIC_API_KEY saknas (utvecklingsläge). Märks alltid
+// med simulation: "mock" så att de aldrig räknas som riktiga svar.
 const mockReactions: Record<
   string,
   { firstImpression: string; wouldClick: number; objections: string[]; relevance?: { score: number }; whatWorked?: string; suggestion?: string }
@@ -31,11 +35,7 @@ const mockReactions: Record<
     firstImpression:
       'Okej, det här känns faktiskt relevant för mig. Jag gillar att det inte trycker på "ansök nu" direkt. Men jag vill veta mer om de faktiska kostnaderna innan jag klickar.',
     wouldClick: 75,
-    objections: [
-      'Vad är den faktiska räntan?',
-      'Finns det dolda avgifter?',
-      'Hur lång tid tar processen?',
-    ],
+    objections: ['Vad är den faktiska räntan?', 'Finns det dolda avgifter?', 'Hur lång tid tar processen?'],
     relevance: { score: 80 },
     whatWorked: 'Tydligt budskap utan övertydligt säljtryck',
     suggestion: 'Visa ett konkret prisexempel eller räntesats',
@@ -44,11 +44,7 @@ const mockReactions: Record<
     firstImpression:
       'Lite för vagt för min smak. "Enkel kalkyl" säger mig ingenting. Jag vill se siffror, jämförelser, konkret data.',
     wouldClick: 45,
-    objections: [
-      'Hur jämför sig era räntor med andra banker?',
-      'Vilka avgifter tillkommer?',
-      'Var är den konkreta informationen?',
-    ],
+    objections: ['Hur jämför sig era räntor med andra banker?', 'Vilka avgifter tillkommer?', 'Var är den konkreta informationen?'],
     relevance: { score: 55 },
     whatWorked: 'Professionellt intryck',
     suggestion: 'Lägg till jämförande data eller konkreta siffror',
@@ -66,11 +62,7 @@ const mockReactions: Record<
     firstImpression:
       'Känns lite för digitalt för mig. "Testa kalkylatorn" – jag vill hellre prata med någon som kan förklara.',
     wouldClick: 35,
-    objections: [
-      'Kan jag ringa någon istället?',
-      'Finns det ett kontor jag kan besöka?',
-      'Jag litar inte riktigt på att göra detta själv online',
-    ],
+    objections: ['Kan jag ringa någon istället?', 'Finns det ett kontor jag kan besöka?', 'Jag litar inte riktigt på att göra detta själv online'],
     relevance: { score: 40 },
     whatWorked: 'Ämnet pension är relevant för mig',
     suggestion: 'Erbjud möjlighet att boka ett personligt rådgivningsmöte',
@@ -96,131 +88,62 @@ const mockReactions: Record<
 };
 
 export async function POST(request: Request) {
+  let body: PersonaReactRequest;
   try {
-    const body: PersonaReactRequest = await request.json();
-
-    const identity = resolvePersonaIdentity(body);
-    const images = await toImageBlocks(body.images, body.isVideo ? 4 : 1);
-    const hasVisual = images.length > 0;
-
-    const visualContext = !hasVisual && body.imageDescription
-      ? `\nVISUELLT MATERIAL: ${body.imageDescription}`
-      : '';
-
-    const mediaType = body.isVideo ? 'videoannons' : 'annons';
-
-    const productContext = body.productCategory && body.productCategory !== 'general'
-      ? `\nPRODUKTKATEGORI: ${PRODUCT_LABELS[body.productCategory]}
-Tänk på hur relevant denna produktkategori är för dig utifrån din livssituation och dina behov.`
-      : '';
-
-    const systemPrompt = `${buildPersonaProfileBlock(identity)}
-
-Du ska reagera på en bankannons från Nordea.
-${productContext}
-
-INSTRUKTIONER:
-- Reagera som denna persona skulle reagera i verkligheten
-- Var ärlig och autentisk – om annonsen inte tilltalar dig, säg det
-- Tänk på dina specifika smärtpunkter och hur annonsen adresserar (eller missar) dem
-- Bedöm relevansen utifrån din specifika livssituation och behov
-
-Svara ENDAST i följande JSON-format:
-{
-  "firstImpression": "Din spontana reaktion (2-4 meningar, skriv i jag-form)",
-  "wouldClick": 0-100,
-  "emotionalResponse": "Vilka känslor väcker annonsen?",
-  "objections": ["Invändning 1", "Invändning 2", "Invändning 3"],
-  "relevance": {
-    "score": 0-100,
-    "explanation": "Hur relevant känns detta för din livssituation?"
-  },
-  "trustLevel": {
-    "score": 0-100,
-    "explanation": "Hur trovärdig känns annonsen?"
-  },
-  "whatWorked": "Vad i annonsen fungerade bra för dig? (1 mening)",${
-    hasVisual
-      ? `
-  "firstNoticed": "Vad du lade märke till först i bilden (max 10 ord)",`
-      : ''
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Ogiltig begäran' }, { status: 400 });
   }
-  "missingInfo": "Vad saknar du för att ta nästa steg?"${
-    body.isVideo
-      ? `,
-  "videoSpecific": {
-    "hookReaction": "Reaktion på första 3 sekunderna",
-    "watchTime": "Hur länge skulle du titta?",
-    "dropOffReason": "Om du skulle scrolla vidare – varför?"
-  }`
-      : ''
-  },
-  "suggestion": "Ett konkret förslag på hur annonsen kunde tilltala dig bättre"
-}
 
-Svara PÅ SVENSKA och i karaktär.`;
+  const identity = resolvePersonaIdentity(body);
+  const samples = Math.max(1, Math.min(5, Math.round(body.samples ?? 1)));
 
-    const userMessage = `Reagera på denna ${mediaType} på ${body.channel || 'digital'}:
-
-RUBRIK: ${body.copy.headline}
-BRÖDTEXT: ${body.copy.body}
-CTA: ${body.copy.cta}
-${visualContext}
-${hasVisual ? `\n${buildVisualInstruction(body.isVideo ? 'frames' : 'image')}\n` : ''}
-Ge din ärliga reaktion som ${identity.speakerName}.`;
-
-    const anthropic = getClaudeClient();
-    if (anthropic) {
-      const response = await anthropic.messages.create({
-        model: CLAUDE_MODEL,
-        max_tokens: 1500,
-        temperature: 0.8,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: [...images, { type: 'text', text: userMessage }] }],
-      });
-
-      const content = response.content[0];
-      if (content.type === 'text') {
-        const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          return NextResponse.json({
-            firstImpression: parsed.firstImpression || 'Intressant annons.',
-            wouldClick: typeof parsed.wouldClick === 'number' ? parsed.wouldClick : 50,
-            emotionalResponse: parsed.emotionalResponse || null,
-            objections: Array.isArray(parsed.objections) ? parsed.objections : [],
-            relevance: parsed.relevance || null,
-            trustLevel: parsed.trustLevel || null,
-            whatWorked: parsed.whatWorked || null,
-            firstNoticed: hasVisual ? parsed.firstNoticed || null : null,
-            sawVisual: hasVisual,
-            missingInfo: parsed.missingInfo || null,
-            videoSpecific: parsed.videoSpecific || null,
-            suggestion: parsed.suggestion || null,
-          });
-        }
-      }
-    }
-
-    // Fallback to mock
-    console.log('[CreativeIQ] Persona-react fallback till mockdata');
+  const anthropic = getClaudeClient();
+  if (!anthropic) {
+    console.log('[CreativeIQ] Persona-react: ANTHROPIC_API_KEY saknas — exempelsvar (simulation: "mock")');
     await new Promise((resolve) => setTimeout(resolve, 800));
     const reaction = mockReactions[identity.segmentName] || mockReactions['Spararen'];
-
     return NextResponse.json({
       firstImpression: reaction.firstImpression,
       wouldClick: reaction.wouldClick,
+      spread: summarize([reaction.wouldClick]),
+      samples: 1,
       objections: reaction.objections,
       relevance: reaction.relevance || null,
       whatWorked: reaction.whatWorked || null,
       suggestion: reaction.suggestion || null,
+      simulation: 'mock',
+    });
+  }
+
+  try {
+    const images = await toImageBlocks(body.images, body.isVideo ? 4 : 1);
+    const result = await reactSampled(
+      anthropic,
+      identity,
+      {
+        copy: body.copy,
+        channel: body.channel,
+        images,
+        isVideo: !!body.isVideo,
+        description: images.length === 0 ? body.imageDescription : undefined,
+        productCategory: body.productCategory,
+      },
+      samples
+    );
+    return NextResponse.json({
+      ...result.reaction,
+      wouldClick: result.wouldClick.mean,
+      spread: result.wouldClick,
+      relevanceSpread: result.relevance,
+      trustSpread: result.trust,
+      objections: result.objections,
+      samples: result.samples,
+      simulation: 'ai',
     });
   } catch (error) {
+    // Ett fel är aldrig en röst: svara med fel så att det inte räknas in.
     console.error('[CreativeIQ] Persona-react error:', error);
-    return NextResponse.json({
-      firstImpression: 'Jag kunde inte analysera den här annonsen just nu.',
-      wouldClick: 50,
-      objections: ['Tekniskt fel uppstod'],
-    });
+    return NextResponse.json({ error: aiErrorMessage(error, 'Personan kunde inte svara') }, { status: 502 });
   }
 }

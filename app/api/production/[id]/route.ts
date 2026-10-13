@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireDb } from "@/lib/supabase/db";
 
 // GET - Single production job status (used for polling progress + zip_url)
 export async function GET(
@@ -8,12 +8,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const { data, error } = await supabase
       .from('production_jobs')
       .select('*')
-      .eq('id', id)
+      .eq("id", id)
+      .eq("user_id", ownerId)
       .single();
 
     if (error) throw error;

@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
-import { AbsoluteFill, Sequence } from "remotion";
-import { colors, FORMAT_PRESETS } from "./styles";
+import { AbsoluteFill, Sequence, useCurrentFrame } from "remotion";
+import { colors, FORMAT_PRESETS, logoBox, safeInsets } from "./styles";
+import { SafeAreaContext } from "./safe-area";
 import type { VideoConfig, Scene, MotionConfig } from "./types";
 import { DEFAULT_MOTION_CONFIG } from "./types";
 
@@ -14,6 +15,8 @@ import { SplitSceneComponent } from "./scenes/SplitScene";
 import { HighlightNumberSceneComponent } from "./scenes/HighlightNumberScene";
 import { LottieSceneComponent } from "./scenes/LottieScene";
 import { CanvasSceneComponent } from "./scenes/CanvasScene";
+import { TermsSceneComponent } from "./scenes/TermsScene";
+import { LegalOverlay, legalReserve } from "./legal";
 
 import { SceneTransition } from "./animations/SceneTransition";
 import { LogoReveal } from "./animations/LogoReveal";
@@ -83,7 +86,16 @@ function renderScene(
     case "lottie":
       return <LottieSceneComponent scene={scene} width={width} />;
     case "canvas":
-      return <CanvasSceneComponent scene={scene} width={width} />;
+      return (
+        <CanvasSceneComponent
+          scene={scene}
+          width={width}
+          motion={motion}
+          durationFrames={durationFrames}
+        />
+      );
+    case "terms":
+      return <TermsSceneComponent scene={scene} width={width} durationFrames={durationFrames} />;
     default:
       return null;
   }
@@ -101,15 +113,41 @@ function computeSceneTimings(scenes: Scene[]) {
 }
 
 export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
+  const frame = useCurrentFrame();
   const format = FORMAT_PRESETS[config.format] || FORMAT_PRESETS.story;
-  const { width } = format;
+  const { width, height } = format;
   // Backward-compat: older templates without motion fall back to the default.
   const motion = config.motion ?? DEFAULT_MOTION_CONFIG;
   const timings = useMemo(() => computeSceneTimings(config.scenes), [config.scenes]);
   const background = config.backgroundColor || colors.nordeaBlue;
-  const rootTheme = themeFor(background);
+  const rootTheme = themeFor(background, config.headlineColor);
+  // En scen kan ha egen bakgrund och rubrikfärg — temat följer den.
+  const sceneTheme = (scene: Scene) =>
+    themeFor(scene.background ?? background, scene.headlineColor ?? config.headlineColor);
+
+  // Aktuell scen: loggan och riskraden byter färg med scenens bakgrund
+  // (vit logga på blått, blå på persika eller ljusblått).
+  const currentIndex = timings.findIndex(
+    (t) => frame >= t.startFrame && frame < t.startFrame + t.durationFrames
+  );
+  const currentScene = config.scenes[currentIndex >= 0 ? currentIndex : config.scenes.length - 1];
+  const currentTheme = currentScene ? sceneTheme(currentScene) : rootTheme;
+
+  const logo = logoBox(width, height);
+
+  // Säker yta: scenerna lägger innehållet under loggan och ovanför formatets
+  // nedre marginal eller den juridiska texten. Bakgrunder går ut i kanten.
+  const safe = useMemo(
+    () =>
+      safeInsets(width, height, {
+        showLogo: config.showLogo,
+        legalReserve: legalReserve(config.legal, config.format, height),
+      }),
+    [width, height, config.showLogo, config.legal, config.format]
+  );
 
   return (
+    <SafeAreaContext.Provider value={safe}>
     <SceneThemeContext.Provider value={rootTheme}>
     <AbsoluteFill
       style={{
@@ -121,8 +159,9 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
         const { startFrame, durationFrames } = timings[i];
         return (
           <Sequence key={i} from={startFrame} durationInFrames={durationFrames}>
-            {/* En scen kan ha egen bakgrund — temat följer den. */}
-            <SceneThemeContext.Provider value={themeFor(scene.background ?? background)}>
+            {/* data-scene: studion mäter elementen per scen för att kunna flytta dem. */}
+            <AbsoluteFill data-scene={i}>
+            <SceneThemeContext.Provider value={sceneTheme(scene)}>
             <SceneTransition
               startFrame={0}
               endFrame={durationFrames}
@@ -134,22 +173,39 @@ export const DynamicVideo: React.FC<{ config: VideoConfig }> = ({ config }) => {
               {renderSceneAssets(scene, width / 1080)}
             </SceneTransition>
             </SceneThemeContext.Provider>
+            </AbsoluteFill>
           </Sequence>
         );
       })}
 
-      {config.showLogo && (
-        <LogoReveal
-          style={motion.logo.reveal}
-          src={config.logo?.url}
-          startFrame={0}
-          durationFrames={motion.logo.duration}
-          videoWidth={width}
-          transform={config.logo?.transform}
-          position="top-center"
+      {config.legal && (
+        <LegalOverlay
+          legal={config.legal}
+          format={config.format}
+          width={width}
+          height={height}
+          textColor={currentTheme.text}
         />
+      )}
+
+      {config.showLogo && (
+        <SceneThemeContext.Provider value={currentTheme}>
+          <LogoReveal
+            style={motion.logo.reveal}
+            src={config.logo?.url}
+            startFrame={0}
+            durationFrames={motion.logo.duration}
+            videoWidth={width}
+            transform={config.logo?.transform}
+            position="top-center"
+            // Storlek och läge per format enligt Nordeas annonser (LOGO_LAYOUT).
+            size={logo.width}
+            topOffset={logo.top}
+          />
+        </SceneThemeContext.Provider>
       )}
     </AbsoluteFill>
     </SceneThemeContext.Provider>
+    </SafeAreaContext.Provider>
   );
 };

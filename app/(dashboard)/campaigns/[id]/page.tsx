@@ -1,112 +1,401 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+// Kampanjvyn: strategin och allt material på ett ställe — videon (Motion
+// Studio) och displaypaketet — med status per del. Materialet ägs av
+// kampanjen och sparas dit automatiskt när det redigeras.
+
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, FileText, LayoutGrid, Loader2, ShieldCheck } from "lucide-react";
-import type { Campaign } from "@/lib/brief/types";
+import dynamic from "next/dynamic";
+import { Thumbnail } from "@remotion/player";
+import {
+  ArrowRight,
+  Film,
+  LayoutGrid,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  Target,
+  MessageSquareQuote,
+  MousePointerClick,
+  Users,
+} from "lucide-react";
+import { Topbar } from "@/components/layout/topbar";
+import { PageHeading } from "@/components/layout/page-heading";
+import type { Campaign, CreativeBrief } from "@/lib/brief/types";
+import type { VideoConfig } from "@/lib/remotion/types";
+import { DISPLAY_FORMATS } from "@/lib/formats/registry";
+import { DisplayBanner, type DisplayBannerProps } from "@/lib/display/DisplayBanner";
+import { resolveContent } from "@/lib/display/types";
+import { CampaignPlanning } from "@/components/campaigns/campaign-planning";
+import { CampaignLocalization } from "@/components/campaigns/campaign-localization";
+import { extractVariantSeeds } from "@/lib/video-types";
 import { channelName, formatName } from "@/lib/campaign-options";
+import { FORMAT_PRESETS } from "@/lib/remotion/styles";
 
-const STATUS: Record<Campaign["status"], string> = {
-  draft: "Utkast",
-  in_review: "Under granskning",
-  approved: "Godkänd",
-  live: "Live",
-};
-interface TemplateSummary { id: string; name: string; format: string | null; qa: { id: string; status: string; approved_at: string | null } | null }
+const MotionPlayer = dynamic(
+  () => import("@/lib/remotion/PlayerWrapper").then((m) => ({ default: m.MotionPlayer })),
+  { ssr: false }
+);
 
-export default function CampaignPage({ params }: { params: Promise<{ id: string }> }) {
+const STATUSES: Array<{ id: Campaign["status"]; label: string }> = [
+  { id: "draft", label: "Utkast" },
+  { id: "in_review", label: "Under granskning" },
+  { id: "approved", label: "Godkänd" },
+  { id: "live", label: "Live" },
+];
+
+type BriefSummary = Pick<
+  CreativeBrief,
+  "id" | "title" | "big_idea" | "insight" | "key_message" | "key_messages" | "desired_action" | "audience_description" | "tone_of_voice"
+>;
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function CampaignPage({ params }: PageProps) {
   const { id } = use(params);
+  const [step, setStep] = useState<"brief" | "material" | "formats" | "review" | "export">("material");
   const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [templates, setTemplates] = useState<TemplateSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [brief, setBrief] = useState<BriefSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const [qaBusy, setQaBusy] = useState<string | null>(null);
-  const [qaError, setQaError] = useState<string | null>(null);
-  async function reviewText(templateId: string) {
-    setQaBusy(templateId); setQaError(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewId, setReviewId] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const reviewTemplate = async () => {
+    if (!campaign?.template_ids[0] || reviewing) return;
+    setReviewing(true); setReviewError(null); setReviewId(null);
     try {
-      const response = await fetch("/api/qa/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creative_kind: "template", creative_ref: templateId }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Granskningen kunde inte köras");
-      const detail = await fetch(`/api/campaigns/${id}`);
-      const data = await detail.json();
-      if (!detail.ok) throw new Error(data.error);
-      setTemplates(data.templates);
-    } catch (cause) { setQaError(cause instanceof Error ? cause.message : "Något gick fel"); }
-    finally { setQaBusy(null); }
-  }
+      const response = await fetch("/api/qa/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creative_kind: "template", creative_ref: campaign.id, metadata: { template_id: campaign.template_ids[0] } }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Textgranskningen kunde inte slutföras");
+      setReviewId(data.id);
+      if (data.status === "error") setReviewError("Granskningen är ofullständig. Öppna rapporten för detaljer.");
+    } catch (cause) { setReviewError(cause instanceof Error ? cause.message : "Granskningen misslyckades"); }
+    finally { setReviewing(false); }
+  };
 
-  useEffect(() => {
-    let active = true;
-    fetch(`/api/campaigns/${id}`)
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Kampanjen kunde inte laddas");
-        return data as { campaign: Campaign; templates: TemplateSummary[] };
-      })
-      .then((value) => {
-        if (!active) return;
-        setCampaign(value.campaign);
-        setTemplates(value.templates ?? []);
-      })
-      .catch((cause: unknown) => active && setError(cause instanceof Error ? cause.message : "Något gick fel"))
-      .finally(() => active && setLoading(false));
-    return () => { active = false; };
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/campaigns/${id}`);
+      const data = (await res.json().catch(() => null)) as { campaign?: Campaign; brief?: BriefSummary; error?: string } | null;
+      if (!res.ok || !data?.campaign) throw new Error(data?.error || "Kampanjen kunde inte hämtas");
+      setCampaign(data.campaign);
+      setBrief(data.brief ?? null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Något gick fel");
+    }
   }, [id]);
 
-  if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-nordea-blue" /></div>;
-  if (error || !campaign) return <div className="nordea-card mx-auto max-w-xl p-8 text-center"><h1 className="text-lg font-semibold text-nordea-deep">Kampanjen kunde inte öppnas</h1><p className="mt-2 text-sm text-nordea-text-secondary">{error}</p><Link className="nordea-btn nordea-btn-secondary mt-5" href="/campaigns">Till kampanjer</Link></div>;
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  const templateIds = campaign.template_ids ?? [];
-  const masterIds = campaign.master_creative_ids ?? [];
-  const channels = campaign.channels ?? [];
-  const formats = campaign.formats ?? [];
-  const missingFormats = formats.filter((format) => !templates.some((template) => template.format === format));
+  const patch = async (updates: Partial<Pick<Campaign, "name" | "status">>) => {
+    if (!campaign) return;
+    setCampaign({ ...campaign, ...updates });
+    const res = await fetch(`/api/campaigns/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) setError("Ändringen kunde inte sparas");
+  };
 
-  return <div className="mx-auto max-w-5xl space-y-6 pb-12">
-    <Link href="/campaigns" className="text-sm text-nordea-blue hover:underline">← Alla kampanjer</Link>
-    <header className="flex flex-wrap items-start justify-between gap-4">
-      <div><p className="text-xs font-semibold uppercase tracking-widest text-nordea-blue">Kampanjöversikt</p><h1 className="nordea-display mt-2 text-3xl text-nordea-deep">{campaign.name}</h1><p className="mt-2 text-sm text-nordea-text-secondary">Status: {STATUS[campaign.status] ?? "Utkast"}</p></div>
-      {campaign.brief_id && <Link className="nordea-btn nordea-btn-secondary" href={`/create/brief/${campaign.brief_id}`}>Visa strategi <ArrowRight className="h-4 w-4" /></Link>}
-    </header>
+  const regenerate = async () => {
+    if (!campaign?.brief_id) return;
+    if (!window.confirm("Skapa en ny video från strategin? Den nuvarande videon ersätts.")) return;
+    setRegenerating(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/brief/${campaign.brief_id}/generate-campaign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ regenerate: true }),
+      });
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (!res.ok) throw new Error(data?.error || "Videon kunde inte skapas");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Något gick fel");
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
-    <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
-      <div className="space-y-5">
-        <section className="nordea-card p-5">
-          <h2 className="flex items-center gap-2 font-semibold text-nordea-deep"><LayoutGrid className="h-5 w-5 text-nordea-blue" /> Kanaler och format</h2>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <div><h3 className="text-xs font-semibold uppercase tracking-wider text-nordea-text-secondary">Valda kanaler</h3><div className="mt-2 flex flex-wrap gap-2">{channels.length ? channels.map((channel) => <span key={channel} className="rounded-full bg-nordea-blue-soft px-3 py-1 text-xs font-medium text-nordea-blue">{channelName(channel)}</span>) : <span className="text-sm text-nordea-text-secondary">Inga kanalval sparade</span>}</div></div>
-            <div><h3 className="text-xs font-semibold uppercase tracking-wider text-nordea-text-secondary">Valda format</h3><div className="mt-2 flex flex-wrap gap-2">{formats.length ? formats.map((format) => <span key={format} className="rounded-full bg-nordea-blue-soft px-3 py-1 text-xs font-medium text-nordea-blue">{formatName(format)}</span>) : <span className="text-sm text-nordea-text-secondary">Inga formatval sparade</span>}</div></div>
+  if (!campaign) {
+    return (
+      <div className="min-h-screen bg-nordea-bg">
+        <Topbar breadcrumb={["Kampanjer", "…"]} />
+        <div className="flex items-center justify-center py-24">
+          {error ? (
+            <div className="text-center">
+              <AlertCircle className="w-8 h-8 text-nordea-rose mx-auto mb-2" />
+              <p className="text-sm text-nordea-text">{error}</p>
+              <Link href="/campaigns" className="mt-3 inline-block text-sm text-nordea-blue hover:underline">
+                Till kampanjerna
+              </Link>
+            </div>
+          ) : (
+            <Loader2 className="w-5 h-5 animate-spin text-nordea-text-tertiary" />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const video = campaign.video_config ?? null;
+
+  return (
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar
+        breadcrumb={["Kampanjer", campaign.name]}
+        right={
+          <select
+            value={campaign.status}
+            onChange={(e) => void patch({ status: e.target.value as Campaign["status"] })}
+            aria-label="Kampanjens status"
+            className="nordea-input h-9 text-sm"
+          >
+            {STATUSES.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        }
+      />
+
+      <div className="px-8 py-7 max-w-[1400px] mx-auto">
+        <PageHeading
+          eyebrow="Kampanj"
+          title={campaign.name}
+          description={brief?.big_idea ?? undefined}
+        />
+
+        {error && (
+          <div className="mb-5 flex items-start gap-2 rounded-lg border border-nordea-rose/20 bg-nordea-rose-soft px-3 py-2 text-sm text-nordea-rose">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            {error}
           </div>
-          {campaign.brief_id && <Link href={`/create/brief/${campaign.brief_id}/campaign`} className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-nordea-blue hover:underline">Ändra kanal- och formatval <ArrowRight className="h-4 w-4" /></Link>}
-        </section>
+        )}
 
-        <section className="nordea-card p-5">
-          <h2 className="font-semibold text-nordea-deep">Kreativt material</h2>
-          <p className="mt-2 text-xs text-nordea-text-secondary">Textgranskning ger beslutsstöd. Granska även bild, animation och färdig video innan användning.</p>
-          {qaError && <p role="alert" className="mt-3 text-sm text-red-700">{qaError}</p>}
-          <p className="mt-1 text-sm text-nordea-text-secondary">{templateIds.length} redigerbara mallar kopplade till kampanjen.</p>
-          {templateIds.length ? <div className="mt-4 divide-y divide-nordea-border rounded-lg border border-nordea-border">{templateIds.map((templateId, index) => {
-            const template = templates.find((item) => item.id === templateId);
-            return <div key={templateId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"><Link href={`/produce?template=${templateId}`} className="text-sm font-medium text-nordea-deep hover:underline">{template?.format ? formatName(template.format) : template?.name ?? `Mall ${index + 1}`}</Link><div className="flex items-center gap-3">{template?.qa && <Link href={`/qa?run=${template.qa.id}`} className="text-xs text-nordea-blue hover:underline">Senaste textgranskning: {template.qa.approved_at ? "Manuellt godkänd" : ({ pass: "Utan hinder", warn: "Behöver bedömning", fail: "Behöver åtgärdas", running: "Pågår", error: "Ej slutförd" } as Record<string, string>)[template.qa.status] ?? "Okänd"}</Link>}<button disabled={qaBusy !== null} onClick={() => void reviewText(templateId)} className="nordea-btn nordea-btn-secondary text-xs">{qaBusy === templateId ? "Granskar…" : "Granska text"}</button></div></div>;
-          })}</div> : <div className="mt-4 rounded-lg border border-dashed border-nordea-border p-5 text-sm text-nordea-text-secondary">Materialet är ännu inte genererat. Välj kanaler och format för att fortsätta.</div>}
-          {missingFormats.length > 0 && <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Material saknas för {missingFormats.map(formatName).join(", ")}. Skapa nya mallar för dessa format innan granskning.</p>}
+        <nav aria-label="Kampanjens arbetsflöde" className="flex flex-wrap gap-2 mb-5">
+          {([{ id: "brief", label: "Brief" }, { id: "material", label: "Material" }, { id: "formats", label: "Format och marknader" }, { id: "review", label: "Granskning" }, { id: "export", label: "Export" }] as const).map((item, i) =>
+            <button key={item.id} type="button" aria-current={step === item.id ? "step" : undefined} onClick={() => setStep(item.id)} className={`nordea-btn ${step === item.id ? "nordea-btn-primary" : "nordea-btn-secondary"}`}>{i + 1}. {item.label}</button>)}
+        </nav>
+        <div className="nordea-card p-4 mb-5 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-nordea-text">{!video ? "Nästa steg: skapa kampanjens huvudfilm." : !campaign.display_set ? "Nästa steg: anpassa materialet för format och marknader." : "Nästa steg: granska materialet före leverans."}</p>
+          <button type="button" className="nordea-btn nordea-btn-secondary nordea-btn-sm" onClick={() => setStep(!video ? "material" : !campaign.display_set ? "formats" : "review")}>Fortsätt</button>
+        </div>
+        <section hidden={step !== "brief"} aria-label="Brief och budget" className="space-y-5">
+          <StrategyCard brief={brief} />
+          {campaign.brief_id && <Link className="nordea-btn nordea-btn-secondary" href={`/create/brief/${campaign.brief_id}`}>Öppna brief</Link>}
+          <details className="nordea-card p-5"><summary className="cursor-pointer font-medium">Budget och målgrupp</summary><CampaignPlanning key={campaign.id} embedded campaignId={campaign.id} campaignName={campaign.name} /></details>
+        </section>
+        <section hidden={step !== "material"} aria-label="Material" className="space-y-5">
+            <section className="nordea-card p-5">
+              <DeliverableHeader
+                icon={Film}
+                title="Video"
+                status={video ? describeVideo(video) : "Ingen video ännu"}
+                done={!!video}
+              />
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-5 items-start">
+                <div className="rounded-xl overflow-hidden bg-nordea-bg-hover" style={{ aspectRatio: aspectOf(video) }}>
+                  {video ? (
+                    <MotionPlayer config={video} loop />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-xs text-nordea-text-tertiary">—</div>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm text-nordea-text-secondary leading-relaxed">
+                    Kampanjens huvudfilm. Ändra den genom att prata med AI:n i Motion Studio — ändringarna sparas i
+                    kampanjen, och du kan testa den i fokusgruppen därifrån.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href={`/create/video?campaign=${campaign.id}`} className="nordea-btn nordea-btn-primary">
+                      Öppna i Motion Studio
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                    {campaign.brief_id && (
+                      <button
+                        type="button"
+                        onClick={() => void regenerate()}
+                        disabled={regenerating}
+                        className="nordea-btn nordea-btn-secondary disabled:opacity-50"
+                      >
+                        {regenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                        {regenerating ? "Skapar ny video…" : "Ny video från strategin"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+        </section>
+        <section hidden={step !== "formats"} aria-label="Format och marknader" className="space-y-5">
+          <div className="nordea-card p-5 space-y-3"><h2 className="font-semibold">Kampanjval</h2><p className="text-sm">Kanaler: {campaign.channels?.map(channelName).join(", ") || "Inte valda"}</p><p className="text-sm">Videoformat: {campaign.formats?.map(formatName).join(", ") || "Inte valda"}</p>{campaign.brief_id && <Link className="nordea-btn nordea-btn-secondary" href={`/create/brief/${campaign.brief_id}/campaign`}>Ändra kanaler och format</Link>}</div>
+            <section className="nordea-card p-5">
+              <DeliverableHeader
+                icon={LayoutGrid}
+                title="Displayformat"
+                status={
+                  campaign.display_set
+                    ? `${campaign.display_set.formats.length} format · ${Object.keys(campaign.display_set.overrides).length} justerade`
+                    : "Inte skapat — utgår från videon när du öppnar det"
+                }
+                done={!!campaign.display_set}
+              />
+              {campaign.display_set && <DisplayStrip set={campaign.display_set} />}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link href={`/create/display?campaign=${campaign.id}`} className="nordea-btn nordea-btn-primary">
+                  {campaign.display_set ? "Öppna displayformat" : "Skapa displayformat"}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </section>
+            {video && <CampaignLocalization key={video.id} embedded initialContent={extractVariantSeeds(video)} />}
+        </section>
+        <section hidden={step !== "review"} aria-label="Granskning" className="nordea-card p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Granska kampanjens material</h2>
+          <p className="text-sm text-nordea-text-secondary">Granska texten och testa hela videon i fokusgruppen. Tidigare rapporter kan avse äldre material; kontrollera alltid vad som faktiskt granskats.</p>
+          {campaign.template_ids[0] && <div className="space-y-2"><button type="button" onClick={() => void reviewTemplate()} disabled={reviewing} className="nordea-btn nordea-btn-secondary disabled:opacity-50">{reviewing ? "Granskar malltext…" : "Granska den sparade mallens text"}</button><p className="text-xs text-nordea-text-secondary">Gäller den sparade mallen. Senare videoändringar, bilder och animation ingår inte; granska aktuell video i studion.</p></div>}
+          {reviewError && <p role="alert" className="text-sm text-nordea-rose">{reviewError}</p>}
+          {reviewId && <Link className="text-sm text-nordea-blue hover:underline" href={`/qa?campaign=${campaign.id}&run=${reviewId}`}>Öppna textgranskningen</Link>}
+          <div className="flex flex-wrap gap-2"><Link href={`/create/video?campaign=${campaign.id}`} className="nordea-btn nordea-btn-primary">Öppna video för granskning</Link><Link href={`/qa?campaign=${campaign.id}`} className="nordea-btn nordea-btn-secondary">Kampanjens rapporter</Link></div>
+        </section>
+        <section hidden={step !== "export"} aria-label="Export" className="nordea-card p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Exportera och skapa fler varianter</h2>
+          <p className="text-sm text-nordea-text-secondary">Välj leveransformat i studion. Exporten kan användas som ett utkast; den innebär inget automatiskt godkännande.</p>
+          <div className="flex flex-wrap gap-2">
+            {video && <Link href={`/create/video?campaign=${campaign.id}&action=export`} className="nordea-btn nordea-btn-primary">Exportera video</Link>}
+            <Link href={`/create/display?campaign=${campaign.id}`} className="nordea-btn nordea-btn-secondary">Exportera displayformat</Link>
+            {campaign.template_ids[0] ? <Link href={`/produce?template=${campaign.template_ids[0]}`} className="nordea-btn nordea-btn-secondary">Skapa fler varianter</Link> : <Link href={`/create/video?campaign=${campaign.id}`} className="nordea-btn nordea-btn-secondary">Spara video som mall för fler varianter</Link>}
+          </div>
         </section>
       </div>
-
-      <aside className="nordea-card h-fit p-5">
-        <h2 className="font-semibold text-nordea-deep">Nästa steg</h2>
-        <ol className="mt-4 space-y-4 text-sm">
-          <li className="flex gap-3"><FileText className="h-4 w-4 shrink-0 text-nordea-blue" /><span>Granska kampanjens brief och budskap.</span></li>
-          <li className="flex gap-3"><LayoutGrid className="h-4 w-4 shrink-0 text-nordea-blue" /><span>{templateIds.length ? "Anpassa kreativa mallar för valda format." : "Skapa material för valda kanaler och format."}</span></li>
-          <li className="flex gap-3"><ShieldCheck className="h-4 w-4 shrink-0 text-nordea-blue" /><span>Kör QA innan materialet används.</span></li>
-        </ol>
-        <div className="mt-5 space-y-2">
-          {campaign.brief_id && <Link className="nordea-btn nordea-btn-cobalt w-full" href={templateIds.length && masterIds[0] ? `/create/master?id=${masterIds[0]}` : `/create/brief/${campaign.brief_id}/campaign`}>{templateIds.length ? "Fortsätt med kreativ" : "Skapa kampanjmaterial"} <ArrowRight className="h-4 w-4" /></Link>}
-          {templateIds.length > 0 && <Link className="nordea-btn nordea-btn-secondary w-full" href="/qa">Öppna QA</Link>}
-        </div>
-      </aside>
     </div>
-  </div>;
+  );
+}
+
+function aspectOf(video: VideoConfig | null): string {
+  const f = FORMAT_PRESETS[video?.format ?? "story"] ?? FORMAT_PRESETS.story;
+  return `${f.width} / ${f.height}`;
+}
+
+function describeVideo(v: VideoConfig): string {
+  const seconds = v.scenes.reduce((s, x) => s + (x.durationSeconds || 0), 0);
+  const f = FORMAT_PRESETS[v.format] ?? FORMAT_PRESETS.story;
+  return `${v.scenes.length} scener · ${seconds.toFixed(1).replace(".", ",")} s · ${f.label}`;
+}
+
+function DeliverableHeader({
+  icon: Icon,
+  title,
+  status,
+  done,
+}: {
+  icon: typeof Film;
+  title: string;
+  status: string;
+  done: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${done ? "bg-nordea-blue-soft" : "bg-nordea-bg-hover"}`}>
+        <Icon className={`w-4 h-4 ${done ? "text-nordea-blue" : "text-nordea-text-tertiary"}`} />
+      </div>
+      <div>
+        <h2 className="text-sm font-semibold text-nordea-text">{title}</h2>
+        <p className="text-xs text-nordea-text-tertiary">{status}</p>
+      </div>
+    </div>
+  );
+}
+
+function DisplayStrip({ set }: { set: NonNullable<Campaign["display_set"]> }) {
+  const specs = useMemo(() => DISPLAY_FORMATS.filter((f) => set.formats.includes(f.id)), [set.formats]);
+  const HEIGHT = 110;
+  return (
+    <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+      {specs.map((spec) => {
+        const content = resolveContent(set.content, set.overrides[spec.id]);
+        const frame = Math.round((content.illustration?.atSeconds ?? 0) * 30);
+        const props: DisplayBannerProps = { content, width: spec.width, height: spec.height, family: spec.family };
+        const w = Math.round((spec.width / spec.height) * HEIGHT);
+        return (
+          <div key={spec.id} className="flex-shrink-0">
+            <div className="rounded-md overflow-hidden ring-1 ring-nordea-border" style={{ width: w, height: HEIGHT }}>
+              <Thumbnail
+                component={DisplayBanner}
+                compositionWidth={spec.width}
+                compositionHeight={spec.height}
+                frameToDisplay={frame}
+                durationInFrames={frame + 1}
+                fps={30}
+                inputProps={props}
+                style={{ width: w, height: HEIGHT }}
+              />
+            </div>
+            <p className="mt-1 text-[10px] text-nordea-text-tertiary tabular-nums">
+              {spec.label} {spec.width}×{spec.height}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StrategyCard({ brief }: { brief: BriefSummary | null }) {
+  if (!brief) {
+    return (
+      <aside className="nordea-card p-5 text-sm text-nordea-text-tertiary">Ingen brief kopplad till kampanjen.</aside>
+    );
+  }
+  const messages = Array.isArray(brief.key_messages) ? brief.key_messages.slice(0, 3) : [];
+  const rows: Array<{ icon: typeof Target; label: string; text: string | null | undefined }> = [
+    { icon: Target, label: "Insikt", text: brief.insight },
+    { icon: MessageSquareQuote, label: "Budskap", text: brief.key_message },
+    { icon: Users, label: "Målgrupp", text: brief.audience_description },
+    { icon: MousePointerClick, label: "Önskad handling", text: brief.desired_action },
+  ];
+  return (
+    <aside className="nordea-card p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-nordea-text">Strategi</h2>
+        <Link href={`/create/brief/${brief.id}/review`} className="text-xs text-nordea-blue hover:underline">
+          Visa briefen
+        </Link>
+      </div>
+      {rows
+        .filter((r) => r.text)
+        .map((r) => (
+          <div key={r.label}>
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-nordea-text-tertiary uppercase tracking-wide">
+              <r.icon className="w-3 h-3" /> {r.label}
+            </div>
+            <p className="mt-1 text-sm text-nordea-text leading-relaxed">{r.text}</p>
+          </div>
+        ))}
+      {messages.length > 0 && (
+        <div>
+          <div className="text-[11px] font-medium text-nordea-text-tertiary uppercase tracking-wide">Budskapsvinklar</div>
+          <ul className="mt-1.5 space-y-1.5">
+            {messages.map((m, i) => (
+              <li key={i} className="text-sm text-nordea-text">
+                <span className="text-nordea-text-tertiary">{m.angle}:</span> {m.headline}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {brief.tone_of_voice && <p className="text-xs text-nordea-text-tertiary leading-relaxed">{brief.tone_of_voice}</p>}
+    </aside>
+  );
 }

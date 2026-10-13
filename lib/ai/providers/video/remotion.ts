@@ -45,7 +45,6 @@ export class RemotionProvider implements VideoProvider {
 
   async generate(opts: VideoGenOptions): Promise<VideoResult> {
     const startTime = Date.now();
-    const user_id = "default-user";
 
     const aspect: AspectRatio = opts.aspect_ratio ?? "9:16";
     const duration_s = opts.duration_s ?? 15;
@@ -76,7 +75,6 @@ export class RemotionProvider implements VideoProvider {
     };
 
     const generation_id = await logGeneration({
-      user_id,
       kind: "video",
       provider: "remotion",
       model: result.model,

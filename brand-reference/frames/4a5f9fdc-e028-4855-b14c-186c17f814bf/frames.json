@@ -1,0 +1,73 @@
+{
+  "ad_id": "4a5f9fdc-e028-4855-b14c-186c17f814bf",
+  "source": "4a5f9fdc-e028-4855-b14c-186c17f814bf.mp4",
+  "duration": 6.121375,
+  "width": 720,
+  "height": 1280,
+  "frames": [
+    {
+      "file": "t000000ms.jpg",
+      "t": 0
+    },
+    {
+      "file": "t000250ms.jpg",
+      "t": 0.25
+    },
+    {
+      "file": "t000500ms.jpg",
+      "t": 0.5
+    },
+    {
+      "file": "t000750ms.jpg",
+      "t": 0.75
+    },
+    {
+      "file": "t001000ms.jpg",
+      "t": 1
+    },
+    {
+      "file": "t001250ms.jpg",
+      "t": 1.25
+    },
+    {
+      "file": "t001500ms.jpg",
+      "t": 1.5
+    },
+    {
+      "file": "t001750ms.jpg",
+      "t": 1.75
+    },
+    {
+      "file": "t002000ms.jpg",
+      "t": 2
+    },
+    {
+      "file": "t003000ms.jpg",
+      "t": 3
+    },
+    {
+      "file": "t004000ms.jpg",
+      "t": 4
+    },
+    {
+      "file": "t004120ms.jpg",
+      "t": 4.12
+    },
+    {
+      "file": "t004620ms.jpg",
+      "t": 4.62
+    },
+    {
+      "file": "t005120ms.jpg",
+      "t": 5.12
+    },
+    {
+      "file": "t005620ms.jpg",
+      "t": 5.62
+    },
+    {
+      "file": "t006070ms.jpg",
+      "t": 6.07
+    }
+  ]
+}

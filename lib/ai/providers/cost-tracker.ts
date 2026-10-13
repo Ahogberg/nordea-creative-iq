@@ -5,12 +5,14 @@
 // the provider call still succeeds — we lose audit data, not the user's
 // generated artifact. checkBudget throws BudgetExceededError before the
 // expensive call so the user gets a clean 402 from the API.
+//
+// Ägaren kommer från förfrågans session (lib/supabase/db.ts): den inloggade
+// användaren, eller "demo" i demoläget. Utan session loggas ingenting.
 
-import { createClient } from "@/lib/supabase/server";
+import { getDb, type Db } from "@/lib/supabase/db";
 import { BudgetExceededError } from "./types";
 
 export interface LogParams {
-  user_id: string;
   kind: "video" | "image" | "stock-search" | "text";
   provider: string;
   model?: string;
@@ -26,12 +28,22 @@ export interface LogParams {
   error_message?: string;
 }
 
+async function dbOrNull(): Promise<Db | null> {
+  try {
+    return await getDb();
+  } catch (err) {
+    console.warn("[ai:cost] ingen databas för loggning:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
 export async function logGeneration(params: LogParams): Promise<string | null> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const db = await dbOrNull();
+    if (!db) return null;
+    const { data, error } = await db.supabase
       .from("ai_generations")
-      .insert(params)
+      .insert({ ...params, user_id: db.ownerId })
       .select("id")
       .single();
 
@@ -41,7 +53,7 @@ export async function logGeneration(params: LogParams): Promise<string | null> {
     }
 
     if ((params.cost_usd ?? 0) > 0 && params.status === "success") {
-      await updateUserSpend(params.user_id, params.cost_usd!);
+      await updateUserSpend(db, params.cost_usd!);
     }
 
     return data.id;
@@ -51,21 +63,19 @@ export async function logGeneration(params: LogParams): Promise<string | null> {
   }
 }
 
-async function updateUserSpend(user_id: string, amount: number): Promise<void> {
-  const supabase = await createClient();
-
+async function updateUserSpend({ supabase, ownerId }: Db, amount: number): Promise<void> {
   const { data: current } = await supabase
     .from("user_credits")
     .select("*")
-    .eq("user_id", user_id)
-    .single();
+    .eq("user_id", ownerId)
+    .maybeSingle();
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
   if (!current) {
     await supabase.from("user_credits").insert({
-      user_id,
+      user_id: ownerId,
       current_period_spend_usd: amount,
       period_start: todayStr,
     });
@@ -86,7 +96,7 @@ async function updateUserSpend(user_id: string, amount: number): Promise<void> {
         period_start: todayStr,
         updated_at: new Date().toISOString(),
       })
-      .eq("user_id", user_id);
+      .eq("user_id", ownerId);
   } else {
     await supabase
       .from("user_credits")
@@ -95,23 +105,21 @@ async function updateUserSpend(user_id: string, amount: number): Promise<void> {
           Number(current.current_period_spend_usd ?? 0) + amount,
         updated_at: new Date().toISOString(),
       })
-      .eq("user_id", user_id);
+      .eq("user_id", ownerId);
   }
 }
 
-export async function checkBudget(
-  user_id: string,
-  estimated_cost: number
-): Promise<void> {
+export async function checkBudget(estimated_cost: number): Promise<void> {
   if (estimated_cost <= 0) return;
 
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
+    const db = await dbOrNull();
+    if (!db) return;
+    const { data } = await db.supabase
       .from("user_credits")
       .select("monthly_budget_usd, current_period_spend_usd")
-      .eq("user_id", user_id)
-      .single();
+      .eq("user_id", db.ownerId)
+      .maybeSingle();
 
     if (!data) return; // No record = no enforced limit (default budget kicks in on first spend)
 
@@ -136,18 +144,17 @@ export interface UserSpend {
   period_start: string;
 }
 
-export async function getUserSpend(user_id: string): Promise<UserSpend> {
+export async function getUserSpend({ supabase, ownerId }: Db): Promise<UserSpend> {
   try {
-    const supabase = await createClient();
     const { data } = await supabase
       .from("user_credits")
       .select("*")
-      .eq("user_id", user_id)
-      .single();
+      .eq("user_id", ownerId)
+      .maybeSingle();
 
     if (data) {
       return {
-        user_id,
+        user_id: ownerId,
         monthly_budget_usd: Number(data.monthly_budget_usd ?? 100),
         current_period_spend_usd: Number(data.current_period_spend_usd ?? 0),
         period_start: data.period_start,
@@ -158,7 +165,7 @@ export async function getUserSpend(user_id: string): Promise<UserSpend> {
   }
 
   return {
-    user_id,
+    user_id: ownerId,
     monthly_budget_usd: 100,
     current_period_spend_usd: 0,
     period_start: new Date().toISOString().split("T")[0],

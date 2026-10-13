@@ -7,6 +7,7 @@ import {
   type SceneAsset,
 } from "@/lib/remotion/types";
 import { Move, Maximize2, Layers, Trash2, X } from "lucide-react";
+import { elementLabel, LAYER_PREFIX } from "@/lib/studio/element-labels";
 
 // Sprint 11A.5: numerisk styrning + z-order för element som är valt i canvas.
 // Synkar mot store i båda riktningarna — dra i canvas uppdaterar dessa
@@ -20,11 +21,36 @@ export function SelectedElementPanel() {
   );
   const updateAssetTransform = useStudioStore((s) => s.updateAssetTransform);
   const removeAssetFromScene = useStudioStore((s) => s.removeAssetFromScene);
+  const resetElementTransform = useStudioStore((s) => s.resetElementTransform);
   const selectElement = useStudioStore((s) => s.selectElement);
 
   if (selectedSceneIndex === null || !selectedElementId) return null;
   const scene = config.scenes[selectedSceneIndex];
   if (!scene) return null;
+  const label = elementLabel(scene, selectedElementId);
+
+  // Lager i canvas-koden: läget är keyframes, som redigeras i lagerspåret.
+  if (selectedElementId.startsWith(LAYER_PREFIX)) {
+    return (
+      <div className="bg-white border border-nordea-teal/30 rounded-lg p-3 space-y-2 shadow-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-nordea-teal">Valt: {label}</span>
+          <button
+            type="button"
+            onClick={() => selectElement(null)}
+            className="text-nordea-text-tertiary hover:text-nordea-text"
+            title="Avmarkera"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <p className="text-xs text-nordea-text-secondary leading-relaxed">
+          Dra i lagret på videon för att flytta det, eller i hörnet för att ändra storlek. Rörelsen följer med —
+          tidpunkterna justerar du i lagerspåret.
+        </p>
+      </div>
+    );
+  }
 
   const isAsset = selectedElementId.startsWith("asset-");
   let layout: ElementTransform;
@@ -66,7 +92,7 @@ export function SelectedElementPanel() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-nordea-teal">
-            Valt: {isAsset ? asset?.type ?? "asset" : selectedElementId}
+            Valt: {label}
           </span>
         </div>
         <button
@@ -156,15 +182,11 @@ export function SelectedElementPanel() {
         <button
           type="button"
           onClick={() =>
-            patch({
-              x: 0.5,
-              y: 0.5,
-              scale: 1,
-              z: 0,
-              anchorX: 0.5,
-              anchorY: 0.5,
-            })
+            isAsset
+              ? patch({ x: 0.5, y: 0.5, scale: 1, z: 0, anchorX: 0.5, anchorY: 0.5 })
+              : resetElementTransform(selectedSceneIndex, selectedElementId)
           }
+          title={isAsset ? "Mitt på bilden, normal storlek" : "Tillbaka till scenens layout"}
           className="nordea-btn nordea-btn-ghost nordea-btn-sm flex-1"
         >
           Återställ

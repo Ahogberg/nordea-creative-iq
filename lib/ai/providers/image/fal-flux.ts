@@ -50,7 +50,6 @@ export class FalImageProvider implements ImageProvider {
   async generate(opts: ImageGenOptions): Promise<ImageResult> {
     if (!this.isAvailable()) {
       await logGeneration({
-        user_id: "default-user",
         kind: "image",
         provider: "fal-image",
         model: opts.model ?? "flux-1.1-pro",

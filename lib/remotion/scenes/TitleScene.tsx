@@ -1,13 +1,15 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { fadeSlideUp, fadeIn } from "../utils";
 import { colors, fonts, headlineScale } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import type { TitleScene as TitleSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
 import { AnimatedText } from "../animations/AnimatedText";
 import { useSceneTheme } from "../theme";
+import { RichText } from "../rich-text";
 
 const FPS = 30;
 
@@ -26,6 +28,8 @@ export const TitleSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
   const { height } = useVideoConfig();
   const headlineSize = Math.round(68 * scale * headlineScale(width, height));
   const m = motion ?? DEFAULT_MOTION_CONFIG;
@@ -35,6 +39,8 @@ export const TitleSceneComponent: React.FC<{
   const lineOpacity = fadeIn(frame, 15, 20);
 
   const isCenter = scene.alignment !== "left";
+  // Den turkosa linjen är valfri: Nordeas annonser har ingen (visual-grammar).
+  const showLine = scene.accentLine === true;
 
   const lineNode = (
     <div
@@ -58,7 +64,7 @@ export const TitleSceneComponent: React.FC<{
       fontStyle={{
         fontSize: headlineSize,
         fontWeight: 900,
-        color: theme.text,
+        color: theme.headline,
         fontFamily: fonts.headline,
         textAlign: isCenter ? "center" : "left",
         lineHeight: 1.15,
@@ -71,7 +77,7 @@ export const TitleSceneComponent: React.FC<{
       endFrame={endFrame}
       fontSize={headlineSize}
       fontWeight={900}
-      color={theme.text}
+      color={theme.headline}
       mode={m.text.stagger}
       delayBetween={m.text.delayBetween}
       useSpring={m.text.useSpring}
@@ -82,7 +88,9 @@ export const TitleSceneComponent: React.FC<{
   );
 
   const subtitleNode = scene.subtitle ? (
-    <p
+    <RichText
+      as="p"
+      text={scene.subtitle}
       style={{
         fontFamily: fonts.body,
         fontSize: Math.round(32 * scale),
@@ -90,11 +98,10 @@ export const TitleSceneComponent: React.FC<{
         color: theme.textSecondary,
         marginTop: 20 * scale,
         textAlign: isCenter ? "center" : "left",
+        whiteSpace: "pre-line",
         ...subtitleAnim,
       }}
-    >
-      {scene.subtitle}
-    </p>
+    />
   ) : null;
 
   return (
@@ -105,15 +112,15 @@ export const TitleSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: isCenter ? "center" : "flex-start",
-        padding: `0 ${110 * scale}px`,
+        padding: `${safe.top}px ${110 * scale}px ${safe.bottom}px`,
         position: "relative",
       }}
     >
-      {isInline(scene, "line") && lineNode}
-      {isInline(scene, "headline") && headlineNode}
-      {isInline(scene, "subtitle") && subtitleNode}
+      {showLine && inlineElement(scene, "line", lineNode)}
+      {inlineElement(scene, "headline", headlineNode)}
+      {inlineElement(scene, "subtitle", subtitleNode)}
 
-      {positionedElement(scene, "line", lineNode)}
+      {showLine && positionedElement(scene, "line", lineNode)}
       {positionedElement(scene, "headline", headlineNode)}
       {subtitleNode && positionedElement(scene, "subtitle", subtitleNode)}
     </AbsoluteFill>

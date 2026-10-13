@@ -10,22 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  LayoutDashboard,
-  Sparkles,
-  Calendar,
-  Users,
-  Rocket,
-  Settings,
-  LogOut,
-  User,
-  LayoutGrid,
-  Settings2,
-  FolderOpen,
-  ShieldCheck,
-} from 'lucide-react';
+import { LogOut, User, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { PRIMARY_NAV, SETTINGS_NAV, isNavActive } from '@/lib/navigation';
 import { NordeaLogo } from '@/components/brand/NordeaLogo';
+import type { UserDisplay } from '@/lib/auth/user-display';
 
 interface NavItem {
   name: string;
@@ -39,52 +28,17 @@ interface NavSection {
   items: NavItem[];
 }
 
-// Sprint 7 nav (sv): /create renamed "Skapa" (single ad), /produce renamed
-// "Massproduktion" (templates → many variants). The two creation surfaces
-// carry inline subtitles so the distinction is visible without hover.
 const NAV_SECTIONS: NavSection[] = [
-  {
-    label: null,
-    items: [
-      { name: 'Översikt', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'Kampanjer', href: '/campaigns', icon: Rocket },
-      {
-        name: 'Skapa',
-        href: '/create',
-        icon: Sparkles,
-        subtitle: 'Skapa enstaka annonser',
-      },
-      { name: 'Mallar', href: '/templates', icon: LayoutGrid },
-      {
-        name: 'Massproduktion',
-        href: '/produce',
-        icon: Settings2,
-        subtitle: 'Skala mallar till många varianter',
-      },
-      { name: 'Mediabibliotek', href: '/dam', icon: FolderOpen },
-      { name: 'QA-rapporter', href: '/qa', icon: ShieldCheck },
-      { name: 'Personas', href: '/personas', icon: Users },
-    ],
-  },
-  {
-    label: 'Verktyg',
-    items: [
-      { name: 'Mediaplanering', href: '/campaign-planner', icon: Calendar },
-    ],
-  },
-  {
-    label: 'System',
-    items: [{ name: 'Inställningar', href: '/settings', icon: Settings }],
-  },
+  { label: null, items: PRIMARY_NAV },
 ];
 
-export function Sidebar() {
+export function Sidebar({ user }: { user: UserDisplay }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
 
   const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + '/');
+    isNavActive(href, pathname);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -99,7 +53,7 @@ export function Sidebar() {
         <NordeaLogo variant="dark" size={32} withProductName />
       </div>
 
-      <nav className="sidebar-nav custom-scrollbar">
+      <nav aria-label="Huvudmeny" className="sidebar-nav custom-scrollbar">
         {NAV_SECTIONS.map((section, sIdx) => (
           <div key={sIdx} className={sIdx > 0 ? 'mt-2' : ''}>
             {section.label && (
@@ -112,6 +66,7 @@ export function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
+                  aria-current={active ? "page" : undefined}
                   title={item.subtitle ?? item.name}
                   className={`sidebar-item ${active ? 'active' : ''} ${item.subtitle ? 'items-start py-2.5' : ''}`}
                 >
@@ -132,14 +87,15 @@ export function Sidebar() {
       </nav>
 
       <div className="p-2 border-t border-gray-200">
+        <Link href={SETTINGS_NAV.href} aria-current={isActive(SETTINGS_NAV.href) ? "page" : undefined} className={`sidebar-item mb-2 ${isActive(SETTINGS_NAV.href) ? "active" : ""}`}><Settings /><span>Inställningar</span></Link>
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0000A0]">
             <div className="w-9 h-9 rounded-lg bg-[#0000A0] flex items-center justify-center text-white text-sm font-medium shrink-0">
-              AH
+              {user.initials}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-gray-900 truncate">Andreas H.</p>
-              <p className="text-xs text-gray-500 truncate">Nordea Marketing</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+              <p className="text-xs text-gray-500 truncate">{user.email || 'Nordea Marketing'}</p>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" className="w-56">

@@ -28,15 +28,43 @@ export function positionedElement(
   return (
     <div
       key={`pos-${id}`}
+      data-element={id}
       style={{
         position: "absolute",
         left: `${transform.x * 100}%`,
         top: `${transform.y * 100}%`,
+        // Utan sparad bredd: lika brett som texten, men aldrig bredare än
+        // scenens textyta — annars radbryts den vid halva bilden.
+        ...(transform.width !== undefined
+          ? { width: `${transform.width * 100}%` }
+          : { width: "max-content", maxWidth: "80%" }),
         transform: `translate(${-ax}%, ${-ay}%) rotate(${transform.rotation ?? 0}deg) scale(${transform.scale})`,
         transformOrigin: "center center",
         zIndex: 2 + (transform.z ?? 0),
       }}
     >
+      {node}
+    </div>
+  );
+}
+
+/**
+ * Elementet på sin plats i scenens standardlayout — eller null om det har
+ * flyttats (då ritar positionedElement det). Omslaget bär `data-element` så
+ * att studion kan mäta var elementet faktiskt ligger.
+ */
+export function inlineElement(
+  scene: Pick<SceneBase, "elementTransforms">,
+  id: string,
+  node: React.ReactNode,
+  /** Omslagets plats i layouten, t.ex. { flex: 1 } i en rad. */
+  style?: React.CSSProperties
+): React.ReactNode {
+  if (!node || scene.elementTransforms?.[id]) return null;
+  // flow-root: nodens marginal hamnar inuti omslaget, precis som i det
+  // absolut placerade omslaget — mittpunkten blir densamma när det flyttas.
+  return (
+    <div key={`inline-${id}`} data-element={id} style={{ display: "flow-root", ...style }}>
       {node}
     </div>
   );
@@ -100,6 +128,7 @@ export function renderSceneAssets(
     return (
       <div
         key={asset.id}
+        data-element={`asset-${asset.id}`}
         style={{
           position: "absolute",
           left: `${t.x * 100}%`,

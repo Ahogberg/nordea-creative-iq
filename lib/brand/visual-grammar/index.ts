@@ -42,9 +42,18 @@ export function buildVisualGrammarPrompt(grammar = getVisualGrammar()): string {
   );
   if (grammar.summary) sections.push(grammar.summary);
 
+  // Grammatiken är varumärkets ramar, inte en mallbok: arketyper, recept och
+  // exempel är beprövade utgångslägen som AI:n får bryta när idén kräver det.
+  sections.push(
+    "SÅ ANVÄNDER DU GRAMMATIKEN:\n" +
+      "- FASTA RAMAR (följ alltid): färgpalett, typografi (Nordea Sans, **fet** på nyckelord), stilla logga, juridisk text (villkor, varningsband, riskrad), tonalitet och UNDVIK-listan.\n" +
+      "- INSPIRATION (fritt att bryta): layout-arketyper, rörelserecept och referensannonser. Använd dem som utgångsläge när användaren inte ber om något specifikt.\n" +
+      "- Användarens prompt går före inspirationen. Ber hen om en ny idé, komposition eller animation: skapa den fritt — gärna som canvas-scen med egen animation — inom de fasta ramarna. Kopiera aldrig en referensannons rakt av."
+  );
+
   if (grammar.layout_archetypes.length > 0) {
     sections.push(
-      "LAYOUT-ARKETYPER (välj en per video och håll dig till den):\n" +
+      "LAYOUT-ARKETYPER (beprövade utgångslägen — nya kompositioner är välkomna inom ramarna):\n" +
         grammar.layout_archetypes
           .map(
             (a) =>
@@ -72,7 +81,7 @@ export function buildVisualGrammarPrompt(grammar = getVisualGrammar()): string {
 
   if (grammar.motion_recipes.length > 0) {
     sections.push(
-      "RÖRELSERECEPT (använd receptets motion-objekt ordagrant som VideoConfig.motion):\n" +
+      "RÖRELSERECEPT (standardval för VideoConfig.motion — avvik när idén kräver det, men behåll det lugna tempot):\n" +
         grammar.motion_recipes
           .map(
             (r) =>
@@ -90,13 +99,13 @@ export function buildVisualGrammarPrompt(grammar = getVisualGrammar()): string {
         grammar.copy_patterns.map((p) => `- ${p.pattern} (ex: "${p.example}")`).join("\n")
     );
   }
-  sections.push(rules("GÖR ALLTID:", grammar.do));
-  sections.push(rules("GÖR ALDRIG:", grammar.dont));
+  sections.push(rules("GÖR (standard — användarens uttryckliga önskemål går före, utom logga och juridik):", grammar.do));
+  sections.push(rules("UNDVIK:", grammar.dont));
 
   const examples = grammar.golden_examples.slice(0, MAX_GOLDEN_EXAMPLES);
   if (examples.length > 0) {
     sections.push(
-      "REFERENSANNONSER SOM VIDEOCONFIG (efterlikna struktur och rytm, kopiera inte copy):\n" +
+      "REFERENSANNONSER SOM VIDEOCONFIG (exempel på hur ramarna kan se ut i praktiken — inspiration, inte mallar; kopiera inte copy):\n" +
         examples
           .map((e) => `// ${e.ad_id}: ${e.why}\n${JSON.stringify(e.video_config)}`)
           .join("\n\n")

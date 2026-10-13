@@ -571,6 +571,8 @@
   border-radius: 8px;
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+/* Motion Studio-chatten: obestämd förloppsindikator medan AI:n arbetar. */
+@keyframes chat-progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
 
 .spinner {
   width: 20px; height: 20px;
@@ -1698,17 +1700,26 @@ label, [data-slot="label"] { color: var(--text-primary); }
     transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     white-space: nowrap;
   }
-  .nordea-btn-primary {
-    background: var(--nordea-teal);
-    color: var(--nordea-deep);
-    font-weight: 600;
-  }
-  .nordea-btn-primary:hover { background: var(--nordea-teal-hover); }
+  /* Primärknapp i UI:t = Nordea-blått. Teal (#40BFA3) är annonsernas
+     CTA-färg enligt brandreferensen och används i UI:t bara för status
+     (godkänd, klar) och förlopp — inte för knappar. */
+  .nordea-btn-primary,
   .nordea-btn-cobalt {
     background: var(--nordea-blue);
     color: white;
+    font-weight: 600;
   }
-  .nordea-btn-cobalt:hover { background: #1818B8; }
+  .nordea-btn-primary:hover,
+  .nordea-btn-cobalt:hover { background: #000080; }
+  .nordea-btn:focus-visible {
+    outline: 2px solid var(--nordea-blue);
+    outline-offset: 2px;
+  }
+  .nordea-btn:disabled,
+  .nordea-btn[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
   .nordea-btn-secondary {
     background: var(--nordea-bg-card);
     border-color: var(--nordea-border);

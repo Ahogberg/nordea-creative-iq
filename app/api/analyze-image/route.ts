@@ -161,13 +161,13 @@ Ge detaljerad feedback på:
       }
     }
 
+    if (anthropic) throw new Error("AI-svaret kunde inte tolkas");
+
     // Fallback to mock
     console.log('[CreativeIQ] Image analysis fallback till mockdata');
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    return NextResponse.json(mockAnalysis);
+    return NextResponse.json({ ...mockAnalysis, simulation: "mock" });
   } catch (error) {
     console.error('[CreativeIQ] Analyze-image error:', error);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return NextResponse.json(mockAnalysis);
+    return NextResponse.json({ message: "Analysen misslyckades. Försök igen." }, { status: 502 });
   }
 }

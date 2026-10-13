@@ -8,6 +8,10 @@ import {
   type VideoConfig,
 } from "@/lib/remotion/types";
 import { withVisualGrammar } from "@/lib/brand/visual-grammar";
+import { withMotionCapabilities } from "@/lib/remotion/prompt-capabilities";
+import { compileCanvasScenes } from "@/lib/remotion/compile";
+import { draftChoices } from "@/lib/studio/draft-choices";
+import { aiErrorMessage } from "@/lib/ai/error-message";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -30,9 +34,11 @@ VideoConfig-schemat (alla fält obligatoriska där inget annat sägs):
   "id": "generated-{timestamp}",
   "title": "Kort namn på videon (svenska, max 50 tecken)",
   "format": "story" | "feed" | "landscape" | "vertical",  // välj baserat på briefens kanaler
-  "backgroundColor": "#0000A0",  // Nordea blue default. Ljus variant: "#FFFFFF" (text och logotyp blir då automatiskt Nordea Blue). Använd bara dessa två, #00005E eller #40BFA3
+  "backgroundColor": "#0000A0",  // Nordea blue default. Ljus variant: "#E5EFFB" eller "#FFFFFF" (text och logotyp blir då automatiskt Nordea Blue). Persika "#FBD9CA" går som scenbakgrund.
   "accentColor": "#40BFA3",  // Nordea teal default
-  "scenes": [ ...3-5 scener... ],
+  "headlineColor"?: "#FBD9CA",  // valfri rubrikfärg, se TEXT, FÄRG OCH JURIDIK
+  "legal"?: { "riskNote"?: "...", "creditWarning"?: { "fromSeconds"?: 0 } },
+  "scenes": [ ...2-4 scener... ],
   "showLogo": true,
   "totalDurationSeconds": <sum av scenernas durationSeconds>,
   "motion": {
@@ -44,17 +50,13 @@ VideoConfig-schemat (alla fält obligatoriska där inget annat sägs):
   }
 }
 
-Scen-typer du kan välja mellan:
-- title:    { "type": "title", "durationSeconds": 2-3, "headline": "...", "subtitle"?: "...", "alignment"?: "center"|"left" }
-- counter:  { "type": "counter", "durationSeconds": 2-4, "label": "VERSALER", "fromValue": 0, "toValue": <tal>, "suffix"?: " kr", "prefix"?: "" }
-- cta:      { "type": "cta", "durationSeconds": 2-3, "headline": "...", "buttonText": "VERSALER", "subtitle"?: "..." }
-- highlight-number: { "type": "highlight-number", "durationSeconds": 2-3, "number": "...", "label": "..." }
-- text-reveal: { "type": "text-reveal", "durationSeconds": 3-4, "lines": ["...","..."] }
+Scentyper: se SCENKATALOG nedan. Utgå från layout-arketyperna och rörelserecepten i NORDEAS VISUELLA GRAMMATIK längst ned när briefen inte säger något annat — egna idéer och fri animation (canvas) är välkomna inom varumärkets fasta ramar.
 
 REGLER:
 - Skriv ALLT på svenska (om briefen inte uttryckligen begär ett annat språk)
 - Behåll Nordea brand-tone: kreditkort (ej kort), bolån (ej lån), ej för säljpushigt, ingen "fixar"
-- Generera 3-5 scener med naturligt flöde: title → (counter/highlight) → cta
+- Typiskt flöde: illustrationsscen (canvas med headline) eller titel med fråga → svarskort (title) → ev. villkor (terms)
+- Kreditprodukter: legal.creditWarning och en terms-scen. Sparande: legal.riskNote.
 - För "bolån" / "förstagångsköpare" / "trygghet" → premium motion (gentle spring, längre durations)
 - För "story" / "tiktok" / "reel" / "ung" → energetic motion (snappy spring, kortare durations)
 - Om briefen är vag: gör rimliga antaganden men producera ALLTID komplett config
@@ -78,8 +80,9 @@ export async function POST(request: Request) {
 
     const message = await client.messages.create({
       model: CLAUDE_MODEL,
-      max_tokens: 4000,
-      system: withVisualGrammar(SYSTEM_PROMPT),
+      // Canvas-illustrationer bär egen kod.
+      max_tokens: 12000,
+      system: withVisualGrammar(withMotionCapabilities(SYSTEM_PROMPT)),
       messages: [
         {
           role: "user",
@@ -93,7 +96,7 @@ export async function POST(request: Request) {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON in Claude response");
 
-    const config = JSON.parse(jsonMatch[0]) as VideoConfig;
+    const config = await compileCanvasScenes(JSON.parse(jsonMatch[0]) as VideoConfig);
 
     // Hard-fix motion fallback in case Claude omits it.
     if (!config.motion) config.motion = DEFAULT_MOTION_CONFIG;
@@ -105,7 +108,6 @@ export async function POST(request: Request) {
     );
 
     await logGeneration({
-      user_id: "default-user",
       kind: "video",
       provider: "claude",
       model: CLAUDE_MODEL,
@@ -120,10 +122,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[studio:initial-prompt] error:", error);
     return NextResponse.json(
-      {
-        error: "Failed to process prompt",
-        message: error instanceof Error ? error.message : "Unknown",
-      },
+      { error: aiErrorMessage(error, "Kunde inte skapa ett utkast från prompten") },
       { status: 500 }
     );
   }
@@ -135,24 +134,26 @@ export async function POST(request: Request) {
 // those raise normal 500s so the user knows something is wrong.
 function buildMockConfig(prompt: string): VideoConfig {
   const trimmed = prompt.trim();
-  const firstSentence = trimmed.split(/[.!?\n]/)[0].trim();
+  const idea = trimmed.match(/idé:\s*([^\n]+)/i)?.[1] ?? trimmed.replace(/^Skapa en hel sammanhängande video:\s*/i, "");
+  const firstSentence = idea.split(/[.!?\n]/)[0].trim();
   const headline =
     firstSentence.length > 0 && firstSentence.length <= 50
       ? firstSentence
-      : trimmed.slice(0, 50);
+      : idea.slice(0, 50);
 
   const lower = trimmed.toLowerCase();
   const isEnergetic = /story|tiktok|reel|ung|snabb|energi/.test(lower);
-  const baseDuration = isEnergetic ? 2 : 2.8;
+  const choices = draftChoices(prompt);
+  const baseDuration = choices.duration ? (choices.duration - 0.5) / 3 : isEnergetic ? 2 : 2.8;
 
   return {
     id: `mock-${Date.now()}`,
     title: headline.slice(0, 50) || "Ny video",
-    format: /landscape|16:9|youtube/.test(lower)
+    format: choices.format ?? (/landscape|16:9|youtube/.test(lower)
       ? "landscape"
       : /feed|instagram|1:1/.test(lower)
         ? "feed"
-        : "story",
+        : "story"),
     backgroundColor: "#0000A0",
     accentColor: "#40BFA3",
     scenes: [
@@ -160,7 +161,7 @@ function buildMockConfig(prompt: string): VideoConfig {
         type: "title",
         durationSeconds: baseDuration,
         headline,
-        subtitle: trimmed.slice(0, 80),
+        subtitle: idea.slice(0, 80),
         alignment: "center",
       },
       {
@@ -176,7 +177,7 @@ function buildMockConfig(prompt: string): VideoConfig {
         durationSeconds: baseDuration,
         headline: "Vill du veta mer?",
         buttonText: "BOKA RÅDGIVNING",
-        subtitle: "Få ett svar inom 24 timmar",
+        subtitle: "Läs om dina alternativ",
       },
     ],
     showLogo: true,

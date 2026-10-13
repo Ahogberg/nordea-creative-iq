@@ -1,14 +1,16 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
+import { useSafeArea } from "../safe-area";
 import { fadeSlideUp } from "../utils";
 import { colors, fonts, headlineScale } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import type { CtaScene as CtaSceneProps, MotionConfig } from "../types";
 import { DEFAULT_MOTION_CONFIG } from "../types";
 import { StaggeredText } from "../animations/StaggeredText";
 import { CtaReveal } from "../animations/CtaReveal";
 import { AnimatedText } from "../animations/AnimatedText";
 import { useSceneTheme } from "../theme";
+import { RichText } from "../rich-text";
 
 const FPS = 30;
 
@@ -24,6 +26,8 @@ export const CtaSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  // Innehållet hålls inom säker yta: under loggan, ovanför nedre marginalen.
+  const safe = useSafeArea();
   const { height } = useVideoConfig();
   const headlineSize = Math.round(60 * scale * headlineScale(width, height));
   const m = motion ?? DEFAULT_MOTION_CONFIG;
@@ -40,7 +44,7 @@ export const CtaSceneComponent: React.FC<{
       fontStyle={{
         fontSize: headlineSize,
         fontWeight: 900,
-        color: theme.text,
+        color: theme.headline,
         fontFamily: fonts.headline,
         textAlign: "center",
         lineHeight: 1.2,
@@ -53,7 +57,7 @@ export const CtaSceneComponent: React.FC<{
       endFrame={endFrame}
       fontSize={headlineSize}
       fontWeight={900}
-      color={theme.text}
+      color={theme.headline}
       mode={m.text.stagger}
       delayBetween={m.text.delayBetween}
       useSpring={m.text.useSpring}
@@ -64,7 +68,9 @@ export const CtaSceneComponent: React.FC<{
   );
 
   const subtitleNode = scene.subtitle ? (
-    <p
+    <RichText
+      as="p"
+      text={scene.subtitle}
       style={{
         fontFamily: fonts.body,
         fontSize: Math.round(28 * scale),
@@ -74,9 +80,7 @@ export const CtaSceneComponent: React.FC<{
         textAlign: "center",
         ...subtitleAnim,
       }}
-    >
-      {scene.subtitle}
-    </p>
+    />
   ) : null;
 
   // Button uses CtaReveal but threads the legacy pill-style colors/padding so
@@ -112,13 +116,13 @@ export const CtaSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        padding: `0 ${110 * scale}px`,
+        padding: `${safe.top}px ${110 * scale}px ${safe.bottom}px`,
         position: "relative",
       }}
     >
-      {isInline(scene, "headline") && headlineNode}
-      {isInline(scene, "subtitle") && subtitleNode}
-      {isInline(scene, "button") && buttonNode}
+      {inlineElement(scene, "headline", headlineNode)}
+      {inlineElement(scene, "subtitle", subtitleNode)}
+      {inlineElement(scene, "button", buttonNode)}
 
       {positionedElement(scene, "headline", headlineNode)}
       {subtitleNode && positionedElement(scene, "subtitle", subtitleNode)}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 import { getUserSpend } from "@/lib/ai/providers/cost-tracker";
 
 export const runtime = "nodejs";
@@ -14,10 +14,11 @@ interface GenerationRow {
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-    const user_id = "default-user";
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
-    const spend = await getUserSpend(user_id);
+    const spend = await getUserSpend(db);
 
     const since = new Date();
     since.setDate(since.getDate() - 30);
@@ -25,7 +26,7 @@ export async function GET() {
     const { data: generations } = await supabase
       .from("ai_generations")
       .select("provider, kind, cost_usd, status, created_at")
-      .eq("user_id", user_id)
+      .eq("user_id", ownerId)
       .gte("created_at", since.toISOString())
       .order("created_at", { ascending: false })
       .limit(100);

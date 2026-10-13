@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import { requireUser } from '@/lib/supabase/server';
+import { requireDb } from '@/lib/supabase/db';
+
+// Mallbiblioteket delas: alla inloggade ser alla mallar, bara ägaren ändrar.
 
 // GET - List all templates
 export async function GET() {
   try {
-    const auth = await requireUser();
-    if ("response" in auth) return auth.response;
-    const { supabase, user } = auth;
+    const db = await requireDb();
+    if ('response' in db) return db.response;
 
-    const { data, error } = await supabase
+    const { data, error } = await db.supabase
       .from('templates')
       .select('*')
       .order('is_favorite', { ascending: false })
@@ -27,9 +28,8 @@ export async function GET() {
 // { name, description, config, is_favorite }
 export async function POST(request: Request) {
   try {
-    const auth = await requireUser();
-    if ("response" in auth) return auth.response;
-    const { supabase, user } = auth;
+    const db = await requireDb();
+    if ('response' in db) return db.response;
     const body = await request.json();
 
     if (!body?.name || !body?.config) {
@@ -39,10 +39,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await db.supabase
       .from('templates')
       .insert({
-        user_id: user.id,
+        user_id: db.ownerId,
         name: body.name,
         description: body.description ?? null,
         config: body.config,

@@ -93,7 +93,12 @@ Kräver minst 3 analyser; bättre ju fler (10+). Skriv
 - **`golden_examples`:** 3–5 av de mest typiska annonserna återskapade som
   `VideoConfig` (bara scentyper och fält som finns i `lib/remotion/types.ts`;
   copy ordagrant). Format: 9:16 → `story`, 1:1 → `feed`, 16:9 → `landscape`,
-  4:5 → `vertical`.
+  4:5 → `vertical`. Använd renderarens förmågor (se
+  `lib/remotion/prompt-capabilities.ts`): `**fet**` på nyckelord, `headlineColor`,
+  `legal` (riskrad, varningsband), `terms`-scener och canvas-illustrationsscener
+  med kort TSX som använder illustrationskitet. De tre första hamnar i AI-prompten
+  — lägg de grafiska först. Rendera dem med `npx remotion still` och titta innan
+  du sparar.
 - `status: "draft"`, `generated_at` = dagens datum, `source_ad_ids` = alla
   analyserade id:n, `market: "SE"`, `reviewed_by: null`.
 - **Sätt aldrig `status: "reviewed"`.** Det gör en människa på marknad efter

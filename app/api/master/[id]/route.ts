@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 
 export const runtime = "nodejs";
 
@@ -16,12 +16,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const { data, error } = await supabase
       .from("master_creatives")
       .select("*")
       .eq("id", id)
+      .eq("created_by", ownerId)
       .single();
 
     if (error || !data) {
@@ -46,7 +49,9 @@ export async function PUT(
     const body = await request.json();
     const parsed = PutSchema.parse(body);
 
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -61,6 +66,7 @@ export async function PUT(
       .from("master_creatives")
       .update(updates)
       .eq("id", id)
+      .eq("created_by", ownerId)
       .select()
       .single();
 
@@ -84,11 +90,14 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
     const { error } = await supabase
       .from("master_creatives")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("created_by", ownerId);
 
     if (error) throw error;
     return NextResponse.json({ success: true });

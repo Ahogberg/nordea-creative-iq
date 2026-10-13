@@ -3,10 +3,12 @@ import { AbsoluteFill, useCurrentFrame, delayRender, continueRender } from "remo
 import { Lottie, LottieAnimationData } from "@remotion/lottie";
 import { fadeSlideUp, fadeIn } from "../utils";
 import { colors, fonts } from "../styles";
-import { positionedElement, isInline, resolveBackground } from "../scene-utils";
+import { positionedElement, inlineElement, resolveBackground } from "../scene-utils";
 import { getLottieUrl } from "../lottie-library";
 import type { LottieScene as LottieSceneProps } from "../types";
 import { useSceneTheme } from "../theme";
+import { RichText } from "../rich-text";
+import { useSafeArea } from "../safe-area";
 
 /**
  * Element IDs for per-element transforms: "headline", "caption"
@@ -19,6 +21,7 @@ export const LottieSceneComponent: React.FC<{
   const theme = useSceneTheme();
   const frame = useCurrentFrame();
   const scale = width / 1080;
+  const safe = useSafeArea();
 
   const url = scene.animationUrl || getLottieUrl(scene.animationId);
   const sizePercent = scene.sizePercent ?? 60;
@@ -28,11 +31,12 @@ export const LottieSceneComponent: React.FC<{
 
   const [handle] = useState(() => delayRender("Loading Lottie animation"));
   const [animationData, setAnimationData] = useState<LottieAnimationData | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [fetchError, setLoadError] = useState<string | null>(null);
+  // Saknad URL är ett fel i sig — härlett, så effekten inte behöver sätta state.
+  const loadError = url ? fetchError : "Ingen animation-URL angiven";
 
   useEffect(() => {
     if (!url) {
-      setLoadError("Ingen animation-URL angiven");
       continueRender(handle);
       return;
     }
@@ -70,25 +74,28 @@ export const LottieSceneComponent: React.FC<{
     position === "top" ? "flex-start" : position === "bottom" ? "flex-end" : "center";
 
   const headlineNode = scene.headline ? (
-    <h2
+    <RichText
+      as="h2"
+      text={scene.headline}
       style={{
         fontFamily: fonts.headline,
         fontSize: Math.round(56 * scale),
         fontWeight: 900,
-        color: theme.text,
+        color: theme.headline,
         lineHeight: 1.15,
         textAlign: "center",
         margin: 0,
         maxWidth: width * 0.82,
+        whiteSpace: "pre-line",
         ...headlineAnim,
       }}
-    >
-      {scene.headline}
-    </h2>
+    />
   ) : null;
 
   const captionNode = scene.caption ? (
-    <p
+    <RichText
+      as="p"
+      text={scene.caption}
       style={{
         fontFamily: fonts.body,
         fontSize: Math.round(26 * scale),
@@ -99,9 +106,7 @@ export const LottieSceneComponent: React.FC<{
         maxWidth: width * 0.8,
         opacity: captionOpacity,
       }}
-    >
-      {scene.caption}
-    </p>
+    />
   ) : null;
 
   return (
@@ -112,7 +117,8 @@ export const LottieSceneComponent: React.FC<{
         flexDirection: "column",
         justifyContent,
         alignItems: "center",
-        padding: `${140 * scale}px ${90 * scale}px`,
+        // Säker yta: under loggan, ovanför nedre marginalen.
+        padding: `${safe.top}px ${90 * scale}px ${safe.bottom}px`,
         gap: 40 * scale,
         position: "relative",
       }}
@@ -142,10 +148,10 @@ export const LottieSceneComponent: React.FC<{
         )}
       </div>
 
-      {headlineNode && isInline(scene, "headline") && headlineNode}
+      {inlineElement(scene, "headline", headlineNode)}
       {headlineNode && positionedElement(scene, "headline", headlineNode)}
 
-      {captionNode && isInline(scene, "caption") && captionNode}
+      {inlineElement(scene, "caption", captionNode)}
       {captionNode && positionedElement(scene, "caption", captionNode)}
     </AbsoluteFill>
   );

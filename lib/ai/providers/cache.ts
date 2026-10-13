@@ -6,7 +6,7 @@
 // provider call still runs.
 
 import { createHash } from "node:crypto";
-import { createClient } from "@/lib/supabase/server";
+import { getDb } from "@/lib/supabase/db";
 
 export function makeCacheKey(
   provider: string,
@@ -31,10 +31,12 @@ export interface CacheLookup {
 
 export async function checkCache(cache_key: string): Promise<CacheLookup> {
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
+    const db = await getDb();
+    if (!db) return { hit: false };
+    const { data } = await db.supabase
       .from("ai_generations")
       .select("id, result_url, thumbnail_url")
+      .eq("user_id", db.ownerId)
       .eq("cache_key", cache_key)
       .eq("status", "success")
       .order("created_at", { ascending: false })

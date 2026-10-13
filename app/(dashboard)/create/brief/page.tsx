@@ -13,6 +13,7 @@ import {
   Eye,
   Loader2,
 } from "lucide-react";
+import { Topbar } from "@/components/layout/topbar";
 import type { CreativeBrief, BriefStatus } from "@/lib/brief/types";
 
 type StatusFilter = "all" | BriefStatus;
@@ -98,7 +99,8 @@ export default function BriefEntryPage() {
   };
 
   return (
-    <div className="main-content">
+    <div className="min-h-screen bg-nordea-bg">
+      <Topbar breadcrumb={["Skapa", "Från brief"]} />
       <div className="max-w-5xl mx-auto py-12 px-6">
         <div className="text-center mb-12">
           <h1 className="nordea-display text-4xl text-nordea-deep mb-3 tracking-tight">
@@ -113,9 +115,9 @@ export default function BriefEntryPage() {
           <button
             type="button"
             onClick={() => router.push("/create/brief/wizard")}
-            className="group bg-white border-2 border-nordea-border rounded-2xl p-8 text-left hover:border-nordea-teal hover:shadow-md transition-all"
+            className="group bg-white border-2 border-nordea-border rounded-2xl p-8 text-left hover:border-nordea-blue hover:shadow-md transition-all"
           >
-            <div className="w-14 h-14 bg-nordea-teal/10 text-nordea-teal rounded-xl flex items-center justify-center mb-6 group-hover:bg-nordea-teal/15">
+            <div className="w-14 h-14 bg-nordea-blue-soft text-nordea-blue rounded-xl flex items-center justify-center mb-6">
               <Sparkles className="w-7 h-7" />
             </div>
             <h2 className="text-xl font-semibold text-nordea-text mb-2">
@@ -123,9 +125,9 @@ export default function BriefEntryPage() {
             </h2>
             <p className="text-sm text-nordea-text-secondary mb-6">
               Du har en idé eller ett problem men ingen färdig brief. AI:n
-              hjälper dig genom 5 enkla steg att bygga strategin tillsammans.
+              hjälper dig i några korta steg att bygga strategin tillsammans.
             </p>
-            <div className="flex items-center gap-2 text-sm font-medium text-nordea-teal">
+            <div className="flex items-center gap-2 text-sm font-medium text-nordea-blue">
               Starta brainstorming
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>

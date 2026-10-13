@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/supabase/server";
+import { requireDb } from "@/lib/supabase/db";
 
 export async function GET(
   _request: Request,
@@ -7,15 +7,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const auth = await requireUser();
-    if ("response" in auth) return auth.response;
-    const { supabase, user } = auth;
+    const db = await requireDb();
+    if ("response" in db) return db.response;
+    const { supabase, ownerId } = db;
 
     const { data, error } = await supabase
       .from("qa_runs")
       .select("*")
       .eq("id", id)
-      .eq("user_id", user.id)
+      .eq("user_id", ownerId)
       .single();
 
     if (error) throw error;

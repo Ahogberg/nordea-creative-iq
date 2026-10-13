@@ -144,7 +144,7 @@ export function QAReportView({
                 </div>
               </div>
               <p className="text-xs text-white/60 italic mb-3">
-                "{score.reaction_quote}"
+                &rdquo;{score.reaction_quote}&rdquo;
               </p>
               <div className="grid grid-cols-3 gap-2 text-xs text-white/50 mb-3">
                 <div>Hook {score.hook_score}/10</div>
@@ -284,7 +284,7 @@ export function QAReportView({
           {report.status === "pass" && onExport && (
             <button
               onClick={onExport}
-              className="px-6 py-2 bg-[#40BFA3] hover:bg-[#40BFA3]/80 rounded-lg text-sm font-semibold text-[#00005E]"
+              className="px-6 py-2 bg-nordea-blue hover:bg-[#000080] rounded-lg text-sm font-semibold text-white"
             >
               Exportera
             </button>
